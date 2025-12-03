@@ -4,6 +4,9 @@ import Comercial from './pages/Comercial';
 import Engenharia from './pages/Engenharia';
 import Modelagem from './pages/Modelagem';
 import Suprimentos from './pages/Suprimentos';
+import Fundicao from './pages/Fundicao';
+import Usinagem from './pages/Usinagem';
+import Liberacao from './pages/Liberacao';
 import __Layout from './Layout.jsx';
 
 
@@ -14,6 +17,9 @@ export const PAGES = {
     "Engenharia": Engenharia,
     "Modelagem": Modelagem,
     "Suprimentos": Suprimentos,
+    "Fundicao": Fundicao,
+    "Usinagem": Usinagem,
+    "Liberacao": Liberacao,
 }
 
 export const pagesConfig = {
