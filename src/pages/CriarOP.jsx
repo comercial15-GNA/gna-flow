@@ -209,7 +209,7 @@ export default function CriarOP() {
                 <Input
                   value={formData.equipamento_principal}
                   onChange={(e) => setFormData({ ...formData, equipamento_principal: e.target.value })}
-                  placeholder="Ex: Bomba Centrífuga"
+                  placeholder="Ex: GA1300"
                   className="mt-1"
                 />
               </div>
