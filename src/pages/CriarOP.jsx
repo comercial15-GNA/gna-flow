@@ -44,12 +44,12 @@ export default function CriarOP() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Buscar usuários ativos com apelido para responsável
+  // Buscar usuários ativos com apelido para responsável (visível para todos)
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios-responsaveis'],
     queryFn: async () => {
       const users = await base44.entities.User.list();
-      return users.filter(u => u.setor && u.ativo !== false && u.apelido);
+      return users.filter(u => u.ativo !== false && u.apelido);
     }
   });
 
@@ -158,6 +158,7 @@ export default function CriarOP() {
       const itensParaCriar = itensValidos.map(item => ({
         op_id: op.id,
         numero_op: numeroOP,
+        equipamento_principal: formData.equipamento_principal,
         descricao: item.descricao,
         codigo_ga: item.codigo_ga,
         peso: item.peso ? parseFloat(item.peso) : null,
