@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -10,10 +10,14 @@ import {
   ArrowRight,
   RotateCcw,
   FileText,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  History
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
 const ETAPA_COLORS = {
   comercial: 'bg-blue-100 text-blue-800',
@@ -48,6 +52,8 @@ export default function ItemCardProducao({
   onRetornar,
   loading = false
 }) {
+  const [showHistorico, setShowHistorico] = useState(false);
+
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
       <div className="flex items-start justify-between mb-3">
@@ -115,6 +121,26 @@ export default function ItemCardProducao({
       {item.data_entrada_etapa && (
         <div className="text-xs text-slate-500 mb-4">
           Entrada: {format(new Date(item.data_entrada_etapa), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        </div>
+      )}
+
+      {/* Botão para mostrar histórico */}
+      <div className="mb-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowHistorico(!showHistorico)}
+          className="text-slate-600 hover:text-slate-800 p-0 h-auto"
+        >
+          <History className="w-4 h-4 mr-1" />
+          Histórico de Movimentações
+          {showHistorico ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+        </Button>
+      </div>
+
+      {showHistorico && (
+        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+          <HistoricoMovimentacoes itemId={item.id} />
         </div>
       )}
 

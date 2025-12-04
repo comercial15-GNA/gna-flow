@@ -191,11 +191,11 @@ export default function Usinagem() {
               arquivos={getArquivos(item.op_id)}
               loading={loadingItem === item.id}
               avancarOpcoes={[
-                { value: 'liberacao', label: 'Enviar p/ Liberação' },
-                { value: 'suprimentos', label: 'Enviar p/ Suprimentos' }
+                { value: 'liberacao', label: 'Enviar p/ Liberação' }
               ]}
               retornarOpcoes={[
-                { value: 'fundicao', label: 'Retornar p/ Fundição' }
+                { value: 'fundicao', label: 'Retornar p/ Fundição' },
+                { value: 'suprimentos', label: 'Retornar p/ Suprimentos' }
               ]}
               onAvancar={(item, etapa) => movimentarItem(item, etapa)}
               onRetornar={(item, etapa) => handleRetornar(item, etapa)}

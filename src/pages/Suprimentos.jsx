@@ -191,7 +191,8 @@ export default function Suprimentos() {
               arquivos={getArquivos(item.op_id)}
               loading={loadingItem === item.id}
               avancarOpcoes={[
-                { value: 'fundicao', label: 'Enviar p/ Fundição' }
+                { value: 'usinagem', label: 'Enviar p/ Usinagem' },
+                { value: 'liberacao', label: 'Enviar p/ Liberação' }
               ]}
               retornarOpcoes={[
                 { value: 'engenharia', label: 'Retornar p/ Engenharia' }
