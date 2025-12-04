@@ -1,18 +1,35 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Truck, 
   Search,
-  Package
+  Package,
+  FileSpreadsheet
 } from 'lucide-react';
 import { toast } from 'sonner';
-import ItemCard from '@/components/producao/ItemCard';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import ItemCardProducao from '@/components/producao/ItemCardProducao';
 
 export default function Suprimentos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingItem, setLoadingItem] = useState(null);
+  const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
+  const [retornarItem, setRetornarItem] = useState(null);
+  const [retornarDestino, setRetornarDestino] = useState('');
+  const [justificativa, setJustificativa] = useState('');
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -28,7 +45,14 @@ export default function Suprimentos() {
     }
   });
 
-  const movimentarItem = async (item, novaEtapa) => {
+  const { data: ops = [] } = useQuery({
+    queryKey: ['ops-all'],
+    queryFn: () => base44.entities.OrdemProducao.list(),
+  });
+
+  const getArquivos = (opId) => ops.find(o => o.id === opId)?.arquivos || [];
+
+  const movimentarItem = async (item, novaEtapa, justif = '') => {
     setLoadingItem(item.id);
     try {
       await base44.entities.ItemOP.update(item.id, {
@@ -43,8 +67,9 @@ export default function Suprimentos() {
         descricao_item: item.descricao,
         setor_origem: 'suprimentos',
         setor_destino: novaEtapa,
+        justificativa: justif,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.email,
+        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
@@ -54,7 +79,54 @@ export default function Suprimentos() {
       toast.error('Erro ao movimentar item');
     } finally {
       setLoadingItem(null);
+      setRetornarDialogOpen(false);
+      setJustificativa('');
     }
+  };
+
+  const handleRetornar = (item, destino) => {
+    setRetornarItem(item);
+    setRetornarDestino(destino);
+    setJustificativa('');
+    setRetornarDialogOpen(true);
+  };
+
+  const confirmarRetorno = () => {
+    if (!justificativa.trim()) {
+      toast.error('Justificativa é obrigatória para retorno');
+      return;
+    }
+    movimentarItem(retornarItem, retornarDestino, justificativa);
+  };
+
+  const gerarRelatorio = () => {
+    const dados = itens.map(item => ({
+      'OP': item.numero_op,
+      'Descrição': item.descricao,
+      'Código GA': item.codigo_ga || '-',
+      'Peso (kg)': item.peso || '-',
+      'Quantidade': item.quantidade,
+      'Cliente': item.cliente,
+      'Responsável': item.responsavel_op || '-',
+      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
+    }));
+
+    if (dados.length === 0) {
+      toast.error('Nenhum dado para exportar');
+      return;
+    }
+
+    const headers = Object.keys(dados[0]).join(';');
+    const rows = dados.map(row => Object.values(row).join(';')).join('\n');
+    const csv = `${headers}\n${rows}`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio_suprimentos_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    link.click();
+    toast.success('Relatório gerado');
   };
 
   const itensFiltrados = itens.filter(item =>
@@ -75,8 +147,16 @@ export default function Suprimentos() {
             <p className="text-slate-500">Itens aguardando materiais</p>
           </div>
         </div>
-        <div className="bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium">
-          {itens.length} itens na fila
+        <div className="flex items-center gap-3">
+          <div className="bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium">
+            {itens.length} itens na fila
+          </div>
+          {itens.length > 0 && (
+            <Button onClick={gerarRelatorio} variant="outline">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Gerar Relatório
+            </Button>
+          )}
         </div>
       </div>
 
@@ -105,9 +185,10 @@ export default function Suprimentos() {
       ) : (
         <div className="grid gap-4">
           {itensFiltrados.map((item) => (
-            <ItemCard
+            <ItemCardProducao
               key={item.id}
               item={item}
+              arquivos={getArquivos(item.op_id)}
               loading={loadingItem === item.id}
               avancarOpcoes={[
                 { value: 'fundicao', label: 'Enviar p/ Fundição' }
@@ -116,11 +197,40 @@ export default function Suprimentos() {
                 { value: 'engenharia', label: 'Retornar p/ Engenharia' }
               ]}
               onAvancar={(item, etapa) => movimentarItem(item, etapa)}
-              onRetornar={(item, etapa) => movimentarItem(item, etapa)}
+              onRetornar={(item, etapa) => handleRetornar(item, etapa)}
             />
           ))}
         </div>
       )}
+
+      <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Retornar Item</DialogTitle>
+            <DialogDescription>Informe a justificativa do retorno</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>Justificativa *</Label>
+              <Textarea
+                value={justificativa}
+                onChange={(e) => setJustificativa(e.target.value)}
+                placeholder="Descreva o motivo do retorno..."
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarRetorno} className="bg-amber-600 hover:bg-amber-700">
+                Confirmar Retorno
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
