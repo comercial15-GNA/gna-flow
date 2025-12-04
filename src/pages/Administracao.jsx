@@ -129,12 +129,16 @@ export default function Administracao() {
       toast.error('É obrigatório definir um setor');
       return;
     }
+    const updateData = {
+      setor: editForm.setor,
+      ativo: editForm.ativo
+    };
+    if (editForm.full_name) {
+      updateData.full_name = editForm.full_name;
+    }
     updateUserMutation.mutate({
       id: editingUser.id,
-      data: {
-        setor: editForm.setor,
-        ativo: editForm.ativo
-      }
+      data: updateData
     });
   };
 
@@ -338,8 +342,13 @@ export default function Administracao() {
               <p className="font-medium text-slate-800">{editingUser?.email}</p>
             </div>
             <div>
-              <Label className="text-sm text-slate-500">Nome</Label>
-              <p className="font-medium text-slate-800">{editingUser?.full_name || 'Não informado'}</p>
+              <Label>Nome</Label>
+              <Input
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                placeholder="Nome do usuário"
+                className="mt-1"
+              />
             </div>
             <div>
               <Label>Setor *</Label>

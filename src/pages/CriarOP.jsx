@@ -4,13 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   ClipboardList, 
@@ -33,7 +27,7 @@ export default function CriarOP() {
   const [formData, setFormData] = useState({
     equipamento_principal: '',
     cliente: '',
-    responsavel_email: '',
+    responsavel_nome: '',
     arquivos: []
   });
   
@@ -43,15 +37,6 @@ export default function CriarOP() {
   
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // Buscar usuários ativos com setor
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-ativos'],
-    queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users.filter(u => u.setor && u.ativo !== false);
-    }
-  });
 
   // Buscar sequência
   const { data: sequencias = [] } = useQuery({
@@ -131,7 +116,7 @@ export default function CriarOP() {
     e.preventDefault();
     
     // Validações
-    if (!formData.equipamento_principal || !formData.cliente || !formData.responsavel_email) {
+    if (!formData.equipamento_principal || !formData.cliente || !formData.responsavel_nome) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -145,7 +130,6 @@ export default function CriarOP() {
     setSubmitting(true);
     try {
       const numeroOP = await gerarNumeroOP();
-      const responsavel = usuarios.find(u => u.email === formData.responsavel_email);
       const dataLancamento = new Date().toISOString();
 
       // Criar OP
@@ -153,8 +137,8 @@ export default function CriarOP() {
         numero_op: numeroOP,
         equipamento_principal: formData.equipamento_principal,
         cliente: formData.cliente,
-        responsavel_email: formData.responsavel_email,
-        responsavel_nome: responsavel?.full_name || formData.responsavel_email,
+        responsavel_email: '',
+        responsavel_nome: formData.responsavel_nome,
         arquivos: formData.arquivos,
         status: 'em_andamento',
         data_lancamento: dataLancamento
@@ -170,7 +154,7 @@ export default function CriarOP() {
         quantidade: parseInt(item.quantidade),
         etapa_atual: 'engenharia',
         cliente: formData.cliente,
-        responsavel_op_email: formData.responsavel_email,
+        responsavel_op_email: '',
         data_entrada_etapa: dataLancamento
       }));
 
@@ -231,21 +215,12 @@ export default function CriarOP() {
             </div>
             <div>
               <Label>Responsável pela OP *</Label>
-              <Select
-                value={formData.responsavel_email}
-                onValueChange={(value) => setFormData({ ...formData, responsavel_email: value })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione o responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {usuarios.map((user) => (
-                    <SelectItem key={user.email} value={user.email}>
-                      {user.full_name || user.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value={formData.responsavel_nome}
+                onChange={(e) => setFormData({ ...formData, responsavel_nome: e.target.value })}
+                placeholder="Nome do responsável"
+                className="mt-1"
+              />
             </div>
           </CardContent>
         </Card>
