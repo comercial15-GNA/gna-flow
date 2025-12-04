@@ -349,7 +349,7 @@ export default function Administracao() {
               />
             </div>
             <div>
-              <Label>Apelido (para vincular como Responsável nas OPs)</Label>
+              <Label>Apelido (Nome para vincular como Responsável nas OPs)</Label>
               <Input
                 value={editForm.apelido}
                 onChange={(e) => setEditForm({ ...editForm, apelido: e.target.value })}

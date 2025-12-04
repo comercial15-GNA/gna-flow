@@ -41,6 +41,7 @@ const STATUS_OPTIONS = [
 
 const ETAPA_OPTIONS = [
   { value: 'all', label: 'Todas as Etapas' },
+  { value: 'comercial', label: 'Comercial' },
   { value: 'engenharia', label: 'Engenharia' },
   { value: 'modelagem', label: 'Modelagem' },
   { value: 'suprimentos', label: 'Suprimentos' },
@@ -52,6 +53,7 @@ const ETAPA_OPTIONS = [
 ];
 
 const ETAPA_COLORS = {
+  comercial: 'bg-blue-100 text-blue-800',
   engenharia: 'bg-green-100 text-green-800',
   modelagem: 'bg-yellow-100 text-yellow-800',
   suprimentos: 'bg-orange-100 text-orange-800',
