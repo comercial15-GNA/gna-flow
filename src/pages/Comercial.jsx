@@ -3,12 +3,20 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   ClipboardList, 
   Plus, 
   Search,
   FileText,
-  Package
+  Package,
+  Filter
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -16,40 +24,41 @@ import OPCard from '@/components/producao/OPCard';
 
 export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('em_andamento');
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
 
-  // Buscar OPs ordenadas pela data de lançamento (mais antigas primeiro)
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
     queryKey: ['ops-comercial'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
-  // Buscar todos os itens
   const { data: itens = [] } = useQuery({
     queryKey: ['itens-all'],
     queryFn: () => base44.entities.ItemOP.list(),
   });
 
-  // Filtrar OPs que o usuário pode ver (criadas por ele ou é responsável)
+  // Filtrar OPs: criadas pelo usuário ou onde é responsável (pelo apelido)
   const opsVisiveis = ops.filter(op => {
     if (currentUser?.setor === 'administrador') return true;
-    return op.created_by === currentUser?.email || op.responsavel_email === currentUser?.email;
+    return op.created_by === currentUser?.email || op.responsavel === currentUser?.apelido;
   });
 
-  // Filtro por busca
-  const opsFiltradas = opsVisiveis.filter(op =>
-    op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtros
+  const opsFiltradas = opsVisiveis.filter(op => {
+    const matchSearch = !searchTerm || 
+      op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus = statusFilter === 'todos' || op.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -68,7 +77,6 @@ export default function Comercial() {
         </Link>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
@@ -122,20 +130,33 @@ export default function Comercial() {
         </div>
       </div>
 
-      {/* Search */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Buscar por OP, cliente ou equipamento..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por OP, cliente ou equipamento..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                <SelectItem value="finalizada">Finalizadas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* Lista de OPs */}
       {loadingOPs ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
