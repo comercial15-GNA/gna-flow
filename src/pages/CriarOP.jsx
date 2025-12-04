@@ -258,60 +258,6 @@ export default function CriarOP() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Arquivos Anexos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-slate-300 transition-colors">
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-                disabled={uploading}
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
-                {uploading ? (
-                  <Loader2 className="w-8 h-8 text-slate-400 mx-auto animate-spin" />
-                ) : (
-                  <Upload className="w-8 h-8 text-slate-400 mx-auto" />
-                )}
-                <p className="mt-2 text-sm text-slate-600">
-                  {uploading ? 'Enviando...' : 'Clique para enviar arquivos'}
-                </p>
-              </label>
-            </div>
-            
-            {formData.arquivos.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {formData.arquivos.map((url, index) => (
-                  <div key={index} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
-                    <FileText className="w-5 h-5 text-slate-500" />
-                    <a 
-                      href={url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex-1 text-sm text-blue-600 hover:underline truncate"
-                    >
-                      Arquivo {index + 1}
-                    </a>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6">
-          <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Itens da OP</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={addItem}>
@@ -393,6 +339,60 @@ export default function CriarOP() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Arquivos Anexos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-slate-300 transition-colors">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+                disabled={uploading}
+              />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                {uploading ? (
+                  <Loader2 className="w-8 h-8 text-slate-400 mx-auto animate-spin" />
+                ) : (
+                  <Upload className="w-8 h-8 text-slate-400 mx-auto" />
+                )}
+                <p className="mt-2 text-sm text-slate-600">
+                  {uploading ? 'Enviando...' : 'Clique para enviar arquivos'}
+                </p>
+              </label>
+            </div>
+            
+            {formData.arquivos.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {formData.arquivos.map((url, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
+                    <FileText className="w-5 h-5 text-slate-500" />
+                    <a 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex-1 text-sm text-blue-600 hover:underline truncate"
+                    >
+                      Arquivo {index + 1}
+                    </a>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
