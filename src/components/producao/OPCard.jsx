@@ -20,7 +20,17 @@ const STATUS_CONFIG = {
   cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
 };
 
-export default function OPCard({ op, itens = [], onClickItem, showItens = false }) {
+const ETAPA_COLORS = {
+  engenharia: 'bg-green-100 text-green-800',
+  modelagem: 'bg-yellow-100 text-yellow-800',
+  suprimentos: 'bg-orange-100 text-orange-800',
+  fundicao: 'bg-red-100 text-red-800',
+  usinagem: 'bg-cyan-100 text-cyan-800',
+  liberacao: 'bg-emerald-100 text-emerald-800',
+  finalizado: 'bg-purple-100 text-purple-800'
+};
+
+export default function OPCard({ op, itens = [], showItens = false }) {
   const [expanded, setExpanded] = useState(false);
   const statusConfig = STATUS_CONFIG[op.status] || STATUS_CONFIG.em_andamento;
 
@@ -28,7 +38,6 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
 
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-      {/* Header */}
       <div 
         className="p-4 cursor-pointer hover:bg-slate-50 transition-colors"
         onClick={() => setExpanded(!expanded)}
@@ -51,7 +60,6 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
           </Button>
         </div>
 
-        {/* Quick Info */}
         <div className="flex flex-wrap gap-4 mt-3 text-sm">
           <div className="flex items-center gap-2 text-slate-600">
             <Building2 className="w-4 h-4 text-slate-400" />
@@ -59,7 +67,7 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
           </div>
           <div className="flex items-center gap-2 text-slate-600">
             <User className="w-4 h-4 text-slate-400" />
-            <span>{op.responsavel_nome || op.responsavel_email}</span>
+            <span>{op.responsavel || '-'}</span>
           </div>
           {op.data_lancamento && (
             <div className="flex items-center gap-2 text-slate-600">
@@ -74,10 +82,8 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
         </div>
       </div>
 
-      {/* Expanded Content */}
       {expanded && (
         <div className="border-t border-slate-100 p-4 bg-slate-50">
-          {/* Arquivos */}
           {op.arquivos && op.arquivos.length > 0 && (
             <div className="mb-4">
               <p className="text-xs font-medium text-slate-500 uppercase mb-2">Arquivos Anexos</p>
@@ -99,7 +105,6 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
             </div>
           )}
 
-          {/* Itens */}
           {showItens && itensOP.length > 0 && (
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase mb-2">Itens da OP</p>
@@ -107,8 +112,7 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
                 {itensOP.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg p-3 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-slate-300 transition-colors"
-                    onClick={() => onClickItem && onClickItem(item)}
+                    className="bg-white rounded-lg p-3 border border-slate-200 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
                       <Package className="w-4 h-4 text-slate-400" />
@@ -118,10 +122,11 @@ export default function OPCard({ op, itens = [], onClickItem, showItens = false 
                           {item.codigo_ga && `${item.codigo_ga} • `}
                           Qtd: {item.quantidade}
                           {item.peso && ` • ${item.peso} kg`}
+                          {item.data_entrega && ` • Entrega: ${format(new Date(item.data_entrega), 'dd/MM/yy')}`}
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge className={ETAPA_COLORS[item.etapa_atual] || 'bg-slate-100 text-slate-800'}>
                       {item.etapa_atual}
                     </Badge>
                   </div>
