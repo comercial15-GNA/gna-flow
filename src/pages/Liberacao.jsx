@@ -32,7 +32,8 @@ import {
   Box,
   History,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileSpreadsheet
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -176,6 +177,37 @@ export default function Liberacao() {
     }
   };
 
+  const gerarRelatorio = () => {
+    const dados = itens.map(item => ({
+      'OP': item.numero_op,
+      'Equipamento': item.equipamento_principal || '-',
+      'Descrição': item.descricao,
+      'Código GA': item.codigo_ga || '-',
+      'Peso (kg)': item.peso || '-',
+      'Quantidade': item.quantidade,
+      'Cliente': item.cliente,
+      'Responsável': item.responsavel_op || '-',
+      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
+    }));
+
+    if (dados.length === 0) {
+      toast.error('Nenhum dado para exportar');
+      return;
+    }
+
+    const headers = Object.keys(dados[0]).join(';');
+    const rows = dados.map(row => Object.values(row).join(';')).join('\n');
+    const csv = `${headers}\n${rows}`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio_liberacao_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    link.click();
+    toast.success('Relatório gerado');
+  };
+
   const itensFiltrados = itens.filter(item =>
     item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,8 +227,16 @@ export default function Liberacao() {
             <p className="text-slate-500">Itens aguardando liberação para expedição</p>
           </div>
         </div>
-        <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium">
-          {itens.length} itens na fila
+        <div className="flex items-center gap-3">
+          <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium">
+            {itens.length} itens na fila
+          </div>
+          {itens.length > 0 && (
+            <Button onClick={gerarRelatorio} variant="outline">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Gerar Relatório
+            </Button>
+          )}
         </div>
       </div>
 
