@@ -3,6 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -23,7 +25,9 @@ import {
   Search,
   Package,
   RotateCcw,
-  Check
+  Check,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -44,6 +48,7 @@ export default function Liberacao() {
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedEtapa, setSelectedEtapa] = useState('');
+  const [justificativa, setJustificativa] = useState('');
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -58,6 +63,13 @@ export default function Liberacao() {
       return items;
     }
   });
+
+  const { data: ops = [] } = useQuery({
+    queryKey: ['ops-all'],
+    queryFn: () => base44.entities.OrdemProducao.list(),
+  });
+
+  const getArquivos = (opId) => ops.find(o => o.id === opId)?.arquivos || [];
 
   const finalizarItem = async (item) => {
     setLoadingItem(item.id);
@@ -75,7 +87,7 @@ export default function Liberacao() {
         setor_origem: 'liberacao',
         setor_destino: 'finalizado',
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.email,
+        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
@@ -99,12 +111,17 @@ export default function Liberacao() {
   const abrirDialogRetorno = (item) => {
     setSelectedItem(item);
     setSelectedEtapa('');
+    setJustificativa('');
     setRetornarDialogOpen(true);
   };
 
   const confirmarRetorno = async () => {
     if (!selectedEtapa) {
       toast.error('Selecione uma etapa');
+      return;
+    }
+    if (!justificativa.trim()) {
+      toast.error('Justificativa é obrigatória para retorno');
       return;
     }
 
@@ -122,8 +139,9 @@ export default function Liberacao() {
         descricao_item: selectedItem.descricao,
         setor_origem: 'liberacao',
         setor_destino: selectedEtapa,
+        justificativa: justificativa,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.email,
+        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
@@ -184,104 +202,125 @@ export default function Liberacao() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {itensFiltrados.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                    <Package className="w-4 h-4 text-slate-600" />
+          {itensFiltrados.map((item) => {
+            const arquivos = getArquivos(item.op_id);
+            return (
+              <div key={item.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                      <Package className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800">{item.descricao}</p>
+                      <p className="text-xs text-slate-500">{item.numero_op} • {item.cliente}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-slate-800">{item.descricao}</p>
-                    <p className="text-xs text-slate-500">{item.numero_op}</p>
-                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-800">Liberação</Badge>
                 </div>
-                <Badge className="bg-emerald-100 text-emerald-800">Liberação</Badge>
-              </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
-                {item.codigo_ga && (
-                  <div className="text-slate-600">
-                    <span className="text-slate-400">Código:</span> {item.codigo_ga}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 text-sm">
+                  <div><span className="text-slate-400">Código:</span> {item.codigo_ga || '-'}</div>
+                  <div><span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
+                  <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
+                  <div><span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}</div>
+                  <div><span className="text-slate-400">Responsável:</span> {item.responsavel_op || '-'}</div>
+                </div>
+
+                {arquivos.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-slate-500 mb-2">Arquivos:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {arquivos.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded text-xs text-blue-600 hover:bg-slate-200"
+                        >
+                          <FileText className="w-3 h-3" />
+                          Arquivo {idx + 1}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {item.peso && (
-                  <div className="text-slate-600">
-                    <span className="text-slate-400">Peso:</span> {item.peso} kg
+
+                {item.data_entrada_etapa && (
+                  <div className="text-xs text-slate-500 mb-4">
+                    Entrada: {format(new Date(item.data_entrada_etapa), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                   </div>
                 )}
-                <div className="text-slate-600">
-                  <span className="text-slate-400">Qtd:</span> {item.quantidade}
-                </div>
-                {item.cliente && (
-                  <div className="text-slate-600">
-                    <span className="text-slate-400">Cliente:</span> {item.cliente}
-                  </div>
-                )}
-              </div>
 
-              {item.data_entrada_etapa && (
-                <div className="text-xs text-slate-500 mb-4">
-                  Entrada: {format(new Date(item.data_entrada_etapa), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                  <Button
+                    size="sm"
+                    onClick={() => finalizarItem(item)}
+                    disabled={loadingItem === item.id}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Check className="w-3 h-3 mr-1" />
+                    Finalizar Item
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => abrirDialogRetorno(item)}
+                    disabled={loadingItem === item.id}
+                    className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    Retornar
+                  </Button>
                 </div>
-              )}
-
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
-                <Button
-                  size="sm"
-                  onClick={() => finalizarItem(item)}
-                  disabled={loadingItem === item.id}
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <Check className="w-3 h-3 mr-1" />
-                  Finalizar Item
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => abrirDialogRetorno(item)}
-                  disabled={loadingItem === item.id}
-                  className="text-amber-600 border-amber-300 hover:bg-amber-50"
-                >
-                  <RotateCcw className="w-3 h-3 mr-1" />
-                  Retornar
-                </Button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Dialog de Retorno */}
       <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Retornar Item</DialogTitle>
-            <DialogDescription>
-              Selecione a etapa para qual deseja retornar o item
-            </DialogDescription>
+            <DialogDescription>Selecione a etapa e informe a justificativa</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Select value={selectedEtapa} onValueChange={setSelectedEtapa}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a etapa" />
-              </SelectTrigger>
-              <SelectContent>
-                {ETAPAS_RETORNO.map((etapa) => (
-                  <SelectItem key={etapa.value} value={etapa.value}>
-                    {etapa.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarRetorno} disabled={!selectedEtapa || loadingItem}>
-              Confirmar Retorno
-            </Button>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>Etapa de Destino *</Label>
+              <Select value={selectedEtapa} onValueChange={setSelectedEtapa}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione a etapa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ETAPAS_RETORNO.map((etapa) => (
+                    <SelectItem key={etapa.value} value={etapa.value}>
+                      {etapa.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Justificativa *</Label>
+              <Textarea
+                value={justificativa}
+                onChange={(e) => setJustificativa(e.target.value)}
+                placeholder="Descreva o motivo do retorno..."
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarRetorno} disabled={!selectedEtapa || loadingItem} className="bg-amber-600 hover:bg-amber-700">
+                Confirmar Retorno
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

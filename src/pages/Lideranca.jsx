@@ -27,8 +27,7 @@ import {
   Package,
   FileText,
   Clock,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,7 +37,6 @@ const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os Status' },
   { value: 'em_andamento', label: 'Em Andamento' },
   { value: 'finalizada', label: 'Finalizada' },
-  { value: 'cancelada', label: 'Cancelada' },
 ];
 
 const ETAPA_OPTIONS = [
@@ -51,12 +49,6 @@ const ETAPA_OPTIONS = [
   { value: 'liberacao', label: 'Liberação' },
   { value: 'finalizado', label: 'Finalizado' },
 ];
-
-const STATUS_CONFIG = {
-  em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800', icon: Clock },
-  finalizada: { label: 'Finalizada', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-  cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: XCircle }
-};
 
 const ETAPA_COLORS = {
   engenharia: 'bg-green-100 text-green-800',
@@ -74,37 +66,18 @@ export default function Lideranca() {
   const [etapaFilter, setEtapaFilter] = useState('all');
   const [responsavelFilter, setResponsavelFilter] = useState('all');
 
-  // Buscar todas as OPs ordenadas por data de lançamento (mais antigas primeiro)
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
     queryKey: ['ops-lideranca'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
-  // Buscar todos os itens
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['itens-lideranca'],
     queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
   });
 
-  // Buscar usuários para filtro
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-lideranca'],
-    queryFn: () => base44.entities.User.list(),
-  });
-
   // Responsáveis únicos
-  const responsaveisUnicos = [...new Set(ops.map(op => op.responsavel_email).filter(Boolean))];
-
-  // Filtrar OPs
-  const opsFiltradas = ops.filter(op => {
-    const matchSearch = !searchTerm || 
-      op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.cliente?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter === 'all' || op.status === statusFilter;
-    const matchResponsavel = responsavelFilter === 'all' || op.responsavel_email === responsavelFilter;
-    
-    return matchSearch && matchStatus && matchResponsavel;
-  });
+  const responsaveisUnicos = [...new Set(ops.map(op => op.responsavel).filter(Boolean))];
 
   // Filtrar itens
   const itensFiltrados = itens.filter(item => {
@@ -114,7 +87,7 @@ export default function Lideranca() {
       item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.cliente?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchEtapa = etapaFilter === 'all' || item.etapa_atual === etapaFilter;
-    const matchResponsavel = responsavelFilter === 'all' || op?.responsavel_email === responsavelFilter;
+    const matchResponsavel = responsavelFilter === 'all' || op?.responsavel === responsavelFilter;
     const matchStatus = statusFilter === 'all' || op?.status === statusFilter;
     
     return matchSearch && matchEtapa && matchResponsavel && matchStatus;
@@ -131,9 +104,10 @@ export default function Lideranca() {
         'Quantidade': item.quantidade,
         'Cliente': item.cliente,
         'Etapa Atual': item.etapa_atual,
-        'Responsável': op?.responsavel_nome || op?.responsavel_email || '-',
+        'Responsável': op?.responsavel || '-',
         'Status OP': op?.status || '-',
-        'Data Entrada': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
+        'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+        'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
       };
     });
 
@@ -151,25 +125,19 @@ export default function Lideranca() {
     link.href = URL.createObjectURL(blob);
     link.download = `relatorio_lideranca_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
     link.click();
-    
-    toast.success('Relatório gerado com sucesso');
+    toast.success('Relatório gerado');
   };
 
-  // Stats
   const stats = {
     totalOPs: ops.length,
     emAndamento: ops.filter(op => op.status === 'em_andamento').length,
     finalizadas: ops.filter(op => op.status === 'finalizada').length,
     totalItens: itens.length,
-    itensPorEtapa: ETAPA_OPTIONS.slice(1).map(etapa => ({
-      etapa: etapa.label,
-      count: itens.filter(i => i.etapa_atual === etapa.value).length
-    }))
+    finalizados: itens.filter(i => i.etapa_atual === 'finalizado').length
   };
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -186,7 +154,6 @@ export default function Lideranca() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
@@ -238,16 +205,13 @@ export default function Lideranca() {
               <CheckCircle className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-800">
-                {itens.filter(i => i.etapa_atual === 'finalizado').length}
-              </p>
-              <p className="text-xs text-slate-500">Finalizados</p>
+              <p className="text-2xl font-bold text-slate-800">{stats.finalizados}</p>
+              <p className="text-xs text-slate-500">Itens Finalizados</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Filter className="w-4 h-4 text-slate-500" />
@@ -289,20 +253,14 @@ export default function Lideranca() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os Responsáveis</SelectItem>
-              {responsaveisUnicos.map((email) => {
-                const user = usuarios.find(u => u.email === email);
-                return (
-                  <SelectItem key={email} value={email}>
-                    {user?.full_name || email}
-                  </SelectItem>
-                );
-              })}
+              {responsaveisUnicos.map((resp) => (
+                <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Items Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-4 border-b border-slate-100">
           <h2 className="font-semibold text-slate-800">Itens ({itensFiltrados.length})</h2>
@@ -317,19 +275,20 @@ export default function Lideranca() {
                 <TableHead>Qtd</TableHead>
                 <TableHead>Etapa</TableHead>
                 <TableHead>Responsável</TableHead>
-                <TableHead>Data Entrada</TableHead>
+                <TableHead>Entrega</TableHead>
+                <TableHead>Entrada</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingItens ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
+                  <TableCell colSpan={8} className="text-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto"></div>
                   </TableCell>
                 </TableRow>
               ) : itensFiltrados.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                  <TableCell colSpan={8} className="text-center py-12 text-slate-500">
                     Nenhum item encontrado
                   </TableCell>
                 </TableRow>
@@ -342,9 +301,7 @@ export default function Lideranca() {
                       <TableCell>
                         <div>
                           <p className="font-medium text-slate-800">{item.descricao}</p>
-                          {item.codigo_ga && (
-                            <p className="text-xs text-slate-500">{item.codigo_ga}</p>
-                          )}
+                          {item.codigo_ga && <p className="text-xs text-slate-500">{item.codigo_ga}</p>}
                         </div>
                       </TableCell>
                       <TableCell>{item.cliente}</TableCell>
@@ -354,8 +311,9 @@ export default function Lideranca() {
                           {item.etapa_atual}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-600">
-                        {op?.responsavel_nome || op?.responsavel_email || '-'}
+                      <TableCell className="text-slate-600">{op?.responsavel || '-'}</TableCell>
+                      <TableCell className="text-sm text-slate-500">
+                        {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}
                       </TableCell>
                       <TableCell className="text-sm text-slate-500">
                         {item.data_entrada_etapa 
