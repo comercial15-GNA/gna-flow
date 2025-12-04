@@ -27,7 +27,7 @@ const SETOR_CONFIG = {
     label: 'Administrador',
     icon: Settings,
     color: 'bg-purple-500',
-    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Usinagem', 'Liberacao', 'Lideranca']
+    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Usinagem', 'Liberacao', 'Expedicao', 'Lideranca']
   },
   comercial: {
     label: 'Comercial',
@@ -71,6 +71,12 @@ const SETOR_CONFIG = {
     color: 'bg-emerald-500',
     pages: ['Liberacao']
   },
+  expedicao: {
+    label: 'Expedição',
+    icon: Truck,
+    color: 'bg-teal-500',
+    pages: ['Expedicao']
+  },
   lideranca: {
     label: 'Liderança',
     icon: Users,
@@ -89,6 +95,7 @@ const NAV_ITEMS = [
   { name: 'Fundicao', label: 'Fundição', icon: Flame, setores: ['administrador', 'fundicao'] },
   { name: 'Usinagem', label: 'Usinagem', icon: Wrench, setores: ['administrador', 'usinagem'] },
   { name: 'Liberacao', label: 'Liberação', icon: CheckCircle, setores: ['administrador', 'liberacao'] },
+  { name: 'Expedicao', label: 'Expedição', icon: Truck, setores: ['administrador', 'expedicao'] },
   { name: 'Lideranca', label: 'Liderança', icon: LayoutDashboard, setores: ['administrador', 'lideranca'] },
 ];
 
