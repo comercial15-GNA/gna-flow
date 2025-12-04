@@ -24,11 +24,15 @@ import {
   Weight,
   Box,
   FileSpreadsheet,
-  Info
+  Info,
+  History,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 
 export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,7 +42,12 @@ export default function Expedicao() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [justificativa, setJustificativa] = useState('');
   const [informacoes, setInformacoes] = useState('');
+  const [expandedHistorico, setExpandedHistorico] = useState({});
   const queryClient = useQueryClient();
+
+  const toggleHistorico = (itemId) => {
+    setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -301,6 +310,26 @@ export default function Expedicao() {
                 {item.data_entrada_etapa && (
                   <div className="text-xs text-slate-500 mb-4">
                     Entrada: {format(new Date(item.data_entrada_etapa), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </div>
+                )}
+
+                {/* Histórico de Movimentações */}
+                <div className="mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleHistorico(item.id)}
+                    className="text-slate-600 hover:text-slate-800 p-0 h-auto"
+                  >
+                    <History className="w-4 h-4 mr-1" />
+                    Histórico de Movimentações
+                    {expandedHistorico[item.id] ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                  </Button>
+                </div>
+
+                {expandedHistorico[item.id] && (
+                  <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                    <HistoricoMovimentacoes itemId={item.id} />
                   </div>
                 )}
 
