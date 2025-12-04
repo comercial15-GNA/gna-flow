@@ -9,6 +9,7 @@ import Usinagem from './pages/Usinagem';
 import Liberacao from './pages/Liberacao';
 import Lideranca from './pages/Lideranca';
 import Home from './pages/Home';
+import Expedicao from './pages/Expedicao';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "Liberacao": Liberacao,
     "Lideranca": Lideranca,
     "Home": Home,
+    "Expedicao": Expedicao,
 }
 
 export const pagesConfig = {

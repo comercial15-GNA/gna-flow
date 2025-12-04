@@ -191,11 +191,11 @@ export default function Fundicao() {
               arquivos={getArquivos(item.op_id)}
               loading={loadingItem === item.id}
               avancarOpcoes={[
-                { value: 'usinagem', label: 'Enviar p/ Usinagem' }
+                { value: 'usinagem', label: 'Enviar p/ Usinagem' },
+                { value: 'liberacao', label: 'Enviar p/ Liberação' }
               ]}
               retornarOpcoes={[
-                { value: 'modelagem', label: 'Retornar p/ Modelagem' },
-                { value: 'suprimentos', label: 'Retornar p/ Suprimentos' }
+                { value: 'modelagem', label: 'Retornar p/ Modelagem' }
               ]}
               onAvancar={(item, etapa) => movimentarItem(item, etapa)}
               onRetornar={(item, etapa) => handleRetornar(item, etapa)}

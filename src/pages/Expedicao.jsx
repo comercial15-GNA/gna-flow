@@ -13,47 +13,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
-  CheckCircle, 
+  Truck, 
   Search,
   Package,
   RotateCcw,
-  ArrowRight,
+  Check,
   FileText,
   ExternalLink,
   Weight,
-  Box
+  Box,
+  FileSpreadsheet,
+  Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const ETAPAS_RETORNO = [
-  { value: 'comercial', label: 'Comercial' },
-  { value: 'engenharia', label: 'Engenharia' },
-  { value: 'modelagem', label: 'Modelagem' },
-  { value: 'suprimentos', label: 'Suprimentos' },
-  { value: 'fundicao', label: 'Fundição' },
-  { value: 'usinagem', label: 'Usinagem' },
-];
-
-export default function Liberacao() {
+export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
-  const [expedicaoDialogOpen, setExpedicaoDialogOpen] = useState(false);
+  const [finalizarDialogOpen, setFinalizarDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedEtapa, setSelectedEtapa] = useState('');
   const [justificativa, setJustificativa] = useState('');
-  const [pesoExpedicao, setPesoExpedicao] = useState('');
-  const [volumeExpedicao, setVolumeExpedicao] = useState('');
+  const [informacoes, setInformacoes] = useState('');
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -62,9 +46,9 @@ export default function Liberacao() {
   });
 
   const { data: itens = [], isLoading } = useQuery({
-    queryKey: ['itens-liberacao'],
+    queryKey: ['itens-expedicao'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'liberacao' }, 'data_entrada_etapa');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'expedicao' }, 'data_entrada_etapa');
       return items;
     }
   });
@@ -76,26 +60,19 @@ export default function Liberacao() {
 
   const getArquivos = (opId) => ops.find(o => o.id === opId)?.arquivos || [];
 
-  const abrirDialogExpedicao = (item) => {
+  const abrirDialogFinalizar = (item) => {
     setSelectedItem(item);
-    setPesoExpedicao(item.peso_expedicao || '');
-    setVolumeExpedicao(item.volume_expedicao || '');
-    setExpedicaoDialogOpen(true);
+    setInformacoes(item.informacoes_expedicao || '');
+    setFinalizarDialogOpen(true);
   };
 
-  const enviarParaExpedicao = async () => {
-    if (!pesoExpedicao || !volumeExpedicao) {
-      toast.error('Peso e Volume são obrigatórios para enviar à Expedição');
-      return;
-    }
-
+  const finalizarItem = async () => {
     setLoadingItem(selectedItem.id);
     try {
       await base44.entities.ItemOP.update(selectedItem.id, {
-        etapa_atual: 'expedicao',
+        etapa_atual: 'finalizado',
         data_entrada_etapa: new Date().toISOString(),
-        peso_expedicao: parseFloat(pesoExpedicao),
-        volume_expedicao: volumeExpedicao
+        informacoes_expedicao: informacoes
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -103,18 +80,26 @@ export default function Liberacao() {
         op_id: selectedItem.op_id,
         numero_op: selectedItem.numero_op,
         descricao_item: selectedItem.descricao,
-        setor_origem: 'liberacao',
-        setor_destino: 'expedicao',
+        setor_origem: 'expedicao',
+        setor_destino: 'finalizado',
         usuario_email: currentUser?.email,
         usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
-      queryClient.invalidateQueries({ queryKey: ['itens-liberacao'] });
-      toast.success('Item enviado para Expedição');
-      setExpedicaoDialogOpen(false);
+      // Verificar se todos os itens da OP foram finalizados
+      const itensOP = await base44.entities.ItemOP.filter({ op_id: selectedItem.op_id });
+      const todosFinalizados = itensOP.every(i => i.id === selectedItem.id ? true : i.etapa_atual === 'finalizado');
+      
+      if (todosFinalizados) {
+        await base44.entities.OrdemProducao.update(selectedItem.op_id, { status: 'finalizada' });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
+      toast.success('Item finalizado com sucesso!');
+      setFinalizarDialogOpen(false);
     } catch (error) {
-      toast.error('Erro ao enviar item');
+      toast.error('Erro ao finalizar item');
     } finally {
       setLoadingItem(null);
     }
@@ -122,16 +107,11 @@ export default function Liberacao() {
 
   const abrirDialogRetorno = (item) => {
     setSelectedItem(item);
-    setSelectedEtapa('');
     setJustificativa('');
     setRetornarDialogOpen(true);
   };
 
   const confirmarRetorno = async () => {
-    if (!selectedEtapa) {
-      toast.error('Selecione uma etapa');
-      return;
-    }
     if (!justificativa.trim()) {
       toast.error('Justificativa é obrigatória para retorno');
       return;
@@ -140,7 +120,7 @@ export default function Liberacao() {
     setLoadingItem(selectedItem.id);
     try {
       await base44.entities.ItemOP.update(selectedItem.id, {
-        etapa_atual: selectedEtapa,
+        etapa_atual: 'liberacao',
         data_entrada_etapa: new Date().toISOString()
       });
 
@@ -149,22 +129,55 @@ export default function Liberacao() {
         op_id: selectedItem.op_id,
         numero_op: selectedItem.numero_op,
         descricao_item: selectedItem.descricao,
-        setor_origem: 'liberacao',
-        setor_destino: selectedEtapa,
+        setor_origem: 'expedicao',
+        setor_destino: 'liberacao',
         justificativa: justificativa,
         usuario_email: currentUser?.email,
         usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
-      queryClient.invalidateQueries({ queryKey: ['itens-liberacao'] });
-      toast.success(`Item retornado para ${ETAPAS_RETORNO.find(e => e.value === selectedEtapa)?.label}`);
+      queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
+      toast.success('Item retornado para Liberação');
       setRetornarDialogOpen(false);
     } catch (error) {
       toast.error('Erro ao retornar item');
     } finally {
       setLoadingItem(null);
     }
+  };
+
+  const gerarRelatorio = () => {
+    const dados = itens.map(item => ({
+      'OP': item.numero_op,
+      'Equipamento': item.equipamento_principal || '-',
+      'Descrição': item.descricao,
+      'Código GA': item.codigo_ga || '-',
+      'Peso Item (kg)': item.peso || '-',
+      'Quantidade': item.quantidade,
+      'Cliente': item.cliente,
+      'Peso Expedição (kg)': item.peso_expedicao || '-',
+      'Volume': item.volume_expedicao || '-',
+      'Responsável': item.responsavel_op || '-',
+      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
+    }));
+
+    if (dados.length === 0) {
+      toast.error('Nenhum dado para exportar');
+      return;
+    }
+
+    const headers = Object.keys(dados[0]).join(';');
+    const rows = dados.map(row => Object.values(row).join(';')).join('\n');
+    const csv = `${headers}\n${rows}`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio_expedicao_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    link.click();
+    toast.success('Relatório gerado');
   };
 
   const itensFiltrados = itens.filter(item =>
@@ -178,16 +191,24 @@ export default function Liberacao() {
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-            <CheckCircle className="w-6 h-6 text-emerald-600" />
+          <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+            <Truck className="w-6 h-6 text-teal-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Liberação</h1>
-            <p className="text-slate-500">Itens aguardando liberação para expedição</p>
+            <h1 className="text-2xl font-bold text-slate-800">Expedição</h1>
+            <p className="text-slate-500">Itens prontos para expedição</p>
           </div>
         </div>
-        <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium">
-          {itens.length} itens na fila
+        <div className="flex items-center gap-3">
+          <div className="bg-teal-100 text-teal-800 px-4 py-2 rounded-full text-sm font-medium">
+            {itens.length} itens na fila
+          </div>
+          {itens.length > 0 && (
+            <Button onClick={gerarRelatorio} variant="outline">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Gerar Relatório
+            </Button>
+          )}
         </div>
       </div>
 
@@ -230,15 +251,30 @@ export default function Liberacao() {
                       <p className="text-xs text-slate-400">{item.cliente}</p>
                     </div>
                   </div>
-                  <Badge className="bg-emerald-100 text-emerald-800">Liberação</Badge>
+                  <Badge className="bg-teal-100 text-teal-800">Expedição</Badge>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4 text-sm">
                   <div><span className="text-slate-400">Código:</span> {item.codigo_ga || '-'}</div>
-                  <div><span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
+                  <div><span className="text-slate-400">Peso Item:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
                   <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
                   <div><span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}</div>
                   <div><span className="text-slate-400">Responsável:</span> {item.responsavel_op || '-'}</div>
+                </div>
+
+                {/* Dados de Expedição */}
+                <div className="bg-teal-50 rounded-lg p-3 mb-4">
+                  <p className="text-xs font-medium text-teal-700 mb-2">Dados para Expedição:</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Weight className="w-4 h-4 text-teal-600" />
+                      <span className="text-slate-700">Peso: <strong>{item.peso_expedicao ? `${item.peso_expedicao} kg` : '-'}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Box className="w-4 h-4 text-teal-600" />
+                      <span className="text-slate-700">Volume: <strong>{item.volume_expedicao || '-'}</strong></span>
+                    </div>
+                  </div>
                 </div>
 
                 {arquivos.length > 0 && (
@@ -271,12 +307,12 @@ export default function Liberacao() {
                 <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
                   <Button
                     size="sm"
-                    onClick={() => abrirDialogExpedicao(item)}
+                    onClick={() => abrirDialogFinalizar(item)}
                     disabled={loadingItem === item.id}
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-teal-600 hover:bg-teal-700"
                   >
-                    <ArrowRight className="w-3 h-3 mr-1" />
-                    Enviar p/ Expedição
+                    <Check className="w-3 h-3 mr-1" />
+                    Finalizar Item
                   </Button>
                   <Button
                     size="sm"
@@ -286,7 +322,7 @@ export default function Liberacao() {
                     className="text-amber-600 border-amber-300 hover:bg-amber-50"
                   >
                     <RotateCcw className="w-3 h-3 mr-1" />
-                    Retornar
+                    Retornar p/ Liberação
                   </Button>
                 </div>
               </div>
@@ -295,46 +331,34 @@ export default function Liberacao() {
         </div>
       )}
 
-      {/* Dialog Expedição */}
-      <Dialog open={expedicaoDialogOpen} onOpenChange={setExpedicaoDialogOpen}>
+      {/* Dialog Finalizar */}
+      <Dialog open={finalizarDialogOpen} onOpenChange={setFinalizarDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar para Expedição</DialogTitle>
-            <DialogDescription>Informe o Peso e Volume do item para expedição</DialogDescription>
+            <DialogTitle>Finalizar Item</DialogTitle>
+            <DialogDescription>Adicione informações adicionais se necessário</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div>
-              <Label>Peso (kg) *</Label>
+              <Label>Informações Adicionais</Label>
               <div className="relative mt-1">
-                <Weight className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={pesoExpedicao}
-                  onChange={(e) => setPesoExpedicao(e.target.value)}
-                  placeholder="Ex: 150.5"
+                <Info className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                <Textarea
+                  value={informacoes}
+                  onChange={(e) => setInformacoes(e.target.value)}
+                  placeholder="Observações, número de NF, transportadora, etc."
                   className="pl-10"
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Volume *</Label>
-              <div className="relative mt-1">
-                <Box className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  value={volumeExpedicao}
-                  onChange={(e) => setVolumeExpedicao(e.target.value)}
-                  placeholder="Ex: 2m³ ou 100x50x30cm"
-                  className="pl-10"
+                  rows={4}
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => setExpedicaoDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setFinalizarDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={enviarParaExpedicao} disabled={loadingItem} className="bg-emerald-600 hover:bg-emerald-700">
-                Enviar para Expedição
+              <Button onClick={finalizarItem} disabled={loadingItem} className="bg-teal-600 hover:bg-teal-700">
+                <Check className="w-4 h-4 mr-2" />
+                Finalizar Item
               </Button>
             </div>
           </div>
@@ -345,25 +369,10 @@ export default function Liberacao() {
       <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Retornar Item</DialogTitle>
-            <DialogDescription>Selecione a etapa e informe a justificativa</DialogDescription>
+            <DialogTitle>Retornar para Liberação</DialogTitle>
+            <DialogDescription>Informe a justificativa do retorno</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div>
-              <Label>Etapa de Destino *</Label>
-              <Select value={selectedEtapa} onValueChange={setSelectedEtapa}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione a etapa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ETAPAS_RETORNO.map((etapa) => (
-                    <SelectItem key={etapa.value} value={etapa.value}>
-                      {etapa.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div>
               <Label>Justificativa *</Label>
               <Textarea
@@ -378,7 +387,7 @@ export default function Liberacao() {
               <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={confirmarRetorno} disabled={!selectedEtapa || loadingItem} className="bg-amber-600 hover:bg-amber-700">
+              <Button onClick={confirmarRetorno} disabled={loadingItem} className="bg-amber-600 hover:bg-amber-700">
                 Confirmar Retorno
               </Button>
             </div>
