@@ -200,7 +200,8 @@ export default function Engenharia() {
                     </div>
                     <div>
                       <p className="font-semibold text-slate-800">{item.descricao}</p>
-                      <p className="text-xs text-slate-500">{item.numero_op} • {item.cliente}</p>
+                      <p className="text-xs text-slate-500">{item.numero_op} • {item.equipamento_principal || item.cliente}</p>
+                      {item.equipamento_principal && <p className="text-xs text-slate-400">{item.cliente}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

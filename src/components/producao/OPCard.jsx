@@ -119,6 +119,7 @@ export default function OPCard({ op, itens = [], showItens = false }) {
                       <div>
                         <p className="font-medium text-slate-800">{item.descricao}</p>
                         <p className="text-xs text-slate-500">
+                          {item.equipamento_principal && `${item.equipamento_principal} • `}
                           {item.codigo_ga && `${item.codigo_ga} • `}
                           Qtd: {item.quantidade}
                           {item.peso && ` • ${item.peso} kg`}

@@ -301,7 +301,10 @@ export default function Lideranca() {
                       <TableCell>
                         <div>
                           <p className="font-medium text-slate-800">{item.descricao}</p>
-                          {item.codigo_ga && <p className="text-xs text-slate-500">{item.codigo_ga}</p>}
+                          <p className="text-xs text-slate-500">
+                            {item.equipamento_principal && `${item.equipamento_principal} • `}
+                            {item.codigo_ga || ''}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>{item.cliente}</TableCell>
