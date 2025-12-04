@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -30,7 +29,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
-  UserPlus, 
   Settings, 
   Search,
   Edit2,
@@ -69,7 +67,7 @@ export default function Administracao() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', setor: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', apelido: '', setor: '', ativo: true });
   
   const queryClient = useQueryClient();
 
@@ -91,12 +89,11 @@ export default function Administracao() {
       setEditDialogOpen(false);
       setEditingUser(null);
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Erro ao atualizar usuário');
     }
   });
 
-  // Verificar se é administrador
   if (currentUser && currentUser.setor !== 'administrador') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -111,13 +108,15 @@ export default function Administracao() {
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.apelido?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEditUser = (user) => {
     setEditingUser(user);
     setEditForm({
       full_name: user.full_name || '',
+      apelido: user.apelido || '',
       setor: user.setor || '',
       ativo: user.ativo !== false
     });
@@ -129,16 +128,14 @@ export default function Administracao() {
       toast.error('É obrigatório definir um setor');
       return;
     }
-    const updateData = {
-      setor: editForm.setor,
-      ativo: editForm.ativo
-    };
-    if (editForm.full_name) {
-      updateData.full_name = editForm.full_name;
-    }
     updateUserMutation.mutate({
       id: editingUser.id,
-      data: updateData
+      data: {
+        full_name: editForm.full_name,
+        apelido: editForm.apelido,
+        setor: editForm.setor,
+        ativo: editForm.ativo
+      }
     });
   };
 
@@ -151,7 +148,6 @@ export default function Administracao() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -164,7 +160,6 @@ export default function Administracao() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
@@ -184,7 +179,7 @@ export default function Administracao() {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-800">
-                {users.filter(u => u.ativo !== false).length}
+                {users.filter(u => u.ativo !== false && u.setor).length}
               </p>
               <p className="text-xs text-slate-500">Ativos</p>
             </div>
@@ -218,13 +213,12 @@ export default function Administracao() {
         </div>
       </div>
 
-      {/* Search and Actions */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="Buscar por nome ou email..."
+              placeholder="Buscar por nome, email ou apelido..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -232,17 +226,17 @@ export default function Administracao() {
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Mail className="w-4 h-4" />
-            <span>Para adicionar novos usuários, use a opção "Convidar Usuários" no menu do Base44</span>
+            <span>Para adicionar novos usuários, use "Convidar Usuários" no menu do Base44</span>
           </div>
         </div>
       </div>
 
-      {/* Users Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead>Usuário</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Apelido (Responsável)</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Setor</TableHead>
               <TableHead>Status</TableHead>
@@ -252,13 +246,13 @@ export default function Administracao() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12">
+                <TableCell colSpan={6} className="text-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto"></div>
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
                   Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
@@ -276,6 +270,9 @@ export default function Administracao() {
                         {user.full_name || 'Sem nome'}
                       </span>
                     </div>
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {user.apelido || '-'}
                   </TableCell>
                   <TableCell className="text-slate-600">{user.email}</TableCell>
                   <TableCell>
@@ -327,7 +324,6 @@ export default function Administracao() {
         </Table>
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -342,11 +338,20 @@ export default function Administracao() {
               <p className="font-medium text-slate-800">{editingUser?.email}</p>
             </div>
             <div>
-              <Label>Nome</Label>
+              <Label>Nome Completo</Label>
               <Input
                 value={editForm.full_name}
                 onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                placeholder="Nome do usuário"
+                placeholder="Nome completo do usuário"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Apelido (para vincular como Responsável nas OPs)</Label>
+              <Input
+                value={editForm.apelido}
+                onChange={(e) => setEditForm({ ...editForm, apelido: e.target.value })}
+                placeholder="Ex: João Silva"
                 className="mt-1"
               />
             </div>

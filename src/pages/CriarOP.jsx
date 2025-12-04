@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   ClipboardList, 
@@ -27,18 +33,26 @@ export default function CriarOP() {
   const [formData, setFormData] = useState({
     equipamento_principal: '',
     cliente: '',
-    responsavel_nome: '',
+    responsavel: '',
     arquivos: []
   });
   
   const [itens, setItens] = useState([
-    { descricao: '', codigo_ga: '', peso: '', quantidade: 1 }
+    { descricao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }
   ]);
   
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Buscar sequência
+  // Buscar usuários ativos com apelido para responsável
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios-responsaveis'],
+    queryFn: async () => {
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.setor && u.ativo !== false && u.apelido);
+    }
+  });
+
   const { data: sequencias = [] } = useQuery({
     queryKey: ['sequencia-op'],
     queryFn: () => base44.entities.SequenciaOP.list()
@@ -95,7 +109,7 @@ export default function CriarOP() {
   };
 
   const addItem = () => {
-    setItens([...itens, { descricao: '', codigo_ga: '', peso: '', quantidade: 1 }]);
+    setItens([...itens, { descricao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }]);
   };
 
   const removeItem = (index) => {
@@ -115,8 +129,7 @@ export default function CriarOP() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validações
-    if (!formData.equipamento_principal || !formData.cliente || !formData.responsavel_nome) {
+    if (!formData.equipamento_principal || !formData.cliente || !formData.responsavel) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -132,19 +145,16 @@ export default function CriarOP() {
       const numeroOP = await gerarNumeroOP();
       const dataLancamento = new Date().toISOString();
 
-      // Criar OP
       const op = await base44.entities.OrdemProducao.create({
         numero_op: numeroOP,
         equipamento_principal: formData.equipamento_principal,
         cliente: formData.cliente,
-        responsavel_email: '',
-        responsavel_nome: formData.responsavel_nome,
+        responsavel: formData.responsavel,
         arquivos: formData.arquivos,
         status: 'em_andamento',
         data_lancamento: dataLancamento
       });
 
-      // Criar itens
       const itensParaCriar = itensValidos.map(item => ({
         op_id: op.id,
         numero_op: numeroOP,
@@ -152,9 +162,10 @@ export default function CriarOP() {
         codigo_ga: item.codigo_ga,
         peso: item.peso ? parseFloat(item.peso) : null,
         quantidade: parseInt(item.quantidade),
+        data_entrega: item.data_entrega || null,
         etapa_atual: 'engenharia',
         cliente: formData.cliente,
-        responsavel_op_email: '',
+        responsavel_op: formData.responsavel,
         data_entrada_etapa: dataLancamento
       }));
 
@@ -173,7 +184,6 @@ export default function CriarOP() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -187,7 +197,6 @@ export default function CriarOP() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Dados Principais */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Dados da OP</CardTitle>
@@ -215,17 +224,37 @@ export default function CriarOP() {
             </div>
             <div>
               <Label>Responsável pela OP *</Label>
-              <Input
-                value={formData.responsavel_nome}
-                onChange={(e) => setFormData({ ...formData, responsavel_nome: e.target.value })}
-                placeholder="Nome do responsável"
-                className="mt-1"
-              />
+              {usuarios.length > 0 ? (
+                <Select
+                  value={formData.responsavel}
+                  onValueChange={(value) => setFormData({ ...formData, responsavel: value })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usuarios.map((user) => (
+                      <SelectItem key={user.id} value={user.apelido}>
+                        {user.apelido} ({user.full_name || user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={formData.responsavel}
+                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                  placeholder="Nome do responsável"
+                  className="mt-1"
+                />
+              )}
+              <p className="text-xs text-slate-500 mt-1">
+                Vinculado ao campo "Apelido" cadastrado na Administração
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Arquivos */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Arquivos Anexos</CardTitle>
@@ -280,7 +309,6 @@ export default function CriarOP() {
           </CardContent>
         </Card>
 
-        {/* Itens */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -309,7 +337,7 @@ export default function CriarOP() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="md:col-span-2">
                       <Label className="text-xs">Descrição *</Label>
                       <Input
@@ -351,6 +379,15 @@ export default function CriarOP() {
                         />
                       </div>
                     </div>
+                    <div>
+                      <Label className="text-xs">Data Entrega</Label>
+                      <Input
+                        type="date"
+                        value={item.data_entrega}
+                        onChange={(e) => updateItem(index, 'data_entrega', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -358,7 +395,6 @@ export default function CriarOP() {
           </CardContent>
         </Card>
 
-        {/* Submit */}
         <div className="flex justify-end gap-4">
           <Button 
             type="button" 
