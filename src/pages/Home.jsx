@@ -13,6 +13,7 @@ const SETOR_REDIRECT = {
   fundicao: 'Fundicao',
   usinagem: 'Usinagem',
   liberacao: 'Liberacao',
+  expedicao: 'Expedicao',
   lideranca: 'Lideranca'
 };
 
