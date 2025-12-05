@@ -78,34 +78,30 @@ export default function Expedicao() {
   const finalizarItem = async () => {
     setLoadingItem(selectedItem.id);
     try {
-      await base44.entities.ItemOP.update(selectedItem.id, {
-        etapa_atual: 'finalizado',
-        data_entrada_etapa: new Date().toISOString(),
-        informacoes_expedicao: informacoes
-      });
-
-      await base44.entities.HistoricoMovimentacao.create({
-        item_id: selectedItem.id,
-        op_id: selectedItem.op_id,
-        numero_op: selectedItem.numero_op,
-        descricao_item: selectedItem.descricao,
-        setor_origem: 'expedicao',
-        setor_destino: 'finalizado',
-        usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
-        data_movimentacao: new Date().toISOString()
-      });
-
-      // Verificar se todos os itens da OP foram finalizados
-      const itensOP = await base44.entities.ItemOP.filter({ op_id: selectedItem.op_id });
-      const todosFinalizados = itensOP.every(i => i.id === selectedItem.id ? true : i.etapa_atual === 'finalizado');
+      const opId = selectedItem.op_id;
       
-      if (todosFinalizados) {
-        await base44.entities.OrdemProducao.update(selectedItem.op_id, { status: 'finalizada' });
+      // Excluir histórico de movimentações do item
+      const historicos = await base44.entities.HistoricoMovimentacao.filter({ item_id: selectedItem.id });
+      for (const hist of historicos) {
+        await base44.entities.HistoricoMovimentacao.delete(hist.id);
+      }
+      
+      // Excluir o item
+      await base44.entities.ItemOP.delete(selectedItem.id);
+
+      // Verificar se ainda existem itens na OP
+      const itensRestantes = await base44.entities.ItemOP.filter({ op_id: opId });
+      
+      if (itensRestantes.length === 0) {
+        // Se não há mais itens, excluir a OP também
+        await base44.entities.OrdemProducao.delete(opId);
+        toast.success('Item e OP finalizados e excluídos!');
+      } else {
+        toast.success('Item finalizado e excluído!');
       }
 
       queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
-      toast.success('Item finalizado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       setFinalizarDialogOpen(false);
     } catch (error) {
       toast.error('Erro ao finalizar item');
