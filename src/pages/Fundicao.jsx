@@ -40,7 +40,7 @@ export default function Fundicao() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-fundicao'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'fundicao' }, 'data_entrada_etapa');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'fundicao' }, 'created_date');
       return items;
     }
   });

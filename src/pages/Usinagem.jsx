@@ -40,7 +40,7 @@ export default function Usinagem() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-usinagem'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'usinagem' }, 'data_entrada_etapa');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'usinagem' }, 'created_date');
       return items;
     }
   });
