@@ -11,14 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { 
   LayoutDashboard, 
   Search,
@@ -27,11 +19,16 @@ import {
   Package,
   FileText,
   Clock,
-  CheckCircle
+  CheckCircle,
+  TrendingUp,
+  Users,
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import EtapaChart from '@/components/lideranca/EtapaChart';
+import OPDetailPanel from '@/components/lideranca/OPDetailPanel';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os Status' },
@@ -64,55 +61,73 @@ const ETAPA_COLORS = {
   finalizado: 'bg-purple-100 text-purple-800'
 };
 
+const ETAPA_LABELS = {
+  comercial: 'Comercial',
+  engenharia: 'Engenharia',
+  modelagem: 'Modelagem',
+  suprimentos: 'Suprimentos',
+  fundicao: 'Fundição',
+  usinagem: 'Usinagem',
+  liberacao: 'Liberação',
+  expedicao: 'Expedição',
+  finalizado: 'Finalizado'
+};
+
 export default function Lideranca() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [etapaFilter, setEtapaFilter] = useState('all');
   const [responsavelFilter, setResponsavelFilter] = useState('all');
+  const [selectedOP, setSelectedOP] = useState(null);
 
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
     queryKey: ['ops-lideranca'],
-    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
+    queryFn: () => base44.entities.OrdemProducao.list('-data_lancamento'),
   });
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['itens-lideranca'],
-    queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
+    queryFn: () => base44.entities.ItemOP.list('-data_entrada_etapa'),
   });
 
-  // Responsáveis únicos
   const responsaveisUnicos = [...new Set(ops.map(op => op.responsavel).filter(Boolean))];
 
-  // Filtrar itens
-  const itensFiltrados = itens.filter(item => {
-    const op = ops.find(o => o.id === item.op_id);
+  // Filtrar OPs
+  const opsFiltradas = ops.filter(op => {
     const matchSearch = !searchTerm || 
-      item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.cliente?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchEtapa = etapaFilter === 'all' || item.etapa_atual === etapaFilter;
-    const matchResponsavel = responsavelFilter === 'all' || op?.responsavel === responsavelFilter;
-    const matchStatus = statusFilter === 'all' || op?.status === statusFilter;
+      op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchResponsavel = responsavelFilter === 'all' || op.responsavel === responsavelFilter;
+    const matchStatus = statusFilter === 'all' || op.status === statusFilter;
     
-    return matchSearch && matchEtapa && matchResponsavel && matchStatus;
+    // Filtrar por etapa: verificar se a OP tem pelo menos um item na etapa selecionada
+    const itensOP = itens.filter(i => i.op_id === op.id);
+    const matchEtapa = etapaFilter === 'all' || itensOP.some(i => i.etapa_atual === etapaFilter);
+    
+    return matchSearch && matchResponsavel && matchStatus && matchEtapa;
   });
 
   const gerarRelatorio = () => {
-    const dados = itensFiltrados.map(item => {
-      const op = ops.find(o => o.id === item.op_id);
-      return {
-        'OP': item.numero_op,
-        'Descrição': item.descricao,
-        'Código GA': item.codigo_ga || '-',
-        'Peso (kg)': item.peso || '-',
-        'Quantidade': item.quantidade,
-        'Cliente': item.cliente,
-        'Etapa Atual': item.etapa_atual,
-        'Responsável': op?.responsavel || '-',
-        'Status OP': op?.status || '-',
-        'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
-        'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
-      };
+    const dados = [];
+    opsFiltradas.forEach(op => {
+      const itensOP = itens.filter(i => i.op_id === op.id);
+      itensOP.forEach(item => {
+        dados.push({
+          'OP': item.numero_op,
+          'Equipamento': item.equipamento_principal || '-',
+          'Descrição': item.descricao,
+          'Código GA': item.codigo_ga || '-',
+          'Peso (kg)': item.peso || '-',
+          'Quantidade': item.quantidade,
+          'Cliente': item.cliente,
+          'Etapa Atual': ETAPA_LABELS[item.etapa_atual] || item.etapa_atual,
+          'Responsável': op.responsavel || '-',
+          'Status OP': op.status === 'em_andamento' ? 'Em Andamento' : 'Finalizada',
+          'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+          'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
+        });
+      });
     });
 
     if (dados.length === 0) {
@@ -137,28 +152,38 @@ export default function Lideranca() {
     emAndamento: ops.filter(op => op.status === 'em_andamento').length,
     finalizadas: ops.filter(op => op.status === 'finalizada').length,
     totalItens: itens.length,
-    finalizados: itens.filter(i => i.etapa_atual === 'finalizado').length
+    finalizados: itens.filter(i => i.etapa_atual === 'finalizado').length,
+    responsaveis: responsaveisUnicos.length
   };
+
+  const handleEtapaClick = (etapa) => {
+    setEtapaFilter(etapaFilter === etapa ? 'all' : etapa);
+  };
+
+  const selectedOPData = selectedOP ? ops.find(op => op.id === selectedOP) : null;
+  const selectedOPItens = selectedOP ? itens.filter(i => i.op_id === selectedOP) : [];
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-            <LayoutDashboard className="w-6 h-6 text-indigo-600" />
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <LayoutDashboard className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Painel de Liderança</h1>
-            <p className="text-slate-500">Visão geral de todas as OPs e itens</p>
+            <p className="text-slate-500">Visão geral completa da produção</p>
           </div>
         </div>
         <Button onClick={gerarRelatorio} className="bg-indigo-600 hover:bg-indigo-700">
           <FileSpreadsheet className="w-4 h-4 mr-2" />
-          Gerar Relatório
+          Exportar Relatório
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -206,133 +231,175 @@ export default function Lideranca() {
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-emerald-600" />
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-800">{stats.finalizados}</p>
-              <p className="text-xs text-slate-500">Itens Finalizados</p>
+              <p className="text-xs text-slate-500">Finalizados</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-800">{stats.responsaveis}</p>
+              <p className="text-xs text-slate-500">Responsáveis</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-slate-500" />
-          <span className="text-sm font-medium text-slate-700">Filtros</span>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar - Gráfico de Etapas */}
+        <div className="lg:col-span-1">
+          <EtapaChart 
+            itens={itens} 
+            onEtapaClick={handleEtapaClick}
+            etapaSelecionada={etapaFilter !== 'all' ? etapaFilter : null}
+          />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Buscar OP, descrição, cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={etapaFilter} onValueChange={setEtapaFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Etapa" />
-            </SelectTrigger>
-            <SelectContent>
-              {ETAPA_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={responsavelFilter} onValueChange={setResponsavelFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Responsáveis</SelectItem>
-              {responsaveisUnicos.map((resp) => (
-                <SelectItem key={resp} value={resp}>{resp}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-800">Itens ({itensFiltrados.length})</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>OP</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Qtd</TableHead>
-                <TableHead>Etapa</TableHead>
-                <TableHead>Responsável</TableHead>
-                <TableHead>Entrega</TableHead>
-                <TableHead>Entrada</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loadingItens ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto"></div>
-                  </TableCell>
-                </TableRow>
-              ) : itensFiltrados.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-slate-500">
-                    Nenhum item encontrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                itensFiltrados.map((item) => {
-                  const op = ops.find(o => o.id === item.op_id);
-                  return (
-                    <TableRow key={item.id} className="hover:bg-slate-50">
-                      <TableCell className="font-medium">{item.numero_op}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-800">{item.descricao}</p>
-                          <p className="text-xs text-slate-500">
-                            {item.equipamento_principal && `${item.equipamento_principal} • `}
-                            {item.codigo_ga || ''}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.cliente}</TableCell>
-                      <TableCell>{item.quantidade}</TableCell>
-                      <TableCell>
-                        <Badge className={ETAPA_COLORS[item.etapa_atual]}>
-                          {item.etapa_atual}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-600">{op?.responsavel || '-'}</TableCell>
-                      <TableCell className="text-sm text-slate-500">
-                        {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-500">
-                        {item.data_entrada_etapa 
-                          ? format(new Date(item.data_entrada_etapa), 'dd/MM/yy HH:mm', { locale: ptBR })
-                          : '-'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Filtros */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-4 h-4 text-slate-500" />
+              <span className="text-sm font-medium text-slate-700">Filtros</span>
+              {etapaFilter !== 'all' && (
+                <Badge className="ml-2 bg-indigo-100 text-indigo-700">
+                  Etapa: {ETAPA_LABELS[etapaFilter]}
+                  <button onClick={() => setEtapaFilter('all')} className="ml-1 hover:text-indigo-900">×</button>
+                </Badge>
               )}
-            </TableBody>
-          </Table>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar OP, cliente, equipamento..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={responsavelFilter} onValueChange={setResponsavelFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Responsáveis</SelectItem>
+                  {responsaveisUnicos.map((resp) => (
+                    <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Lista de OPs ou Detalhe da OP */}
+          {selectedOPData ? (
+            <OPDetailPanel 
+              op={selectedOPData} 
+              itens={selectedOPItens} 
+              onClose={() => setSelectedOP(null)} 
+            />
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="font-semibold text-slate-800">Ordens de Produção ({opsFiltradas.length})</h2>
+              </div>
+              
+              {loadingOPs ? (
+                <div className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto"></div>
+                </div>
+              ) : opsFiltradas.length === 0 ? (
+                <div className="p-12 text-center text-slate-500">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                  <p>Nenhuma OP encontrada</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+                  {opsFiltradas.map((op) => {
+                    const itensOP = itens.filter(i => i.op_id === op.id);
+                    const itensFinalizados = itensOP.filter(i => i.etapa_atual === 'finalizado').length;
+                    const progressPercent = itensOP.length > 0 ? Math.round((itensFinalizados / itensOP.length) * 100) : 0;
+                    
+                    // Distribuição por etapa
+                    const etapas = itensOP.reduce((acc, item) => {
+                      acc[item.etapa_atual] = (acc[item.etapa_atual] || 0) + 1;
+                      return acc;
+                    }, {});
+
+                    return (
+                      <div 
+                        key={op.id} 
+                        className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                        onClick={() => setSelectedOP(op.id)}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-slate-800">{op.numero_op}</h3>
+                              <Badge className={op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}>
+                                {op.status === 'em_andamento' ? 'Em Andamento' : 'Finalizada'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-slate-600">{op.equipamento_principal} • {op.cliente}</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Responsável: {op.responsavel || '-'} • 
+                              Lançamento: {op.data_lancamento ? format(new Date(op.data_lancamento), 'dd/MM/yyyy') : '-'}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
+                            <Eye className="w-4 h-4 mr-1" />
+                            Ver
+                          </Button>
+                        </div>
+
+                        {/* Mini Progress */}
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                            <span>{itensOP.length} itens</span>
+                            <span>{progressPercent}% concluído</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-indigo-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Etapas */}
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(etapas).map(([etapa, count]) => (
+                            <Badge key={etapa} variant="outline" className={`text-xs ${ETAPA_COLORS[etapa]}`}>
+                              {ETAPA_LABELS[etapa]}: {count}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
