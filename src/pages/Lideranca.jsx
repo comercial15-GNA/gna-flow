@@ -82,12 +82,12 @@ export default function Lideranca() {
 
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
     queryKey: ['ops-lideranca'],
-    queryFn: () => base44.entities.OrdemProducao.list('-data_lancamento'),
+    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['itens-lideranca'],
-    queryFn: () => base44.entities.ItemOP.list('-data_entrada_etapa'),
+    queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
   });
 
   const responsaveisUnicos = [...new Set(ops.map(op => op.responsavel).filter(Boolean))];

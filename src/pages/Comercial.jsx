@@ -65,12 +65,12 @@ export default function Comercial() {
 
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
     queryKey: ['ops-comercial'],
-    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
+    queryFn: () => base44.entities.OrdemProducao.list('created_date'),
   });
 
   const { data: itens = [] } = useQuery({
     queryKey: ['itens-all'],
-    queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
+    queryFn: () => base44.entities.ItemOP.list('created_date'),
   });
 
   // Filtrar OPs: criadas pelo usuário ou onde é responsável (pelo apelido)
