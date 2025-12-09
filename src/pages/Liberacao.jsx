@@ -33,7 +33,9 @@ import {
   History,
   ChevronDown,
   ChevronUp,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -52,6 +54,8 @@ const ETAPAS_RETORNO = [
 
 export default function Liberacao() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroData, setFiltroData] = useState('todos'); // 'todos', 'atrasados', 'data_especifica'
+  const [dataEspecifica, setDataEspecifica] = useState('');
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [expedicaoDialogOpen, setExpedicaoDialogOpen] = useState(false);
@@ -102,6 +106,14 @@ export default function Liberacao() {
 
     setLoadingItem(selectedItem.id);
     try {
+      const opId = selectedItem.op_id;
+
+      // Atualizar status da OP para "coleta" quando item for para expedição
+      const op = ops.find(o => o.id === opId);
+      if (op && op.status !== 'coleta') {
+        await base44.entities.OrdemProducao.update(opId, { status: 'coleta' });
+      }
+
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: 'expedicao',
         data_entrada_etapa: new Date().toISOString(),
@@ -122,7 +134,8 @@ export default function Liberacao() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['itens-liberacao'] });
-      toast.success('Item enviado para Expedição');
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      toast.success('Item enviado para Expedição - OP marcada como Coleta');
       setExpedicaoDialogOpen(false);
     } catch (error) {
       toast.error('Erro ao enviar item');
@@ -209,12 +222,33 @@ export default function Liberacao() {
     toast.success('Relatório gerado');
   };
 
-  const itensFiltrados = itens.filter(item =>
-    item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const itensFiltrados = itens.filter(item => {
+    // Filtro de busca
+    const matchSearch = item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchSearch) return false;
+
+    // Filtro de data
+    if (filtroData === 'todos') return true;
+
+    if (filtroData === 'atrasados') {
+      if (!item.data_entrega) return false;
+      const dataEntrega = new Date(item.data_entrega);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      return dataEntrega < hoje;
+    }
+
+    if (filtroData === 'data_especifica' && dataEspecifica) {
+      if (!item.data_entrega) return false;
+      return item.data_entrega === dataEspecifica;
+    }
+
+    return true;
+  });
 
   // Agrupar itens por OP
   const itensAgrupadosPorOP = itensFiltrados.reduce((acc, item) => {
@@ -257,14 +291,44 @@ export default function Liberacao() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div>
+            <Select value={filtroData} onValueChange={setFiltroData}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por data" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas as Datas</SelectItem>
+                <SelectItem value="atrasados">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                    Atrasados
+                  </div>
+                </SelectItem>
+                <SelectItem value="data_especifica">Data Específica</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {filtroData === 'data_especifica' && (
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="date"
+                value={dataEspecifica}
+                onChange={(e) => setDataEspecifica(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -284,10 +348,7 @@ export default function Liberacao() {
             const arquivos = getArquivos(op.id);
             return (
               <div key={op.id} className="space-y-4">
-                {/* Painel de Progresso da OP */}
-                <OPProgressPanel op={op} itens={itensOP} />
-
-                {/* Container dos Itens */}
+                {/* Container dos Itens - sem painel de progresso */}
                 <div className="bg-white rounded-xl border-2 border-emerald-200 shadow-sm overflow-hidden">
                   {/* Cabeçalho da OP */}
                   <div className="bg-emerald-50 border-b border-emerald-200 p-4">
@@ -356,7 +417,17 @@ export default function Liberacao() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
                         <div><span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
                         <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
-                        <div><span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}</div>
+                        <div>
+                          <span className="text-slate-400">Entrega:</span>{' '}
+                          {item.data_entrega ? (
+                            <>
+                              {format(new Date(item.data_entrega), 'dd/MM/yy')}
+                              {new Date(item.data_entrega) < new Date() && (
+                                <AlertTriangle className="w-3 h-3 inline ml-1 text-red-500" />
+                              )}
+                            </>
+                          ) : '-'}
+                        </div>
                         <div><span className="text-slate-400">Entrada:</span> {item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM HH:mm', { locale: ptBR }) : '-'}</div>
                       </div>
 

@@ -267,10 +267,7 @@ export default function Expedicao() {
             const arquivos = getArquivos(op.id);
             return (
               <div key={op.id} className="space-y-4">
-                {/* Painel de Progresso da OP */}
-                <OPProgressPanel op={op} itens={itensOP} />
-
-                {/* Container dos Itens */}
+                {/* Container dos Itens - sem painel de progresso */}
                 <div className="bg-white rounded-xl border-2 border-teal-200 shadow-sm overflow-hidden">
                   {/* Cabeçalho da OP */}
                   <div className="bg-teal-50 border-b border-teal-200 p-4">
