@@ -38,7 +38,7 @@ export default function CriarOP() {
   });
   
   const [itens, setItens] = useState([
-    { descricao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }
+    { descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }
   ]);
   
   const [uploading, setUploading] = useState(false);
@@ -109,7 +109,7 @@ export default function CriarOP() {
   };
 
   const addItem = () => {
-    setItens([...itens, { descricao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }]);
+    setItens([...itens, { descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }]);
   };
 
   const removeItem = (index) => {
@@ -145,11 +145,15 @@ export default function CriarOP() {
       const numeroOP = await gerarNumeroOP();
       const dataLancamento = new Date().toISOString();
 
+      // Buscar ID do usuário selecionado
+      const usuarioSelecionado = usuarios.find(u => u.apelido === formData.responsavel);
+
       const op = await base44.entities.OrdemProducao.create({
         numero_op: numeroOP,
         equipamento_principal: formData.equipamento_principal,
         cliente: formData.cliente,
         responsavel: formData.responsavel,
+        responsavel_user_id: usuarioSelecionado?.id || null,
         arquivos: formData.arquivos,
         status: 'em_andamento',
         data_lancamento: dataLancamento
@@ -160,6 +164,7 @@ export default function CriarOP() {
         numero_op: numeroOP,
         equipamento_principal: formData.equipamento_principal,
         descricao: item.descricao,
+        observacao: item.observacao || '',
         codigo_ga: item.codigo_ga,
         peso: item.peso ? parseFloat(item.peso) : null,
         quantidade: parseInt(item.quantidade),
@@ -284,26 +289,37 @@ export default function CriarOP() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="md:col-span-2">
-                      <Label className="text-xs">Descrição *</Label>
-                      <Input
-                        value={item.descricao}
-                        onChange={(e) => updateItem(index, 'descricao', e.target.value)}
-                        placeholder="Descrição do item"
-                        className="mt-1"
-                      />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs">Descrição *</Label>
+                        <Input
+                          value={item.descricao}
+                          onChange={(e) => updateItem(index, 'descricao', e.target.value)}
+                          placeholder="Descrição do item"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Observação</Label>
+                        <Input
+                          value={item.observacao}
+                          onChange={(e) => updateItem(index, 'observacao', e.target.value)}
+                          placeholder="Observações sobre o item"
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-xs">Código GA</Label>
-                      <Input
-                        value={item.codigo_ga}
-                        onChange={(e) => updateItem(index, 'codigo_ga', e.target.value)}
-                        placeholder="Código"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label className="text-xs">Código GA</Label>
+                        <Input
+                          value={item.codigo_ga}
+                          onChange={(e) => updateItem(index, 'codigo_ga', e.target.value)}
+                          placeholder="Código"
+                          className="mt-1"
+                        />
+                      </div>
                       <div>
                         <Label className="text-xs">Peso (kg)</Label>
                         <Input
@@ -325,15 +341,15 @@ export default function CriarOP() {
                           className="mt-1"
                         />
                       </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Data Entrega</Label>
-                      <Input
-                        type="date"
-                        value={item.data_entrega}
-                        onChange={(e) => updateItem(index, 'data_entrega', e.target.value)}
-                        className="mt-1"
-                      />
+                      <div>
+                        <Label className="text-xs">Data Entrega</Label>
+                        <Input
+                          type="date"
+                          value={item.data_entrega}
+                          onChange={(e) => updateItem(index, 'data_entrega', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

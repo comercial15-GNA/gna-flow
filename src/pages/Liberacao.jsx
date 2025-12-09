@@ -39,6 +39,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
+import OPProgressPanel from '@/components/producao/OPProgressPanel';
 
 const ETAPAS_RETORNO = [
   { value: 'comercial', label: 'Comercial' },
@@ -282,9 +283,14 @@ export default function Liberacao() {
           {opsComItens.map(({ op, itens: itensOP }) => {
             const arquivos = getArquivos(op.id);
             return (
-              <div key={op.id} className="bg-white rounded-xl border-2 border-emerald-200 shadow-sm overflow-hidden">
-                {/* Cabeçalho da OP */}
-                <div className="bg-emerald-50 border-b border-emerald-200 p-4">
+              <div key={op.id} className="space-y-4">
+                {/* Painel de Progresso da OP */}
+                <OPProgressPanel op={op} itens={itensOP} />
+
+                {/* Container dos Itens */}
+                <div className="bg-white rounded-xl border-2 border-emerald-200 shadow-sm overflow-hidden">
+                  {/* Cabeçalho da OP */}
+                  <div className="bg-emerald-50 border-b border-emerald-200 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{op.numero_op}</h3>
@@ -339,6 +345,14 @@ export default function Liberacao() {
                         </div>
                       </div>
 
+                      {item.observacao && (
+                        <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+                          <p className="text-xs text-blue-800">
+                            <strong>Observação:</strong> {item.observacao}
+                          </p>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
                         <div><span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
                         <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
@@ -389,6 +403,7 @@ export default function Liberacao() {
                       </div>
                     </div>
                   ))}
+                  </div>
                 </div>
               </div>
             );

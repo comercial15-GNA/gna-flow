@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
+import OPProgressPanel from '@/components/producao/OPProgressPanel';
 
 export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,6 +81,12 @@ export default function Expedicao() {
     try {
       const opId = selectedItem.op_id;
       
+      // Atualizar status da OP para "coleta" quando houver itens em expedição
+      const op = ops.find(o => o.id === opId);
+      if (op && op.status !== 'coleta') {
+        await base44.entities.OrdemProducao.update(opId, { status: 'coleta' });
+      }
+
       // Excluir histórico de movimentações do item
       const historicos = await base44.entities.HistoricoMovimentacao.filter({ item_id: selectedItem.id });
       for (const hist of historicos) {
@@ -259,9 +266,14 @@ export default function Expedicao() {
           {opsComItens.map(({ op, itens: itensOP }) => {
             const arquivos = getArquivos(op.id);
             return (
-              <div key={op.id} className="bg-white rounded-xl border-2 border-teal-200 shadow-sm overflow-hidden">
-                {/* Cabeçalho da OP */}
-                <div className="bg-teal-50 border-b border-teal-200 p-4">
+              <div key={op.id} className="space-y-4">
+                {/* Painel de Progresso da OP */}
+                <OPProgressPanel op={op} itens={itensOP} />
+
+                {/* Container dos Itens */}
+                <div className="bg-white rounded-xl border-2 border-teal-200 shadow-sm overflow-hidden">
+                  {/* Cabeçalho da OP */}
+                  <div className="bg-teal-50 border-b border-teal-200 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{op.numero_op}</h3>
@@ -315,6 +327,14 @@ export default function Expedicao() {
                           </div>
                         </div>
                       </div>
+
+                      {item.observacao && (
+                        <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+                          <p className="text-xs text-blue-800">
+                            <strong>Observação:</strong> {item.observacao}
+                          </p>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
                         <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
@@ -372,6 +392,7 @@ export default function Expedicao() {
                       </div>
                     </div>
                   ))}
+                  </div>
                 </div>
               </div>
             );
