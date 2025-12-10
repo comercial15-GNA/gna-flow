@@ -44,12 +44,12 @@ export default function CriarOP() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Buscar usuários ativos com apelido para responsável (visível para todos)
+  // Buscar usuários ativos para responsável (visível para todos)
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios-responsaveis'],
     queryFn: async () => {
       const users = await base44.entities.User.list();
-      return users.filter(u => u.ativo !== false && u.apelido);
+      return users.filter(u => u.ativo !== false);
     }
   });
 
@@ -146,7 +146,9 @@ export default function CriarOP() {
       const dataLancamento = new Date().toISOString();
 
       // Buscar ID do usuário selecionado
-      const usuarioSelecionado = usuarios.find(u => u.apelido === formData.responsavel);
+      const usuarioSelecionado = usuarios.find(u => 
+        (u.apelido || u.full_name || u.email) === formData.responsavel
+      );
 
       const op = await base44.entities.OrdemProducao.create({
         numero_op: numeroOP,
@@ -239,8 +241,8 @@ export default function CriarOP() {
                 </SelectTrigger>
                 <SelectContent>
                   {usuarios.map((user) => (
-                    <SelectItem key={user.id} value={user.apelido}>
-                      {user.apelido} ({user.full_name || user.email})
+                    <SelectItem key={user.id} value={user.apelido || user.full_name || user.email}>
+                      {user.apelido || user.full_name || user.email}
                     </SelectItem>
                   ))}
                 </SelectContent>
