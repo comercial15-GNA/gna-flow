@@ -199,6 +199,12 @@ export default function Expedicao() {
     item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Buscar TODOS os itens de TODAS as OPs (não apenas os da etapa expedição)
+  const { data: todosItens = [] } = useQuery({
+    queryKey: ['todos-itens-ops'],
+    queryFn: () => base44.entities.ItemOP.list(),
+  });
+
   // Agrupar TODAS OPs que têm pelo menos um item na etapa de expedição
   const opsComItensExpedicao = ops.filter(op => {
     const itensOP = itens.filter(i => i.op_id === op.id);
@@ -218,7 +224,7 @@ export default function Expedicao() {
     
     return temItensExpedicao;
   }).map(op => {
-    const todosItensOP = itens.filter(i => i.op_id === op.id);
+    const todosItensOP = todosItens.filter(i => i.op_id === op.id);
     return { op, itens: todosItensOP };
   });
 
@@ -408,34 +414,60 @@ export default function Expedicao() {
                       </div>
                     </div>
 
-                    {/* Outros Itens da OP */}
-                    {todosItensOP.filter(i => i.etapa_atual !== 'expedicao').length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-600 mb-3 flex items-center gap-2">
-                          <Package className="w-4 h-4" />
-                          Outros Itens da OP ({todosItensOP.filter(i => i.etapa_atual !== 'expedicao').length})
-                        </h4>
-                        <div className="space-y-2">
-                          {todosItensOP.filter(i => i.etapa_atual !== 'expedicao').map((item) => (
-                            <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
-                                  <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                                    <span>Código: {item.codigo_ga || '-'}</span>
-                                    <span>Qtd: {item.quantidade}</span>
-                                    <span>Peso: {item.peso ? `${item.peso} kg` : '-'}</span>
-                                  </div>
-                                </div>
-                                <Badge className="bg-slate-200 text-slate-700 text-xs">
-                                  {item.etapa_atual}
-                                </Badge>
-                              </div>
+                    {/* Distribuição por Etapa - Todos os Itens */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Distribuição por Etapa - Todos os Itens da OP
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                        {['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'usinagem', 'liberacao', 'expedicao'].map(etapa => {
+                          const count = todosItensOP.filter(i => i.etapa_atual === etapa).length;
+                          const etapaLabels = {
+                            comercial: 'Comercial',
+                            engenharia: 'Engenharia',
+                            modelagem: 'Modelagem',
+                            suprimentos: 'Suprimentos',
+                            fundicao: 'Fundição',
+                            usinagem: 'Usinagem',
+                            liberacao: 'Liberação',
+                            expedicao: 'Expedição'
+                          };
+                          return count > 0 ? (
+                            <div key={etapa} className="bg-slate-100 rounded p-2 text-center">
+                              <p className="text-xs text-slate-600 mb-1">{etapaLabels[etapa]}</p>
+                              <p className="text-lg font-bold text-slate-800">{count}</p>
                             </div>
-                          ))}
-                        </div>
+                          ) : null;
+                        })}
                       </div>
-                    )}
+
+                      {/* Lista de Outros Itens */}
+                      {todosItensOP.filter(i => i.etapa_atual !== 'expedicao').length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-slate-600 mb-2">Outros Itens ({todosItensOP.filter(i => i.etapa_atual !== 'expedicao').length})</h4>
+                          <div className="space-y-2">
+                            {todosItensOP.filter(i => i.etapa_atual !== 'expedicao').map((item) => (
+                              <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                                    <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
+                                      <span>Código: {item.codigo_ga || '-'}</span>
+                                      <span>Qtd: {item.quantidade}</span>
+                                      <span>Peso: {item.peso ? `${item.peso} kg` : '-'}</span>
+                                    </div>
+                                  </div>
+                                  <Badge className="bg-slate-200 text-slate-700 text-xs">
+                                    {item.etapa_atual}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

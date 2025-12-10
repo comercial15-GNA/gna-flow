@@ -230,32 +230,23 @@ export default function CriarOP() {
             </div>
             <div>
               <Label>Responsável pela OP *</Label>
-              {usuarios.length > 0 ? (
-                <Select
-                  value={formData.responsavel}
-                  onValueChange={(value) => setFormData({ ...formData, responsavel: value })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecione o responsável" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {usuarios.map((user) => (
-                      <SelectItem key={user.id} value={user.apelido}>
-                        {user.apelido} ({user.full_name || user.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  value={formData.responsavel}
-                  onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-                  placeholder="Nome do responsável"
-                  className="mt-1"
-                />
-              )}
+              <Select
+                value={formData.responsavel}
+                onValueChange={(value) => setFormData({ ...formData, responsavel: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione o responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios.map((user) => (
+                    <SelectItem key={user.id} value={user.apelido}>
+                      {user.apelido} ({user.full_name || user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-xs text-slate-500 mt-1">
-                Vinculado ao campo "Apelido" cadastrado na Administração
+                Selecione um usuário cadastrado como responsável pela OP
               </p>
             </div>
           </CardContent>
