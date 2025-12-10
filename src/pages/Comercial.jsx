@@ -213,9 +213,9 @@ export default function Comercial() {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-800">
-                {opsVisiveis.filter(op => op.status === 'finalizada').length}
+                {opsVisiveis.filter(op => op.status === 'coleta').length}
               </p>
-              <p className="text-xs text-slate-500">Finalizadas</p>
+              <p className="text-xs text-slate-500">Coleta</p>
             </div>
           </div>
         </div>
@@ -369,7 +369,7 @@ export default function Comercial() {
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                <SelectItem value="finalizada">Finalizadas</SelectItem>
+                <SelectItem value="coleta">Coleta</SelectItem>
               </SelectContent>
             </Select>
           </div>
