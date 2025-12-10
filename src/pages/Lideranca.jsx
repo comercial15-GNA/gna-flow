@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   LayoutDashboard, 
   Search,
@@ -22,7 +23,9 @@ import {
   CheckCircle,
   TrendingUp,
   Users,
-  Eye
+  Eye,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -33,7 +36,7 @@ import OPDetailPanel from '@/components/lideranca/OPDetailPanel';
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os Status' },
   { value: 'em_andamento', label: 'Em Andamento' },
-  { value: 'finalizada', label: 'Finalizada' },
+  { value: 'coleta', label: 'Coleta' },
 ];
 
 const ETAPA_OPTIONS = [
@@ -78,6 +81,8 @@ export default function Lideranca() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [etapaFilter, setEtapaFilter] = useState('all');
   const [responsavelFilter, setResponsavelFilter] = useState('all');
+  const [filtroData, setFiltroData] = useState('todos');
+  const [dataEspecifica, setDataEspecifica] = useState('');
   const [selectedOP, setSelectedOP] = useState(null);
 
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
@@ -105,7 +110,21 @@ export default function Lideranca() {
     const itensOP = itens.filter(i => i.op_id === op.id);
     const matchEtapa = etapaFilter === 'all' || itensOP.some(i => i.etapa_atual === etapaFilter);
     
-    return matchSearch && matchResponsavel && matchStatus && matchEtapa;
+    // Filtro de data
+    let matchData = true;
+    if (filtroData === 'atrasados') {
+      matchData = itensOP.some(item => {
+        if (!item.data_entrega) return false;
+        const dataEntrega = new Date(item.data_entrega);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        return dataEntrega < hoje;
+      });
+    } else if (filtroData === 'data_especifica' && dataEspecifica) {
+      matchData = itensOP.some(item => item.data_entrega === dataEspecifica);
+    }
+    
+    return matchSearch && matchResponsavel && matchStatus && matchEtapa && matchData;
   });
 
   const gerarRelatorio = () => {
@@ -150,9 +169,8 @@ export default function Lideranca() {
   const stats = {
     totalOPs: ops.length,
     emAndamento: ops.filter(op => op.status === 'em_andamento').length,
-    finalizadas: ops.filter(op => op.status === 'finalizada').length,
+    coleta: ops.filter(op => op.status === 'coleta').length,
     totalItens: itens.length,
-    finalizados: itens.filter(i => i.etapa_atual === 'finalizado').length,
     responsaveis: responsaveisUnicos.length
   };
 
@@ -183,7 +201,7 @@ export default function Lideranca() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -208,12 +226,12 @@ export default function Lideranca() {
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.finalizadas}</p>
-              <p className="text-xs text-slate-500">Finalizadas</p>
+              <p className="text-2xl font-bold text-slate-800">{stats.coleta}</p>
+              <p className="text-xs text-slate-500">Coleta</p>
             </div>
           </div>
         </div>
@@ -228,17 +246,7 @@ export default function Lideranca() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.finalizados}</p>
-              <p className="text-xs text-slate-500">Finalizados</p>
-            </div>
-          </div>
-        </div>
+
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -276,7 +284,7 @@ export default function Lideranca() {
                 </Badge>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
@@ -307,6 +315,29 @@ export default function Lideranca() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={filtroData} onValueChange={setFiltroData}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por data" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas as Datas</SelectItem>
+                  <SelectItem value="atrasados">
+                    Atrasados
+                  </SelectItem>
+                  <SelectItem value="data_especifica">Data Específica</SelectItem>
+                </SelectContent>
+              </Select>
+              {filtroData === 'data_especifica' && (
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="date"
+                    value={dataEspecifica}
+                    onChange={(e) => setDataEspecifica(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -355,8 +386,8 @@ export default function Lideranca() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="font-semibold text-slate-800">{op.numero_op}</h3>
-                              <Badge className={op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}>
-                                {op.status === 'em_andamento' ? 'Em Andamento' : 'Finalizada'}
+                              <Badge className={op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}>
+                                {op.status === 'em_andamento' ? 'Em Andamento' : 'Coleta'}
                               </Badge>
                             </div>
                             <p className="text-sm text-slate-600">{op.equipamento_principal} • {op.cliente}</p>
