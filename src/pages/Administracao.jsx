@@ -83,6 +83,37 @@ export default function Administracao() {
     queryFn: () => base44.entities.User.list(),
   });
 
+  // Sincronizar automaticamente usuários com ResponsavelOP ao carregar
+  React.useEffect(() => {
+    const sincronizarResponsaveis = async () => {
+      if (!users || users.length === 0) return;
+      
+      try {
+        const responsaveisExistentes = await base44.entities.ResponsavelOP.list();
+        const idsExistentes = responsaveisExistentes.map(r => r.user_id);
+        
+        // Criar registros para usuários que não existem ainda em ResponsavelOP
+        for (const user of users) {
+          if (!idsExistentes.includes(user.id)) {
+            await base44.entities.ResponsavelOP.create({
+              user_id: user.id,
+              apelido: user.apelido || user.full_name || user.email.split('@')[0],
+              nome_completo: user.full_name || '',
+              email: user.email,
+              ativo: user.ativo !== false
+            });
+          }
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ['responsaveis-op'] });
+      } catch (error) {
+        console.error('Erro ao sincronizar responsáveis:', error);
+      }
+    };
+    
+    sincronizarResponsaveis();
+  }, [users]);
+
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }) => {
       await base44.entities.User.update(id, data);
