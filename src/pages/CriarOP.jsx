@@ -44,6 +44,42 @@ export default function CriarOP() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Buscar todos os usuários para sincronizar
+  const { data: todosUsers = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  // Sincronizar usuários com ResponsavelOP
+  React.useEffect(() => {
+    const sincronizarResponsaveis = async () => {
+      if (!todosUsers || todosUsers.length === 0) return;
+      
+      try {
+        const responsaveisExistentes = await base44.entities.ResponsavelOP.list();
+        const idsExistentes = responsaveisExistentes.map(r => r.user_id);
+        
+        for (const user of todosUsers) {
+          if (!idsExistentes.includes(user.id)) {
+            await base44.entities.ResponsavelOP.create({
+              user_id: user.id,
+              apelido: user.apelido || user.full_name || user.email.split('@')[0],
+              nome_completo: user.full_name || '',
+              email: user.email,
+              ativo: user.ativo !== false
+            });
+          }
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ['responsaveis-op'] });
+      } catch (error) {
+        console.error('Erro ao sincronizar responsáveis:', error);
+      }
+    };
+    
+    sincronizarResponsaveis();
+  }, [todosUsers]);
+
   // Buscar responsáveis ativos (visível para todos)
   const { data: usuarios = [] } = useQuery({
     queryKey: ['responsaveis-op'],
