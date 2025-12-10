@@ -44,12 +44,12 @@ export default function CriarOP() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Buscar usuários ativos para responsável (visível para todos)
+  // Buscar responsáveis ativos (visível para todos)
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-responsaveis'],
+    queryKey: ['responsaveis-op'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
-      return users.filter(u => u.ativo !== false);
+      const responsaveis = await base44.entities.ResponsavelOP.filter({ ativo: true });
+      return responsaveis;
     }
   });
 
@@ -147,7 +147,7 @@ export default function CriarOP() {
 
       // Buscar ID do usuário selecionado
       const usuarioSelecionado = usuarios.find(u => 
-        (u.apelido || u.full_name || u.email) === formData.responsavel
+        (u.apelido || u.nome_completo || u.email) === formData.responsavel
       );
 
       const op = await base44.entities.OrdemProducao.create({
@@ -240,9 +240,9 @@ export default function CriarOP() {
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  {usuarios.map((user) => (
-                    <SelectItem key={user.id} value={user.apelido || user.full_name || user.email}>
-                      {user.apelido || user.full_name || user.email}
+                  {usuarios.map((resp) => (
+                    <SelectItem key={resp.id} value={resp.apelido || resp.nome_completo || resp.email}>
+                      {resp.apelido || resp.nome_completo} ({resp.email})
                     </SelectItem>
                   ))}
                 </SelectContent>
