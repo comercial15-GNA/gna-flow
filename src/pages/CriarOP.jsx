@@ -32,6 +32,7 @@ export default function CriarOP() {
   
   const [formData, setFormData] = useState({
     equipamento_principal: '',
+    ordem_compra: '',
     cliente: '',
     responsavel: '',
     arquivos: []
@@ -188,6 +189,7 @@ export default function CriarOP() {
 
       const op = await base44.entities.OrdemProducao.create({
         numero_op: numeroOP,
+        ordem_compra: formData.ordem_compra || null,
         equipamento_principal: formData.equipamento_principal,
         cliente: formData.cliente,
         responsavel: formData.responsavel,
@@ -246,13 +248,22 @@ export default function CriarOP() {
             <CardTitle className="text-lg">Dados da OP</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Equipamento Principal *</Label>
                 <Input
                   value={formData.equipamento_principal}
                   onChange={(e) => setFormData({ ...formData, equipamento_principal: e.target.value })}
                   placeholder="Ex: GA1300"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Ordem de Compra (O.C)</Label>
+                <Input
+                  value={formData.ordem_compra}
+                  onChange={(e) => setFormData({ ...formData, ordem_compra: e.target.value })}
+                  placeholder="Ex: OC-2024-001"
                   className="mt-1"
                 />
               </div>

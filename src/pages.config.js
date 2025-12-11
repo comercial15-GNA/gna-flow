@@ -1,31 +1,31 @@
+import Home from './pages/Home';
 import Administracao from './pages/Administracao';
-import CriarOP from './pages/CriarOP';
 import Comercial from './pages/Comercial';
+import CriarOP from './pages/CriarOP';
 import Engenharia from './pages/Engenharia';
-import Modelagem from './pages/Modelagem';
-import Suprimentos from './pages/Suprimentos';
+import Expedicao from './pages/Expedicao';
 import Fundicao from './pages/Fundicao';
-import Usinagem from './pages/Usinagem';
 import Liberacao from './pages/Liberacao';
 import Lideranca from './pages/Lideranca';
-import Home from './pages/Home';
-import Expedicao from './pages/Expedicao';
+import Modelagem from './pages/Modelagem';
+import Suprimentos from './pages/Suprimentos';
+import Usinagem from './pages/Usinagem';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Home": Home,
     "Administracao": Administracao,
-    "CriarOP": CriarOP,
     "Comercial": Comercial,
+    "CriarOP": CriarOP,
     "Engenharia": Engenharia,
-    "Modelagem": Modelagem,
-    "Suprimentos": Suprimentos,
+    "Expedicao": Expedicao,
     "Fundicao": Fundicao,
-    "Usinagem": Usinagem,
     "Liberacao": Liberacao,
     "Lideranca": Lideranca,
-    "Home": Home,
-    "Expedicao": Expedicao,
+    "Modelagem": Modelagem,
+    "Suprimentos": Suprimentos,
+    "Usinagem": Usinagem,
 }
 
 export const pagesConfig = {
