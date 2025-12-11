@@ -9,10 +9,14 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  Package
+  Package,
+  Edit2,
+  History
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import EditObservacaoDialog from './EditObservacaoDialog';
+import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
 const STATUS_CONFIG = {
   em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
@@ -31,11 +35,17 @@ const ETAPA_COLORS = {
   finalizado: 'bg-purple-100 text-purple-800'
 };
 
-export default function OPCard({ op, itens = [], showItens = false }) {
+export default function OPCard({ op, itens = [], showItens = false, onItemUpdate }) {
   const [expanded, setExpanded] = useState(false);
+  const [editingObservacao, setEditingObservacao] = useState(null);
+  const [expandedHistorico, setExpandedHistorico] = useState({});
   const statusConfig = STATUS_CONFIG[op.status] || STATUS_CONFIG.em_andamento;
 
   const itensOP = itens.filter(item => item.op_id === op.id);
+
+  const toggleHistorico = (itemId) => {
+    setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
 
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -126,11 +136,30 @@ export default function OPCard({ op, itens = [], showItens = false }) {
                         <div className="flex-1">
                           <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
                           {item.observacao && (
-                            <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                              <p className="text-xs text-blue-900">
+                            <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-start justify-between">
+                              <p className="text-xs text-blue-900 flex-1">
                                 <strong>Observação:</strong> {item.observacao}
                               </p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingObservacao(item)}
+                                className="h-6 px-2 ml-2"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </Button>
                             </div>
+                          )}
+                          {!item.observacao && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingObservacao(item)}
+                              className="h-7 px-2 text-xs text-slate-500"
+                            >
+                              <Edit2 className="w-3 h-3 mr-1" />
+                              Adicionar Observação
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -138,7 +167,7 @@ export default function OPCard({ op, itens = [], showItens = false }) {
                         {item.etapa_atual}
                       </Badge>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
                       <div className="text-slate-600">
                         <span className="text-slate-400">Código GA:</span> {item.codigo_ga || '-'}
                       </div>
@@ -171,6 +200,25 @@ export default function OPCard({ op, itens = [], showItens = false }) {
                         </div>
                       )}
                     </div>
+
+                    {/* Histórico de Movimentações */}
+                    <div className="border-t border-slate-200 pt-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleHistorico(item.id)}
+                        className="text-slate-600 hover:text-slate-800 p-0 h-auto text-xs"
+                      >
+                        <History className="w-3 h-3 mr-1" />
+                        {expandedHistorico[item.id] ? 'Ocultar' : 'Ver'} Histórico
+                        {expandedHistorico[item.id] ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+                      </Button>
+                      {expandedHistorico[item.id] && (
+                        <div className="mt-2 p-3 bg-slate-50 rounded-lg">
+                          <HistoricoMovimentacoes itemId={item.id} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -178,6 +226,13 @@ export default function OPCard({ op, itens = [], showItens = false }) {
           )}
         </div>
       )}
+
+      <EditObservacaoDialog
+        item={editingObservacao}
+        open={!!editingObservacao}
+        onOpenChange={(open) => !open && setEditingObservacao(null)}
+        onSuccess={onItemUpdate}
+      />
     </div>
   );
 }

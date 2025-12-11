@@ -414,7 +414,13 @@ export default function Comercial() {
       ) : (
         <div className="space-y-4">
           {opsFiltradas.map((op) => (
-            <OPCard key={op.id} op={op} itens={itens} showItens={true} />
+            <OPCard 
+              key={op.id} 
+              op={op} 
+              itens={itens} 
+              showItens={true}
+              onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
+            />
           ))}
         </div>
       )}
