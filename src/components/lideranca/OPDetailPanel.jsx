@@ -66,9 +66,14 @@ export default function OPDetailPanel({ op, itens, onClose }) {
       <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 p-4 text-white">
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <FileText className="w-5 h-5" />
               <h2 className="text-lg font-bold">{op.numero_op}</h2>
+              {op.ordem_compra && (
+                <Badge variant="outline" className="bg-white/20 text-white border-white/30">
+                  O.C: {op.ordem_compra}
+                </Badge>
+              )}
             </div>
             <p className="text-indigo-200 text-sm">{op.equipamento_principal}</p>
           </div>
@@ -170,24 +175,29 @@ export default function OPDetailPanel({ op, itens, onClose }) {
         <h3 className="text-sm font-medium text-slate-700 mb-3">Itens da OP ({itens.length})</h3>
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {itens.map((item) => (
-            <div key={item.id} className="bg-slate-50 rounded-lg p-3 flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+            <div key={item.id} className="bg-slate-50 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <Package className="w-4 h-4 text-slate-400" />
                   <p className="font-medium text-slate-800 text-sm truncate">{item.descricao}</p>
                 </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
-                  <span>Cód: {item.codigo_ga || '-'}</span>
-                  <span>Qtd: {item.quantidade}</span>
-                  <span>Peso: {item.peso ? `${item.peso}kg` : '-'}</span>
-                  {item.data_entrega && (
-                    <span>Entrega: {format(new Date(item.data_entrega), 'dd/MM/yy')}</span>
-                  )}
-                </div>
+                <Badge className={ETAPA_COLORS[item.etapa_atual]}>
+                  {ETAPA_LABELS[item.etapa_atual]}
+                </Badge>
               </div>
-              <Badge className={ETAPA_COLORS[item.etapa_atual]}>
-                {ETAPA_LABELS[item.etapa_atual]}
-              </Badge>
+              {item.observacao && (
+                <p className="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded p-2 mb-2">
+                  <strong>Obs:</strong> {item.observacao}
+                </p>
+              )}
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span>Cód: {item.codigo_ga || '-'}</span>
+                <span>Qtd: {item.quantidade}</span>
+                <span>Peso: {item.peso ? `${item.peso}kg` : '-'}</span>
+                {item.data_entrega && (
+                  <span>Entrega: {format(new Date(item.data_entrega), 'dd/MM/yy')}</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
