@@ -90,7 +90,8 @@ export default function Comercial() {
     const matchSearch = !searchTerm || 
       op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'todos' || op.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -262,9 +263,19 @@ export default function Comercial() {
                       <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
                         <Package className="w-4 h-4 text-amber-600" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-800">{item.descricao}</p>
-                        <p className="text-xs text-slate-500">{item.numero_op} • {item.equipamento_principal}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-slate-800">{item.descricao}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs text-slate-500">{item.numero_op}</p>
+                          {ops.find(o => o.id === item.op_id)?.ordem_compra && (
+                            <Badge variant="outline" className="text-blue-700 border-blue-300 text-xs">
+                              O.C: {ops.find(o => o.id === item.op_id)?.ordem_compra}
+                            </Badge>
+                          )}
+                          <p className="text-xs text-slate-500">• {item.equipamento_principal}</p>
+                        </div>
                         <p className="text-xs text-slate-400">{item.cliente}</p>
                       </div>
                     </div>
@@ -275,6 +286,14 @@ export default function Comercial() {
                       </Button>
                     </div>
                   </div>
+
+                  {item.observacao && (
+                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                      <p className="text-sm text-blue-900">
+                        <strong>Observação:</strong> {item.observacao}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 text-sm">
                     <div><span className="text-slate-400">Código GA:</span> {item.codigo_ga || '-'}</div>
@@ -354,7 +373,7 @@ export default function Comercial() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="Buscar por OP, cliente ou equipamento..."
+              placeholder="Buscar por OP, O.C, cliente ou equipamento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
