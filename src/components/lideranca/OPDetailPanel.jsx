@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
+import ItemOPActions from '@/components/producao/ItemOPActions';
 
 const ETAPA_COLORS = {
   comercial: 'bg-blue-100 text-blue-800',
@@ -46,6 +48,8 @@ const STATUS_CONFIG = {
 };
 
 export default function OPDetailPanel({ op, itens, onClose }) {
+  const queryClient = useQueryClient();
+  
   if (!op) return null;
 
   const statusConfig = STATUS_CONFIG[op.status] || STATUS_CONFIG.em_andamento;
@@ -185,12 +189,7 @@ export default function OPDetailPanel({ op, itens, onClose }) {
                   {ETAPA_LABELS[item.etapa_atual]}
                 </Badge>
               </div>
-              {item.observacao && (
-                <p className="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded p-2 mb-2">
-                  <strong>Obs:</strong> {item.observacao}
-                </p>
-              )}
-              <div className="flex items-center gap-3 text-xs text-slate-500">
+              <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
                 <span>Cód: {item.codigo_ga || '-'}</span>
                 <span>Qtd: {item.quantidade}</span>
                 <span>Peso: {item.peso ? `${item.peso}kg` : '-'}</span>
@@ -198,6 +197,7 @@ export default function OPDetailPanel({ op, itens, onClose }) {
                   <span>Entrega: {format(new Date(item.data_entrega), 'dd/MM/yy')}</span>
                 )}
               </div>
+              <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries()} />
             </div>
           ))}
         </div>

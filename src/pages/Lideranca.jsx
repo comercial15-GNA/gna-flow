@@ -31,6 +31,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import EtapaChart from '@/components/lideranca/EtapaChart';
 import OPDetailPanel from '@/components/lideranca/OPDetailPanel';
+import ItemOPActions from '@/components/producao/ItemOPActions';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os Status' },

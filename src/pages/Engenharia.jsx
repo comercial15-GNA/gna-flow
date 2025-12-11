@@ -39,6 +39,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ItemOPActions from '@/components/producao/ItemOPActions';
 
 export default function Engenharia() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -383,14 +384,11 @@ export default function Engenharia() {
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
                                 <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
-                                {item.observacao && (
-                                  <p className="text-sm text-slate-600 bg-blue-50 border border-blue-200 rounded p-2 mb-2">
-                                    <strong>Obs:</strong> {item.observacao}
-                                  </p>
-                                )}
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                               </div>
                             </div>
+
+                            <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] })} />
 
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-sm">
                               <div className="text-slate-600">

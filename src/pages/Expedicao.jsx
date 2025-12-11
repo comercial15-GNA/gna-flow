@@ -34,6 +34,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 import OPProgressPanel from '@/components/producao/OPProgressPanel';
+import ItemOPActions from '@/components/producao/ItemOPActions';
 
 export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -361,13 +362,7 @@ export default function Expedicao() {
                               </div>
                             </div>
 
-                            {item.observacao && (
-                              <div className="mb-3 p-2 bg-blue-100 rounded border border-blue-300">
-                                <p className="text-xs text-blue-900">
-                                  <strong>Observação:</strong> {item.observacao}
-                                </p>
-                              </div>
-                            )}
+                            <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] })} />
 
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-sm">
                               <div className="text-slate-600">
