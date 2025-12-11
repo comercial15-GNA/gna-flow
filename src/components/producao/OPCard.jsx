@@ -49,8 +49,13 @@ export default function OPCard({ op, itens = [], showItens = false }) {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-bold text-slate-800">{op.numero_op}</h3>
+                {op.ordem_compra && (
+                  <Badge variant="outline" className="text-blue-700 border-blue-300">
+                    O.C: {op.ordem_compra}
+                  </Badge>
+                )}
                 <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
               </div>
               <p className="text-sm text-slate-500">{op.equipamento_principal}</p>
@@ -113,24 +118,59 @@ export default function OPCard({ op, itens = [], showItens = false }) {
                 {itensOP.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg p-3 border border-slate-200 flex items-center justify-between"
+                    className="bg-white rounded-lg p-4 border border-slate-200"
                   >
-                    <div className="flex items-center gap-3">
-                      <Package className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="font-medium text-slate-800">{item.descricao}</p>
-                        <p className="text-xs text-slate-500">
-                          {item.equipamento_principal && `${item.equipamento_principal} • `}
-                          {item.codigo_ga && `${item.codigo_ga} • `}
-                          Qtd: {item.quantidade}
-                          {item.peso && ` • ${item.peso} kg`}
-                          {item.data_entrega && ` • Entrega: ${format(new Date(item.data_entrega), 'dd/MM/yy')}`}
-                        </p>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start gap-3 flex-1">
+                        <Package className="w-4 h-4 text-slate-400 mt-1" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                          {item.observacao && (
+                            <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                              <p className="text-xs text-blue-900">
+                                <strong>Observação:</strong> {item.observacao}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <Badge className={ETAPA_COLORS[item.etapa_atual] || 'bg-slate-100 text-slate-800'}>
+                        {item.etapa_atual}
+                      </Badge>
                     </div>
-                    <Badge className={ETAPA_COLORS[item.etapa_atual] || 'bg-slate-100 text-slate-800'}>
-                      {item.etapa_atual}
-                    </Badge>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Código GA:</span> {item.codigo_ga || '-'}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Quantidade:</span> {item.quantidade}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-'}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Cliente:</span> {item.cliente || '-'}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Responsável:</span> {item.responsavel_op || '-'}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Entrada Etapa:</span> {item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yy HH:mm') : '-'}
+                      </div>
+                      {item.peso_expedicao && (
+                        <div className="text-slate-600">
+                          <span className="text-slate-400">Peso Exp.:</span> {item.peso_expedicao} kg
+                        </div>
+                      )}
+                      {item.volume_expedicao && (
+                        <div className="text-slate-600">
+                          <span className="text-slate-400">Volume:</span> {item.volume_expedicao}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
