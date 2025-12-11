@@ -80,6 +80,7 @@ export default function Lideranca() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [etapaFilter, setEtapaFilter] = useState('all');
   const [responsavelFilter, setResponsavelFilter] = useState('all');
+  const [clienteFilter, setClienteFilter] = useState('all');
   const [filtroData, setFiltroData] = useState('todos');
   const [dataEspecifica, setDataEspecifica] = useState('');
   const [selectedOP, setSelectedOP] = useState(null);
@@ -95,14 +96,17 @@ export default function Lideranca() {
   });
 
   const responsaveisUnicos = [...new Set(ops.map(op => op.responsavel).filter(Boolean))];
+  const clientesUnicos = [...new Set(ops.map(op => op.cliente).filter(Boolean))].sort();
 
   // Filtrar OPs
   const opsFiltradas = ops.filter(op => {
     const matchSearch = !searchTerm || 
       op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchResponsavel = responsavelFilter === 'all' || op.responsavel === responsavelFilter;
+    const matchCliente = clienteFilter === 'all' || op.cliente === clienteFilter;
     const matchStatus = statusFilter === 'all' || op.status === statusFilter;
     
     // Filtrar por etapa: verificar se a OP tem pelo menos um item na etapa selecionada
@@ -123,7 +127,7 @@ export default function Lideranca() {
       matchData = itensOP.some(item => item.data_entrega === dataEspecifica);
     }
     
-    return matchSearch && matchResponsavel && matchStatus && matchEtapa && matchData;
+    return matchSearch && matchResponsavel && matchCliente && matchStatus && matchEtapa && matchData;
   });
 
   const gerarRelatorio = () => {
@@ -133,8 +137,10 @@ export default function Lideranca() {
       itensOP.forEach(item => {
         dados.push({
           'OP': item.numero_op,
+          'O.C': op.ordem_compra || '-',
           'Equipamento': item.equipamento_principal || '-',
           'Descrição': item.descricao,
+          'Observação': item.observacao || '-',
           'Código GA': item.codigo_ga || '-',
           'Peso (kg)': item.peso || '-',
           'Quantidade': item.quantidade,
@@ -283,11 +289,11 @@ export default function Lideranca() {
                 </Badge>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="relative md:col-span-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Buscar OP, cliente, equipamento..."
+                  placeholder="Buscar OP, cliente, O.C, equipamento..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -300,6 +306,17 @@ export default function Lideranca() {
                 <SelectContent>
                   {STATUS_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={clienteFilter} onValueChange={setClienteFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Clientes</SelectItem>
+                  {clientesUnicos.map((cliente) => (
+                    <SelectItem key={cliente} value={cliente}>{cliente}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -320,9 +337,7 @@ export default function Lideranca() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todas as Datas</SelectItem>
-                  <SelectItem value="atrasados">
-                    Atrasados
-                  </SelectItem>
+                  <SelectItem value="atrasados">Atrasados</SelectItem>
                   <SelectItem value="data_especifica">Data Específica</SelectItem>
                 </SelectContent>
               </Select>
@@ -383,8 +398,13 @@ export default function Lideranca() {
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold text-slate-800">{op.numero_op}</h3>
+                              {op.ordem_compra && (
+                                <Badge variant="outline" className="text-blue-700 border-blue-300">
+                                  O.C: {op.ordem_compra}
+                                </Badge>
+                              )}
                               <Badge className={op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}>
                                 {op.status === 'em_andamento' ? 'Em Andamento' : 'Coleta'}
                               </Badge>
