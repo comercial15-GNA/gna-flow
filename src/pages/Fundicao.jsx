@@ -72,7 +72,7 @@ export default function Fundicao() {
 
   const { data: ops = [] } = useQuery({
     queryKey: ['ops-all'],
-    queryFn: () => base44.entities.OrdemProducao.list(),
+    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
   const movimentarItem = async (item, novaEtapa, justif = '') => {

@@ -65,7 +65,7 @@ export default function Comercial() {
 
   const { data: ops = [], isLoading: loadingOPs } = useQuery({
     queryKey: ['ops-comercial'],
-    queryFn: () => base44.entities.OrdemProducao.list('created_date'),
+    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
   const { data: itens = [] } = useQuery({
