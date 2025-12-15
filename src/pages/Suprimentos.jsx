@@ -40,7 +40,7 @@ export default function Suprimentos() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-suprimentos'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'suprimentos' }, 'created_date');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'suprimentos' }, 'data_entrada_etapa');
       return items;
     }
   });

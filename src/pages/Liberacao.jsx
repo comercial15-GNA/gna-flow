@@ -78,7 +78,7 @@ export default function Liberacao() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-liberacao'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'liberacao' }, 'created_date');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'liberacao' }, 'data_entrada_etapa');
       return items;
     }
   });

@@ -59,7 +59,7 @@ export default function Expedicao() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-expedicao'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'expedicao' }, 'created_date');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'expedicao' }, 'data_entrada_etapa');
       return items;
     }
   });

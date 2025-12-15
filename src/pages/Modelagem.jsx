@@ -65,7 +65,7 @@ export default function Modelagem() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-modelagem'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'modelagem' }, 'created_date');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'modelagem' }, 'data_entrada_etapa');
       return items;
     }
   });

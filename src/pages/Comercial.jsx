@@ -70,7 +70,7 @@ export default function Comercial() {
 
   const { data: itens = [] } = useQuery({
     queryKey: ['itens-all'],
-    queryFn: () => base44.entities.ItemOP.list('created_date'),
+    queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
   });
 
   // Filtrar OPs: criadas pelo usuário ou onde é responsável (pelo apelido)

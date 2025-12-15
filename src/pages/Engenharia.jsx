@@ -66,7 +66,7 @@ export default function Engenharia() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-engenharia'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'engenharia' }, 'created_date');
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'engenharia' }, 'data_entrada_etapa');
       return items;
     }
   });
