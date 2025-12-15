@@ -98,7 +98,7 @@ export default function Engenharia() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] });
-      const destinos = { modelagem: 'Modelagem', suprimentos: 'Suprimentos', comercial: 'Comercial' };
+      const destinos = { modelagem: 'Modelagem', suprimentos: 'Suprimentos', usinagem: 'Usinagem', comercial: 'Comercial' };
       toast.success(`Item enviado para ${destinos[novaEtapa]}`);
     } catch (error) {
       toast.error('Erro ao movimentar item');
@@ -433,6 +433,15 @@ export default function Engenharia() {
                               >
                                 <ArrowRight className="w-3 h-3 mr-1" />
                                 Enviar p/ Suprimentos
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => movimentarItem(item, 'usinagem')}
+                                disabled={loadingItem === item.id}
+                                className="bg-slate-800 hover:bg-slate-900"
+                              >
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Enviar p/ Usinagem
                               </Button>
                               <Button
                                 size="sm"

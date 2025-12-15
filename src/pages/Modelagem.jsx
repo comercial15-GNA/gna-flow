@@ -411,12 +411,12 @@ export default function Modelagem() {
                             <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => movimentarItem(item, 'fundicao')}
+                                onClick={() => movimentarItem(item, 'usinagem')}
                                 disabled={loadingItem === item.id}
                                 className="bg-slate-800 hover:bg-slate-900"
                               >
                                 <ArrowRight className="w-3 h-3 mr-1" />
-                                Enviar p/ Fundição
+                                Enviar p/ Usinagem
                               </Button>
                               <Button
                                 size="sm"
