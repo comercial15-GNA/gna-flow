@@ -171,7 +171,24 @@ export default function CriarOP() {
       return;
     }
 
-    const itensValidos = itens.filter(item => item.descricao && item.quantidade > 0);
+    // Validar itens
+    for (let i = 0; i < itens.length; i++) {
+      const item = itens[i];
+      if (!item.descricao?.trim()) {
+        toast.error(`Item ${i + 1}: Preencha a descrição`);
+        return;
+      }
+      if (!item.quantidade || item.quantidade <= 0) {
+        toast.error(`Item ${i + 1}: Quantidade deve ser maior que zero`);
+        return;
+      }
+      if (!item.data_entrega) {
+        toast.error(`Item ${i + 1}: Data de entrega é obrigatória`);
+        return;
+      }
+    }
+
+    const itensValidos = itens.filter(item => item.descricao && item.quantidade > 0 && item.data_entrega);
     if (itensValidos.length === 0) {
       toast.error('Adicione pelo menos um item válido');
       return;
@@ -382,7 +399,7 @@ export default function CriarOP() {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Data Entrega</Label>
+                        <Label className="text-xs">Data Entrega *</Label>
                         <Input
                           type="date"
                           value={item.data_entrega}
