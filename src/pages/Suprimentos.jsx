@@ -312,35 +312,42 @@ export default function Suprimentos() {
             <div key={op.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
               {/* Header da OP */}
               <div 
-                className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 cursor-pointer hover:from-orange-600 hover:to-orange-700 transition-all"
+                className="bg-slate-50 p-4 cursor-pointer hover:bg-slate-100 transition-all border-b border-slate-200"
                 onClick={() => toggleOP(op.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-orange-600" />
                     </div>
-                    <div className="text-white flex-1">
+                    <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-lg">{op.numero_op}</h3>
+                        <h3 className="font-bold text-lg text-slate-800">{op.numero_op}</h3>
                         {op.ordem_compra && (
-                          <Badge variant="outline" className="bg-white/20 text-white border-white/30">
+                          <Badge variant="outline" className="text-blue-700 border-blue-300">
                             O.C: {op.ordem_compra}
                           </Badge>
                         )}
+                        <Badge className="bg-orange-100 text-orange-800">
+                          {op.itens.length} {op.itens.length === 1 ? 'item' : 'itens'}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-orange-100 flex-wrap">
+                      <div className="flex items-center gap-3 text-sm text-slate-600 flex-wrap mt-1">
                         <span>{op.equipamento_principal}</span>
                         <span>•</span>
                         <span>{op.cliente}</span>
-                        <span>•</span>
-                        <span>{op.itens.length} {op.itens.length === 1 ? 'item' : 'itens'}</span>
+                        {op.responsavel && (
+                          <>
+                            <span>•</span>
+                            <span>{op.responsavel}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
                   {expandedOPs[op.id] ? 
-                    <ChevronUp className="w-5 h-5 text-white" /> : 
-                    <ChevronDown className="w-5 h-5 text-white" />
+                    <ChevronUp className="w-5 h-5 text-slate-400" /> : 
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
                   }
                 </div>
               </div>
@@ -374,7 +381,7 @@ export default function Suprimentos() {
                   {op.itens.map((item) => {
                     const atrasado = isAtrasado(item.data_entrega);
                     return (
-                      <div key={item.id} className={`rounded-lg border p-4 ${atrasado ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50'}`}>
+                      <div key={item.id} className={`rounded-lg border p-4 ${atrasado ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white'}`}>
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 flex-1">
                             <Package className="w-4 h-4 text-slate-400" />
