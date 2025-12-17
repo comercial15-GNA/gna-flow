@@ -70,7 +70,15 @@ export default function Comercial() {
 
   const { data: itens = [] } = useQuery({
     queryKey: ['itens-all'],
-    queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
+    queryFn: async () => {
+      const items = await base44.entities.ItemOP.list();
+      // Ordenar por data de entrega (mais próxima primeiro)
+      return items.sort((a, b) => {
+        if (!a.data_entrega) return 1;
+        if (!b.data_entrega) return -1;
+        return new Date(a.data_entrega) - new Date(b.data_entrega);
+      });
+    },
   });
 
   // Filtrar OPs: criadas pelo usuário ou onde é responsável (pelo apelido)
