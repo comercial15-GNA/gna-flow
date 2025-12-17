@@ -59,8 +59,13 @@ export default function Expedicao() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-expedicao'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'expedicao' }, 'data_entrada_etapa');
-      return items;
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'expedicao' });
+      // Ordenar por data de entrega (mais próxima primeiro)
+      return items.sort((a, b) => {
+        if (!a.data_entrega) return 1;
+        if (!b.data_entrega) return -1;
+        return new Date(a.data_entrega) - new Date(b.data_entrega);
+      });
     }
   });
 
