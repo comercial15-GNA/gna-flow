@@ -18,7 +18,7 @@ export default function PainelEngenharia() {
         return new Date(a.data_entrega) - new Date(b.data_entrega);
       }).slice(0, 30);
     },
-    refetchInterval: 30000 // Atualiza a cada 30 segundos
+    refetchInterval: 120000 // Atualiza a cada 2 minutos
   });
 
   const isAtrasado = (dataEntrega) => {

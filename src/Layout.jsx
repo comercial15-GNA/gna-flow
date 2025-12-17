@@ -194,6 +194,14 @@ export default function Layout({ children, currentPageName }) {
     return false;
   });
 
+  // Verificar se é uma página de painel (tela cheia)
+  const isPainelPage = currentPageName && currentPageName.startsWith('Painel');
+
+  // Se for página de painel, renderizar sem layout
+  if (isPainelPage) {
+    return <div className="min-h-screen">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Mobile Header */}

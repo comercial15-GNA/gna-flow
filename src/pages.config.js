@@ -8,12 +8,12 @@ import Home from './pages/Home';
 import Liberacao from './pages/Liberacao';
 import Lideranca from './pages/Lideranca';
 import Modelagem from './pages/Modelagem';
+import PainelEngenharia from './pages/PainelEngenharia';
+import PainelFundicao from './pages/PainelFundicao';
+import PainelModelagem from './pages/PainelModelagem';
+import PainelUsinagem from './pages/PainelUsinagem';
 import Suprimentos from './pages/Suprimentos';
 import Usinagem from './pages/Usinagem';
-import PainelEngenharia from './pages/PainelEngenharia';
-import PainelModelagem from './pages/PainelModelagem';
-import PainelFundicao from './pages/PainelFundicao';
-import PainelUsinagem from './pages/PainelUsinagem';
 import __Layout from './Layout.jsx';
 
 
@@ -28,12 +28,12 @@ export const PAGES = {
     "Liberacao": Liberacao,
     "Lideranca": Lideranca,
     "Modelagem": Modelagem,
+    "PainelEngenharia": PainelEngenharia,
+    "PainelFundicao": PainelFundicao,
+    "PainelModelagem": PainelModelagem,
+    "PainelUsinagem": PainelUsinagem,
     "Suprimentos": Suprimentos,
     "Usinagem": Usinagem,
-    "PainelEngenharia": PainelEngenharia,
-    "PainelModelagem": PainelModelagem,
-    "PainelFundicao": PainelFundicao,
-    "PainelUsinagem": PainelUsinagem,
 }
 
 export const pagesConfig = {
