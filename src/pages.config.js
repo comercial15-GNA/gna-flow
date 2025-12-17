@@ -10,6 +10,10 @@ import Lideranca from './pages/Lideranca';
 import Modelagem from './pages/Modelagem';
 import Suprimentos from './pages/Suprimentos';
 import Usinagem from './pages/Usinagem';
+import PainelEngenharia from './pages/PainelEngenharia';
+import PainelModelagem from './pages/PainelModelagem';
+import PainelFundicao from './pages/PainelFundicao';
+import PainelUsinagem from './pages/PainelUsinagem';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +30,10 @@ export const PAGES = {
     "Modelagem": Modelagem,
     "Suprimentos": Suprimentos,
     "Usinagem": Usinagem,
+    "PainelEngenharia": PainelEngenharia,
+    "PainelModelagem": PainelModelagem,
+    "PainelFundicao": PainelFundicao,
+    "PainelUsinagem": PainelUsinagem,
 }
 
 export const pagesConfig = {
