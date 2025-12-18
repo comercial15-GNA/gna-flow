@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,15 @@ import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function PainelModelagem() {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-painel-modelagem'],
     queryFn: async () => {
@@ -50,10 +59,10 @@ export default function PainelModelagem() {
           </div>
           <div className="text-right">
             <div className="text-white text-2xl font-mono">
-              {format(new Date(), 'HH:mm:ss')}
+              {format(currentTime, 'HH:mm:ss')}
             </div>
             <div className="text-slate-400 text-sm">
-              {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              {format(currentTime, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </div>
           </div>
         </div>
