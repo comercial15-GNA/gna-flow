@@ -260,6 +260,13 @@ export default function Liberacao() {
   }).map(op => {
     const todosItensOP = todosItens.filter(i => i.op_id === op.id);
     return { op, itens: todosItensOP };
+  }).sort((a, b) => {
+    // Ordenar por data de entrega mais próxima
+    const itensLiberacaoA = a.itens.filter(i => i.etapa_atual === 'liberacao');
+    const itensLiberacaoB = b.itens.filter(i => i.etapa_atual === 'liberacao');
+    const dataA = itensLiberacaoA.length > 0 ? Math.min(...itensLiberacaoA.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    const dataB = itensLiberacaoB.length > 0 ? Math.min(...itensLiberacaoB.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    return dataA - dataB;
   });
 
   return (

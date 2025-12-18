@@ -232,6 +232,13 @@ export default function Expedicao() {
   }).map(op => {
     const todosItensOP = todosItens.filter(i => i.op_id === op.id);
     return { op, itens: todosItensOP };
+  }).sort((a, b) => {
+    // Ordenar por data de entrega mais próxima
+    const itensExpedicaoA = a.itens.filter(i => i.etapa_atual === 'expedicao');
+    const itensExpedicaoB = b.itens.filter(i => i.etapa_atual === 'expedicao');
+    const dataA = itensExpedicaoA.length > 0 ? Math.min(...itensExpedicaoA.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    const dataB = itensExpedicaoB.length > 0 ? Math.min(...itensExpedicaoB.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    return dataA - dataB;
   });
 
   return (
