@@ -188,7 +188,13 @@ export default function Suprimentos() {
       ...op,
       itens: itensFiltrados.filter(item => item.op_id === op.id)
     }))
-    .filter(op => op.itens.length > 0);
+    .filter(op => op.itens.length > 0)
+    .sort((a, b) => {
+      // Ordenar por data de entrega mais próxima
+      const dataA = a.itens.length > 0 ? Math.min(...a.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+      const dataB = b.itens.length > 0 ? Math.min(...b.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+      return dataA - dataB;
+    });
 
   const clientes = ['todos', ...new Set(itens.map(i => i.cliente).filter(Boolean))];
   const responsaveis = ['todos', ...new Set(itens.map(i => i.responsavel_op).filter(Boolean))];

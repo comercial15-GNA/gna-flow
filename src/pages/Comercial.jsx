@@ -40,7 +40,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import OPCard from '@/components/producao/OPCard';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 
@@ -56,6 +56,11 @@ export default function Comercial() {
 
   const toggleHistorico = (itemId) => {
     setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
+
+  const isAtrasado = (dataEntrega) => {
+    if (!dataEntrega) return false;
+    return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
   };
 
   const { data: currentUser } = useQuery({
@@ -102,6 +107,13 @@ export default function Comercial() {
       op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'todos' || op.status === statusFilter;
     return matchSearch && matchStatus;
+  }).sort((a, b) => {
+    // Ordenar por data de entrega mais próxima dos itens
+    const itensA = itens.filter(i => i.op_id === a.id);
+    const itensB = itens.filter(i => i.op_id === b.id);
+    const dataA = itensA.length > 0 ? Math.min(...itensA.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    const dataB = itensB.length > 0 ? Math.min(...itensB.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    return dataA - dataB;
   });
 
   const handleEditItem = (item) => {
@@ -264,8 +276,9 @@ export default function Comercial() {
           <div className="space-y-4">
             {itensRetornados.map((item) => {
               const arquivos = getOPArquivos(item.op_id);
+              const atrasado = isAtrasado(item.data_entrega);
               return (
-                <div key={item.id} className="bg-amber-50 rounded-xl border border-amber-200 shadow-sm p-4">
+                <div key={item.id} className={`rounded-xl shadow-sm p-4 ${atrasado ? 'bg-red-50 border-2 border-red-300' : 'bg-amber-50 border border-amber-200'}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -273,7 +286,10 @@ export default function Comercial() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-slate-800">{item.descricao}</p>
+                          <p className={`font-semibold ${atrasado ? 'text-red-800 font-bold' : 'text-slate-800'}`}>{item.descricao}</p>
+                          {atrasado && (
+                            <Badge className="bg-red-600 text-white">ATRASADO</Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-xs text-slate-500">{item.numero_op}</p>
@@ -307,7 +323,7 @@ export default function Comercial() {
                     <div><span className="text-slate-400">Código GA:</span> {item.codigo_ga || '-'}</div>
                     <div><span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
                     <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
-                    <div><span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-'}</div>
+                    <div><span className="text-slate-400">Entrega:</span> <span className={atrasado ? 'text-red-600 font-bold' : ''}>{item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-'}</span></div>
                     <div><span className="text-slate-400">Responsável:</span> {item.responsavel_op || '-'}</div>
                   </div>
 
