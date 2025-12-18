@@ -193,6 +193,11 @@ export default function Engenharia() {
   }).map(op => {
     const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
     return { op, itens: itensOP };
+  }).sort((a, b) => {
+    // Ordenar por data de entrega mais próxima
+    const dataA = a.itens.length > 0 ? Math.min(...a.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    const dataB = b.itens.length > 0 ? Math.min(...b.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    return dataA - dataB;
   });
 
   const limparFiltros = () => {
