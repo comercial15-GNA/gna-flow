@@ -26,15 +26,6 @@ export default function PainelEngenharia() {
     return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
   };
 
-  // Auto-reload da página a cada 2 minutos
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      window.location.reload();
-    }, 120000); // 2 minutos
-
-    return () => clearInterval(interval);
-  }, []);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
