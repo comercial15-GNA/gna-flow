@@ -97,22 +97,44 @@ export default function CriarOP() {
 
   const gerarNumeroOP = async () => {
     const anoAtual = new Date().getFullYear();
-    let sequenciaAtual = sequencias.find(s => s.ano === anoAtual);
-    let proximoNumero = 1;
+    const maxTentativas = 5;
+    
+    for (let tentativa = 0; tentativa < maxTentativas; tentativa++) {
+      try {
+        // Buscar sequência mais recente do banco
+        const sequenciasAtuais = await base44.entities.SequenciaOP.filter({ ano: anoAtual });
+        let sequenciaAtual = sequenciasAtuais[0];
+        let proximoNumero = 1;
 
-    if (sequenciaAtual) {
-      proximoNumero = (sequenciaAtual.ultimo_numero || 0) + 1;
-      await base44.entities.SequenciaOP.update(sequenciaAtual.id, {
-        ultimo_numero: proximoNumero
-      });
-    } else {
-      await base44.entities.SequenciaOP.create({
-        ano: anoAtual,
-        ultimo_numero: 1
-      });
+        if (sequenciaAtual) {
+          proximoNumero = (sequenciaAtual.ultimo_numero || 0) + 1;
+          await base44.entities.SequenciaOP.update(sequenciaAtual.id, {
+            ultimo_numero: proximoNumero
+          });
+        } else {
+          await base44.entities.SequenciaOP.create({
+            ano: anoAtual,
+            ultimo_numero: 1
+          });
+        }
+
+        const numeroOP = `OP-${anoAtual}-${String(proximoNumero).padStart(4, '0')}`;
+        
+        // Verificar se o número já existe
+        const opExistente = await base44.entities.OrdemProducao.filter({ numero_op: numeroOP });
+        if (opExistente.length === 0) {
+          return numeroOP;
+        }
+        
+        // Se existir, tentar novamente após pequeno delay
+        await new Promise(resolve => setTimeout(resolve, 100 * (tentativa + 1)));
+      } catch (error) {
+        if (tentativa === maxTentativas - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 100 * (tentativa + 1)));
+      }
     }
-
-    return `OP-${anoAtual}-${String(proximoNumero).padStart(4, '0')}`;
+    
+    throw new Error('Não foi possível gerar número único para OP');
   };
 
   const handleFileUpload = async (e) => {
