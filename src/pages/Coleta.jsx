@@ -120,7 +120,7 @@ export default function Coleta() {
 
   const confirmarFinalizacao = async () => {
     if (!justificativa.trim()) {
-      toast.error('Justificativa é obrigatória');
+      toast.error('Observações da finalização são obrigatórias');
       return;
     }
     setLoadingItem(dialogFinalizar.item.id);

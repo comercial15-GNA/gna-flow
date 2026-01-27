@@ -17,6 +17,7 @@ import Usinagem from './pages/Usinagem';
 import Acabamento from './pages/Acabamento';
 import Coleta from './pages/Coleta';
 import SuporteIndustrial from './pages/SuporteIndustrial';
+import RelatoriosPeso from './pages/RelatoriosPeso';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "Acabamento": Acabamento,
     "Coleta": Coleta,
     "SuporteIndustrial": SuporteIndustrial,
+    "RelatoriosPeso": RelatoriosPeso,
 }
 
 export const pagesConfig = {
