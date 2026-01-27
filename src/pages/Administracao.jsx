@@ -36,17 +36,9 @@ import {
   UserCheck,
   Mail,
   Shield,
-  ClipboardList,
-  Plus,
-  Package
+  Key
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import OPCard from '@/components/producao/OPCard';
-import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
-import PermissoesTab from '@/components/admin/PermissoesTab';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 
 const SETORES = [
   { value: 'administrador', label: 'Administrador' },
@@ -60,6 +52,23 @@ const SETORES = [
   { value: 'liberacao', label: 'Liberação' },
   { value: 'expedicao', label: 'Expedição' },
   { value: 'lideranca', label: 'Liderança' },
+];
+
+const AVAILABLE_PAGES = [
+  { value: 'Comercial', label: 'Comercial' },
+  { value: 'RelatoriosPeso', label: 'Relatório de Peso' },
+  { value: 'Engenharia', label: 'Engenharia' },
+  { value: 'Modelagem', label: 'Modelagem' },
+  { value: 'Suprimentos', label: 'Suprimentos' },
+  { value: 'Fundicao', label: 'Fundição' },
+  { value: 'Acabamento', label: 'Acabamento' },
+  { value: 'Usinagem', label: 'Usinagem' },
+  { value: 'Liberacao', label: 'Liberação' },
+  { value: 'Expedicao', label: 'Expedição' },
+  { value: 'SuporteIndustrial', label: 'Suporte Industrial' },
+  { value: 'Coleta', label: 'Coleta' },
+  { value: 'Lideranca', label: 'Liderança' },
+  { value: 'Administracao', label: 'Administração' },
 ];
 
 const SETOR_COLORS = {
@@ -80,15 +89,9 @@ export default function Administracao() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: '', apelido: '', setor: '', ativo: true });
-  const [adminEditOP, setAdminEditOP] = useState(null);
-  const [adminEditOPOpen, setAdminEditOPOpen] = useState(false);
-  const [searchOP, setSearchOP] = useState('');
-  const [statusFilterOP, setStatusFilterOP] = useState('todos');
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('user');
-  const [inviting, setInviting] = useState(false);
+  const [selectedPages, setSelectedPages] = useState([]);
   
   const queryClient = useQueryClient();
 
@@ -100,16 +103,6 @@ export default function Administracao() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
-  });
-
-  const { data: ops = [] } = useQuery({
-    queryKey: ['ops-admin'],
-    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
-  });
-
-  const { data: itens = [] } = useQuery({
-    queryKey: ['itens-admin'],
-    queryFn: () => base44.entities.ItemOP.list(),
   });
 
   // Sincronizar automaticamente usuários com ResponsavelOP ao carregar
@@ -172,6 +165,7 @@ export default function Administracao() {
       queryClient.invalidateQueries({ queryKey: ['responsaveis-op'] });
       toast.success('Usuário atualizado com sucesso');
       setEditDialogOpen(false);
+      setPermissionsDialogOpen(false);
       setEditingUser(null);
     },
     onError: () => {
@@ -231,41 +225,28 @@ export default function Administracao() {
     });
   };
 
-  const handleInviteUser = async () => {
-    if (!inviteEmail.trim()) {
-      toast.error('Email é obrigatório');
-      return;
-    }
-    
-    setInviting(true);
-    try {
-      await base44.users.inviteUser(inviteEmail, inviteRole);
-      toast.success(`Convite enviado para ${inviteEmail}`);
-      setInviteDialogOpen(false);
-      setInviteEmail('');
-      setInviteRole('user');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    } catch (error) {
-      toast.error('Erro ao enviar convite');
-    } finally {
-      setInviting(false);
-    }
+  const handleManagePermissions = (user) => {
+    setEditingUser(user);
+    setSelectedPages(user.allowed_pages || []);
+    setPermissionsDialogOpen(true);
   };
 
-  const handleAdminEditOP = (op) => {
-    setAdminEditOP(op);
-    setAdminEditOPOpen(true);
+  const handleTogglePage = (pageValue) => {
+    setSelectedPages(prev => {
+      if (prev.includes(pageValue)) {
+        return prev.filter(p => p !== pageValue);
+      } else {
+        return [...prev, pageValue];
+      }
+    });
   };
 
-  const opsFiltradas = ops.filter(op => {
-    const matchSearch = !searchOP || 
-      op.numero_op?.toLowerCase().includes(searchOP.toLowerCase()) ||
-      op.cliente?.toLowerCase().includes(searchOP.toLowerCase()) ||
-      op.equipamento_principal?.toLowerCase().includes(searchOP.toLowerCase()) ||
-      op.ordem_compra?.toLowerCase().includes(searchOP.toLowerCase());
-    const matchStatus = statusFilterOP === 'todos' || op.status === statusFilterOP;
-    return matchSearch && matchStatus;
-  });
+  const handleSavePermissions = () => {
+    updateUserMutation.mutate({
+      id: editingUser.id,
+      data: { allowed_pages: selectedPages }
+    });
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -281,23 +262,6 @@ export default function Administracao() {
         </div>
       </div>
 
-      <Tabs defaultValue="usuarios" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-6">
-          <TabsTrigger value="usuarios" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Usuários
-          </TabsTrigger>
-          <TabsTrigger value="permissoes" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Permissões
-          </TabsTrigger>
-          <TabsTrigger value="ops" className="flex items-center gap-2">
-            <ClipboardList className="w-4 h-4" />
-            Todas as OPs
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="usuarios">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
@@ -362,10 +326,10 @@ export default function Administracao() {
               className="pl-10"
             />
           </div>
-          <Button onClick={() => setInviteDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700">
-            <Mail className="w-4 h-4 mr-2" />
-            Convidar Usuário
-          </Button>
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Mail className="w-4 h-4" />
+            <span>Para adicionar novos usuários, use "Convidar Usuários" no menu do Base44</span>
+          </div>
         </div>
       </div>
 
@@ -438,14 +402,25 @@ export default function Administracao() {
                         size="sm"
                         onClick={() => handleEditUser(user)}
                         className="text-slate-600 hover:text-slate-800"
+                        title="Editar usuário"
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleManagePermissions(user)}
+                        className="text-blue-600 hover:text-blue-700"
+                        title="Gerenciar permissões de páginas"
+                      >
+                        <Key className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleActive(user)}
                         className={user.ativo !== false ? "text-red-600 hover:text-red-700" : "text-green-600 hover:text-green-700"}
+                        title={user.ativo !== false ? "Desativar usuário" : "Ativar usuário"}
                       >
                         {user.ativo !== false ? (
                           <UserX className="w-4 h-4" />
@@ -533,177 +508,81 @@ export default function Administracao() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent>
+      <Dialog open={permissionsDialogOpen} onOpenChange={setPermissionsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Convidar Novo Usuário</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Gerenciar Permissões de Páginas
+            </DialogTitle>
             <DialogDescription>
-              Envie um convite por email para um novo usuário
+              Selecione as páginas que <strong>{editingUser?.full_name || editingUser?.email}</strong> poderá acessar. Se nenhuma página for selecionada, o usuário terá acesso apenas às páginas do seu setor.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div>
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="usuario@exemplo.com"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label>Função no Sistema</Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500 mt-1">
-                Após aceitar o convite, você pode configurar o setor do usuário
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Atenção:</strong> Ao selecionar páginas específicas, o acesso padrão por setor será substituído pelas páginas escolhidas aqui.
               </p>
             </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+            
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Páginas Disponíveis:</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {AVAILABLE_PAGES.map((page) => (
+                  <div
+                    key={page.value}
+                    className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedPages.includes(page.value)
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                    onClick={() => handleTogglePage(page.value)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPages.includes(page.value)}
+                      onChange={() => handleTogglePage(page.value)}
+                      className="rounded"
+                    />
+                    <Label className="cursor-pointer flex-1">{page.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {selectedPages.length > 0 && (
+              <div className="bg-slate-50 rounded-lg p-4">
+                <p className="text-sm text-slate-600 mb-2">
+                  <strong>Páginas selecionadas ({selectedPages.length}):</strong>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedPages.map((pageValue) => {
+                    const page = AVAILABLE_PAGES.find(p => p.value === pageValue);
+                    return (
+                      <Badge key={pageValue} className="bg-blue-100 text-blue-800">
+                        {page?.label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setPermissionsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleInviteUser} disabled={inviting}>
-                {inviting ? 'Enviando...' : 'Enviar Convite'}
+              <Button 
+                onClick={handleSavePermissions} 
+                disabled={updateUserMutation.isPending}
+              >
+                {updateUserMutation.isPending ? 'Salvando...' : 'Salvar Permissões'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-        </TabsContent>
-
-        <TabsContent value="permissoes">
-          <PermissoesTab users={users} queryClient={queryClient} updateUserMutation={updateUserMutation} />
-        </TabsContent>
-
-        <TabsContent value="ops">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <ClipboardList className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">{ops.length}</p>
-                  <p className="text-xs text-slate-500">Total de OPs</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {ops.filter(op => op.status === 'em_andamento').length}
-                  </p>
-                  <p className="text-xs text-slate-500">Em Andamento</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {ops.filter(op => op.status === 'coleta').length}
-                  </p>
-                  <p className="text-xs text-slate-500">Coleta</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">{itens.length}</p>
-                  <p className="text-xs text-slate-500">Total Itens</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="Buscar por OP, O.C, cliente ou equipamento..."
-                  value={searchOP}
-                  onChange={(e) => setSearchOP(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilterOP} onValueChange={setStatusFilterOP}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os Status</SelectItem>
-                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                  <SelectItem value="coleta">Coleta</SelectItem>
-                  <SelectItem value="finalizado">Finalizado</SelectItem>
-                  <SelectItem value="cancelada">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {ops.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
-              <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma OP cadastrada</h3>
-              <p className="text-slate-500 mb-4">Crie a primeira Ordem de Produção</p>
-              <Link to={createPageUrl('CriarOP')}>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova OP
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {opsFiltradas.map((op) => (
-                <OPCard
-                  key={op.id}
-                  op={op}
-                  itens={itens}
-                  showItens={true}
-                  isAdmin={true}
-                  onAdminEdit={handleAdminEditOP}
-                  onItemUpdate={() => {
-                    queryClient.invalidateQueries({ queryKey: ['itens-admin'] });
-                    queryClient.invalidateQueries({ queryKey: ['ops-admin'] });
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <AdminEditOPDialog
-        op={adminEditOP}
-        open={adminEditOPOpen}
-        onOpenChange={setAdminEditOPOpen}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['ops-admin'] });
-          queryClient.invalidateQueries({ queryKey: ['itens-admin'] });
-        }}
-      />
     </div>
   );
 }
