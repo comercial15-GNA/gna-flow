@@ -35,9 +35,16 @@ import {
   UserX,
   UserCheck,
   Mail,
-  Shield
+  Shield,
+  ClipboardList,
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import OPCard from '@/components/producao/OPCard';
+import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 const SETORES = [
   { value: 'administrador', label: 'Administrador' },
@@ -46,6 +53,7 @@ const SETORES = [
   { value: 'modelagem', label: 'Modelagem' },
   { value: 'suprimentos', label: 'Suprimentos' },
   { value: 'fundicao', label: 'Fundição' },
+  { value: 'acabamento', label: 'Acabamento' },
   { value: 'usinagem', label: 'Usinagem' },
   { value: 'liberacao', label: 'Liberação' },
   { value: 'expedicao', label: 'Expedição' },
@@ -70,6 +78,10 @@ export default function Administracao() {
   const [editingUser, setEditingUser] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: '', apelido: '', setor: '', ativo: true });
+  const [adminEditOP, setAdminEditOP] = useState(null);
+  const [adminEditOPOpen, setAdminEditOPOpen] = useState(false);
+  const [searchOP, setSearchOP] = useState('');
+  const [statusFilterOP, setStatusFilterOP] = useState('todos');
   
   const queryClient = useQueryClient();
 
@@ -81,6 +93,16 @@ export default function Administracao() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
+  });
+
+  const { data: ops = [] } = useQuery({
+    queryKey: ['ops-admin'],
+    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
+  });
+
+  const { data: itens = [] } = useQuery({
+    queryKey: ['itens-admin'],
+    queryFn: () => base44.entities.ItemOP.list(),
   });
 
   // Sincronizar automaticamente usuários com ResponsavelOP ao carregar
@@ -202,6 +224,21 @@ export default function Administracao() {
     });
   };
 
+  const handleAdminEditOP = (op) => {
+    setAdminEditOP(op);
+    setAdminEditOPOpen(true);
+  };
+
+  const opsFiltradas = ops.filter(op => {
+    const matchSearch = !searchOP || 
+      op.numero_op?.toLowerCase().includes(searchOP.toLowerCase()) ||
+      op.cliente?.toLowerCase().includes(searchOP.toLowerCase()) ||
+      op.equipamento_principal?.toLowerCase().includes(searchOP.toLowerCase()) ||
+      op.ordem_compra?.toLowerCase().includes(searchOP.toLowerCase());
+    const matchStatus = statusFilterOP === 'todos' || op.status === statusFilterOP;
+    return matchSearch && matchStatus;
+  });
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
@@ -216,6 +253,19 @@ export default function Administracao() {
         </div>
       </div>
 
+      <Tabs defaultValue="usuarios" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+          <TabsTrigger value="usuarios" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Usuários
+          </TabsTrigger>
+          <TabsTrigger value="ops" className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Todas as OPs
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="usuarios">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
@@ -450,6 +500,128 @@ export default function Administracao() {
           </div>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="ops">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <ClipboardList className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">{ops.length}</p>
+                  <p className="text-xs text-slate-500">Total de OPs</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">
+                    {ops.filter(op => op.status === 'em_andamento').length}
+                  </p>
+                  <p className="text-xs text-slate-500">Em Andamento</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">
+                    {ops.filter(op => op.status === 'coleta').length}
+                  </p>
+                  <p className="text-xs text-slate-500">Coleta</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">{itens.length}</p>
+                  <p className="text-xs text-slate-500">Total Itens</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar por OP, O.C, cliente ou equipamento..."
+                  value={searchOP}
+                  onChange={(e) => setSearchOP(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilterOP} onValueChange={setStatusFilterOP}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Status</SelectItem>
+                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                  <SelectItem value="coleta">Coleta</SelectItem>
+                  <SelectItem value="finalizado">Finalizado</SelectItem>
+                  <SelectItem value="cancelada">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {ops.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
+              <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma OP cadastrada</h3>
+              <p className="text-slate-500 mb-4">Crie a primeira Ordem de Produção</p>
+              <Link to={createPageUrl('CriarOP')}>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova OP
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {opsFiltradas.map((op) => (
+                <OPCard
+                  key={op.id}
+                  op={op}
+                  itens={itens}
+                  showItens={true}
+                  isAdmin={true}
+                  onAdminEdit={handleAdminEditOP}
+                  onItemUpdate={() => {
+                    queryClient.invalidateQueries({ queryKey: ['itens-admin'] });
+                    queryClient.invalidateQueries({ queryKey: ['ops-admin'] });
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <AdminEditOPDialog
+        op={adminEditOP}
+        open={adminEditOPOpen}
+        onOpenChange={setAdminEditOPOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['ops-admin'] });
+          queryClient.invalidateQueries({ queryKey: ['itens-admin'] });
+        }}
+      />
     </div>
   );
 }
