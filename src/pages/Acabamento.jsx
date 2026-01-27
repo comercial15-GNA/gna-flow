@@ -247,8 +247,8 @@ export default function Acabamento() {
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-pink-600" />
+          <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-red-600" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Acabamento</h1>
@@ -256,7 +256,7 @@ export default function Acabamento() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-pink-100 text-pink-800 px-4 py-2 rounded-full text-sm font-medium">
+          <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full text-sm font-medium">
             {itens.length} itens • {opsComItens.length} OPs
           </div>
           {itensFiltrados.length > 0 && (
@@ -376,7 +376,7 @@ export default function Acabamento() {
                             O.C: {op.ordem_compra}
                           </Badge>
                         )}
-                        <Badge className="bg-pink-600 text-white">
+                        <Badge className="bg-red-600 text-white">
                           {itensOP.length} {itensOP.length === 1 ? 'item' : 'itens'}
                         </Badge>
                       </div>
@@ -422,7 +422,7 @@ export default function Acabamento() {
                       {itensOP.map((item) => {
                         const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
                         return (
-                          <div key={item.id} className="bg-pink-50 rounded-lg border-2 border-pink-300 p-4">
+                          <div key={item.id} className="bg-red-50 rounded-lg border-2 border-red-300 p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
                                 <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
