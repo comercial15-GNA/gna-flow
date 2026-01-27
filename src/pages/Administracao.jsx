@@ -37,7 +37,8 @@ import {
   Mail,
   Shield,
   ClipboardList,
-  Plus
+  Plus,
+  Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,6 +68,7 @@ const SETOR_COLORS = {
   modelagem: 'bg-yellow-100 text-yellow-800',
   suprimentos: 'bg-orange-100 text-orange-800',
   fundicao: 'bg-red-100 text-red-800',
+  acabamento: 'bg-pink-100 text-pink-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
   expedicao: 'bg-teal-100 text-teal-800',
