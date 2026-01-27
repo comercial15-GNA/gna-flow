@@ -23,9 +23,12 @@ const ETAPA_COLORS = {
   modelagem: 'bg-yellow-100 text-yellow-800',
   suprimentos: 'bg-orange-100 text-orange-800',
   fundicao: 'bg-red-100 text-red-800',
+  acabamento: 'bg-pink-100 text-pink-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
   expedicao: 'bg-teal-100 text-teal-800',
+  coleta: 'bg-amber-100 text-amber-800',
+  suporte_industrial: 'bg-slate-100 text-slate-800',
   finalizado: 'bg-purple-100 text-purple-800'
 };
 
@@ -35,15 +38,19 @@ const ETAPA_LABELS = {
   modelagem: 'Modelagem',
   suprimentos: 'Suprimentos',
   fundicao: 'Fundição',
+  acabamento: 'Acabamento',
   usinagem: 'Usinagem',
   liberacao: 'Liberação',
   expedicao: 'Expedição',
+  coleta: 'Coleta',
+  suporte_industrial: 'Suporte Industrial',
   finalizado: 'Finalizado'
 };
 
 const STATUS_CONFIG = {
   em_andamento: { label: 'Em Andamento', color: 'bg-amber-100 text-amber-800', icon: Clock },
-  finalizada: { label: 'Finalizada', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+  coleta: { label: 'Coleta', color: 'bg-purple-100 text-purple-800', icon: Package },
+  finalizado: { label: 'Finalizado', color: 'bg-green-100 text-green-800', icon: CheckCircle },
   cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: AlertCircle }
 };
 
