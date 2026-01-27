@@ -43,6 +43,8 @@ import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 import OPProgressPanel from '@/components/producao/OPProgressPanel';
 import ItemOPActions from '@/components/producao/ItemOPActions';
+import ItensRetornados from '@/components/producao/ItensRetornados';
+import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 const ETAPAS_RETORNO = [
   { value: 'comercial', label: 'Comercial' },
@@ -112,17 +114,13 @@ export default function Liberacao() {
     try {
       const opId = selectedItem.op_id;
 
-      // Atualizar status da OP para "coleta" quando item for para expedição
-      const op = ops.find(o => o.id === opId);
-      if (op && op.status !== 'coleta') {
-        await base44.entities.OrdemProducao.update(opId, { status: 'coleta' });
-      }
-
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: 'expedicao',
         data_entrada_etapa: new Date().toISOString(),
         peso_expedicao: parseFloat(pesoExpedicao),
-        volume_expedicao: volumeExpedicao
+        volume_expedicao: volumeExpedicao,
+        retornado: false,
+        justificativa_retorno: ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -137,9 +135,11 @@ export default function Liberacao() {
         data_movimentacao: new Date().toISOString()
       });
 
+      await updateOPStatus(opId);
+      
       queryClient.invalidateQueries({ queryKey: ['itens-liberacao'] });
       queryClient.invalidateQueries({ queryKey: ['ops-all'] });
-      toast.success('Item enviado para Expedição - OP marcada como Coleta');
+      toast.success('Item enviado para Expedição');
       setExpedicaoDialogOpen(false);
     } catch (error) {
       toast.error('Erro ao enviar item');
@@ -169,7 +169,9 @@ export default function Liberacao() {
     try {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: selectedEtapa,
-        data_entrada_etapa: new Date().toISOString()
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: true,
+        justificativa_retorno: justificativa
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -185,7 +187,10 @@ export default function Liberacao() {
         data_movimentacao: new Date().toISOString()
       });
 
+      await updateOPStatus(selectedItem.op_id);
+      
       queryClient.invalidateQueries({ queryKey: ['itens-liberacao'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success(`Item retornado para ${ETAPAS_RETORNO.find(e => e.value === selectedEtapa)?.label}`);
       setRetornarDialogOpen(false);
     } catch (error) {
@@ -306,6 +311,20 @@ export default function Liberacao() {
         </div>
       </div>
 
+      <ItensRetornados
+        itens={itens}
+        onReenviar={async (item, justif) => {
+          if (!pesoExpedicao || !volumeExpedicao) {
+            toast.error('Configure peso e volume primeiro');
+            return;
+          }
+          setLoadingItem(item.id);
+          await enviarParaExpedicao();
+        }}
+        loadingItem={loadingItem}
+        etapaAtual="liberacao"
+      />
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
@@ -392,7 +411,10 @@ export default function Liberacao() {
                           <div key={item.id} className="bg-emerald-50 rounded-lg border-2 border-emerald-300 p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div>
-                                <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                  {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                                </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                               </div>
                             </div>

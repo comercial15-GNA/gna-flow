@@ -35,6 +35,7 @@ import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 import OPProgressPanel from '@/components/producao/OPProgressPanel';
 import ItemOPActions from '@/components/producao/ItemOPActions';
+import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,38 +87,34 @@ export default function Expedicao() {
     setLoadingItem(selectedItem.id);
     try {
       const opId = selectedItem.op_id;
-      
-      // Atualizar status da OP para "coleta" quando houver itens em expedição
-      const op = ops.find(o => o.id === opId);
-      if (op && op.status !== 'coleta') {
-        await base44.entities.OrdemProducao.update(opId, { status: 'coleta' });
-      }
 
-      // Excluir histórico de movimentações do item
-      const historicos = await base44.entities.HistoricoMovimentacao.filter({ item_id: selectedItem.id });
-      for (const hist of historicos) {
-        await base44.entities.HistoricoMovimentacao.delete(hist.id);
-      }
-      
-      // Excluir o item
-      await base44.entities.ItemOP.delete(selectedItem.id);
+      await base44.entities.ItemOP.update(selectedItem.id, {
+        etapa_atual: 'coleta',
+        data_entrada_etapa: new Date().toISOString(),
+        informacoes_expedicao: informacoes
+      });
 
-      // Verificar se ainda existem itens na OP
-      const itensRestantes = await base44.entities.ItemOP.filter({ op_id: opId });
-      
-      if (itensRestantes.length === 0) {
-        // Se não há mais itens, excluir a OP também
-        await base44.entities.OrdemProducao.delete(opId);
-        toast.success('Item e OP finalizados e excluídos!');
-      } else {
-        toast.success('Item finalizado e excluído!');
-      }
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: selectedItem.id,
+        op_id: selectedItem.op_id,
+        numero_op: selectedItem.numero_op,
+        descricao_item: selectedItem.descricao,
+        setor_origem: 'expedicao',
+        setor_destino: 'coleta',
+        justificativa: informacoes || '',
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.full_name || currentUser?.apelido,
+        data_movimentacao: new Date().toISOString()
+      });
+
+      await updateOPStatus(opId);
 
       queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
       queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      toast.success('Item enviado para Coleta');
       setFinalizarDialogOpen(false);
     } catch (error) {
-      toast.error('Erro ao finalizar item');
+      toast.error('Erro ao enviar item');
     } finally {
       setLoadingItem(null);
     }
@@ -139,7 +136,9 @@ export default function Expedicao() {
     try {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: 'liberacao',
-        data_entrada_etapa: new Date().toISOString()
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: true,
+        justificativa_retorno: justificativa
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -155,7 +154,10 @@ export default function Expedicao() {
         data_movimentacao: new Date().toISOString()
       });
 
+      await updateOPStatus(selectedItem.op_id);
+      
       queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success('Item retornado para Liberação');
       setRetornarDialogOpen(false);
     } catch (error) {
@@ -403,7 +405,7 @@ export default function Expedicao() {
                                 className="bg-teal-600 hover:bg-teal-700"
                               >
                                 <Check className="w-3 h-3 mr-1" />
-                                Finalizar Item
+                                Enviar p/ Coleta
                               </Button>
                               <Button
                                 size="sm"
@@ -487,8 +489,8 @@ export default function Expedicao() {
       <Dialog open={finalizarDialogOpen} onOpenChange={setFinalizarDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Finalizar Item</DialogTitle>
-            <DialogDescription>Adicione informações adicionais se necessário</DialogDescription>
+            <DialogTitle>Enviar para Coleta</DialogTitle>
+            <DialogDescription>Adicione informações da coleta</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div>
@@ -510,7 +512,7 @@ export default function Expedicao() {
               </Button>
               <Button onClick={finalizarItem} disabled={loadingItem} className="bg-teal-600 hover:bg-teal-700">
                 <Check className="w-4 h-4 mr-2" />
-                Finalizar Item
+                Enviar p/ Coleta
               </Button>
             </div>
           </div>

@@ -43,6 +43,8 @@ import { toast } from 'sonner';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
+import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
+import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,6 +54,8 @@ export default function Comercial() {
   const [editForm, setEditForm] = useState({});
   const [loadingItem, setLoadingItem] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
+  const [adminEditOP, setAdminEditOP] = useState(null);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const toggleHistorico = (itemId) => {
@@ -149,11 +153,19 @@ export default function Comercial() {
   };
 
   const enviarParaEngenharia = async (item) => {
+    const justif = prompt('Informe a justificativa para reenvio do item:');
+    if (!justif || !justif.trim()) {
+      toast.error('Justificativa é obrigatória');
+      return;
+    }
+    
     setLoadingItem(item.id);
     try {
       await base44.entities.ItemOP.update(item.id, {
         etapa_atual: 'engenharia',
-        data_entrada_etapa: new Date().toISOString()
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: false,
+        justificativa_retorno: ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -163,18 +175,27 @@ export default function Comercial() {
         descricao_item: item.descricao,
         setor_origem: 'comercial',
         setor_destino: 'engenharia',
+        justificativa: justif,
         usuario_email: currentUser?.email,
         usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
+      await updateOPStatus(item.op_id);
+
       queryClient.invalidateQueries({ queryKey: ['itens-all'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success('Item enviado para Engenharia');
     } catch (error) {
       toast.error('Erro ao enviar item');
     } finally {
       setLoadingItem(null);
     }
+  };
+
+  const handleAdminEdit = (op) => {
+    setAdminEditOP(op);
+    setAdminDialogOpen(true);
   };
 
   const getOPArquivos = (opId) => {
@@ -443,6 +464,8 @@ export default function Comercial() {
               op={op} 
               itens={itens} 
               showItens={true}
+              isAdmin={currentUser?.setor === 'administrador'}
+              onAdminEdit={handleAdminEdit}
               onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
             />
           ))}
@@ -518,6 +541,16 @@ export default function Comercial() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AdminEditOPDialog
+        op={adminEditOP}
+        open={adminDialogOpen}
+        onOpenChange={setAdminDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
+          queryClient.invalidateQueries({ queryKey: ['itens-all'] });
+        }}
+      />
     </div>
   );
 }

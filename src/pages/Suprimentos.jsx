@@ -41,6 +41,8 @@ import { toast } from 'sonner';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
+import ItensRetornados from '@/components/producao/ItensRetornados';
+import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Suprimentos() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,12 +85,14 @@ export default function Suprimentos() {
     setExpandedOPs(prev => ({ ...prev, [opId]: !prev[opId] }));
   };
 
-  const movimentarItem = async (item, novaEtapa, justif = '') => {
+  const movimentarItem = async (item, novaEtapa, justif = '', retornado = false) => {
     setLoadingItem(item.id);
     try {
       await base44.entities.ItemOP.update(item.id, {
         etapa_atual: novaEtapa,
-        data_entrada_etapa: new Date().toISOString()
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: retornado,
+        justificativa_retorno: retornado ? justif : ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -104,7 +108,10 @@ export default function Suprimentos() {
         data_movimentacao: new Date().toISOString()
       });
 
+      await updateOPStatus(item.op_id);
+      
       queryClient.invalidateQueries({ queryKey: ['itens-suprimentos'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success('Item movimentado com sucesso');
     } catch (error) {
       toast.error('Erro ao movimentar item');
@@ -127,7 +134,20 @@ export default function Suprimentos() {
       toast.error('Justificativa é obrigatória para retorno');
       return;
     }
-    movimentarItem(retornarItem, retornarDestino, justificativa);
+    movimentarItem(retornarItem, retornarDestino, justificativa, true);
+  };
+
+  const handleEnviar = async (item, destino) => {
+    if (item.retornado) {
+      const justif = prompt('Este item foi retornado. Informe a justificativa para reenvio:');
+      if (!justif || !justif.trim()) {
+        toast.error('Justificativa é obrigatória');
+        return;
+      }
+      await movimentarItem(item, destino, justif, false);
+    } else {
+      await movimentarItem(item, destino, '', false);
+    }
   };
 
   const gerarRelatorio = () => {
@@ -234,6 +254,16 @@ export default function Suprimentos() {
           )}
         </div>
       </div>
+
+      <ItensRetornados
+        itens={itensFiltrados}
+        onReenviar={async (item, justif) => {
+          setLoadingItem(item.id);
+          await movimentarItem(item, item.etapa_atual, justif, false);
+        }}
+        loadingItem={loadingItem}
+        etapaAtual="suprimentos"
+      />
 
       {/* Filtros */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
@@ -397,7 +427,10 @@ export default function Suprimentos() {
                           <div className="flex items-center gap-2 flex-1">
                             <Package className="w-4 h-4 text-slate-400" />
                             <div className="flex-1">
-                              <p className="font-semibold text-slate-800">{item.descricao}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                              </div>
                               {atrasado && (
                                 <div className="flex items-center gap-1 text-xs text-red-600 mt-1">
                                   <AlertCircle className="w-3 h-3" />
@@ -448,16 +481,7 @@ export default function Suprimentos() {
                         <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-200 mt-3">
                           <Button
                             size="sm"
-                            onClick={() => movimentarItem(item, 'usinagem')}
-                            disabled={loadingItem === item.id}
-                            className="bg-slate-800 hover:bg-slate-900"
-                          >
-                            <ArrowRight className="w-3 h-3 mr-1" />
-                            Enviar p/ Usinagem
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => movimentarItem(item, 'liberacao')}
+                            onClick={() => handleEnviar(item, 'liberacao')}
                             disabled={loadingItem === item.id}
                             className="bg-slate-800 hover:bg-slate-900"
                           >

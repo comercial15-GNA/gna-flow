@@ -39,6 +39,8 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
+import ItensRetornados from '@/components/producao/ItensRetornados';
+import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Usinagem() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,12 +83,14 @@ export default function Usinagem() {
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
-  const movimentarItem = async (item, novaEtapa, justif = '') => {
+  const movimentarItem = async (item, novaEtapa, justif = '', retornado = false) => {
     setLoadingItem(item.id);
     try {
       await base44.entities.ItemOP.update(item.id, {
         etapa_atual: novaEtapa,
-        data_entrada_etapa: new Date().toISOString()
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: retornado,
+        justificativa_retorno: retornado ? justif : ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -102,7 +106,10 @@ export default function Usinagem() {
         data_movimentacao: new Date().toISOString()
       });
 
+      await updateOPStatus(item.op_id);
+      
       queryClient.invalidateQueries({ queryKey: ['itens-usinagem'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success('Item movimentado com sucesso');
     } catch (error) {
       toast.error('Erro ao movimentar item');
@@ -125,7 +132,20 @@ export default function Usinagem() {
       toast.error('Justificativa é obrigatória para retorno');
       return;
     }
-    movimentarItem(retornarItem, retornarDestino, justificativa);
+    movimentarItem(retornarItem, retornarDestino, justificativa, true);
+  };
+
+  const handleEnviar = async (item, destino) => {
+    if (item.retornado) {
+      const justif = prompt('Este item foi retornado. Informe a justificativa para reenvio:');
+      if (!justif || !justif.trim()) {
+        toast.error('Justificativa é obrigatória');
+        return;
+      }
+      await movimentarItem(item, destino, justif, false);
+    } else {
+      await movimentarItem(item, destino, '', false);
+    }
   };
 
   const gerarRelatorio = () => {
@@ -230,6 +250,16 @@ export default function Usinagem() {
           )}
         </div>
       </div>
+
+      <ItensRetornados
+        itens={itensFiltrados}
+        onReenviar={async (item, justif) => {
+          setLoadingItem(item.id);
+          await movimentarItem(item, item.etapa_atual, justif, false);
+        }}
+        loadingItem={loadingItem}
+        etapaAtual="usinagem"
+      />
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="flex items-center gap-2 mb-4">
@@ -388,7 +418,10 @@ export default function Usinagem() {
                           <div key={item.id} className="bg-cyan-50 rounded-lg border-2 border-cyan-300 p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
-                                <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                  {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                                </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                               </div>
                             </div>
@@ -423,12 +456,30 @@ export default function Usinagem() {
                             <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => movimentarItem(item, 'liberacao')}
+                                onClick={() => handleEnviar(item, 'acabamento')}
+                                disabled={loadingItem === item.id}
+                                className="bg-slate-800 hover:bg-slate-900"
+                              >
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Enviar p/ Acabamento
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleEnviar(item, 'liberacao')}
                                 disabled={loadingItem === item.id}
                                 className="bg-slate-800 hover:bg-slate-900"
                               >
                                 <ArrowRight className="w-3 h-3 mr-1" />
                                 Enviar p/ Liberação
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleEnviar(item, 'suporte_industrial')}
+                                disabled={loadingItem === item.id}
+                                className="bg-slate-800 hover:bg-slate-900"
+                              >
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Enviar p/ Suporte Industrial
                               </Button>
                               <Button
                                 size="sm"
