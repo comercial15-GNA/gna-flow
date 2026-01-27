@@ -32,7 +32,7 @@ const SETOR_CONFIG = {
     label: 'Administrador',
     icon: Settings,
     color: 'bg-purple-500',
-    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso', 'PainelEngenharia', 'PainelModelagem', 'PainelFundicao', 'PainelAcabamento', 'PainelUsinagem', 'PainelSuprimentos', 'PainelLiberacao', 'PainelExpedicao']
+    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso']
   },
   comercial: {
     label: 'Comercial',
