@@ -112,7 +112,10 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess })
           peso: parseFloat(item.peso) || 0,
           quantidade: parseInt(item.quantidade) || 1,
           data_entrega: item.data_entrega,
-          etapa_atual: item.etapa_atual
+          etapa_atual: item.etapa_atual,
+          equipamento_principal: dadosOP.equipamento_principal,
+          cliente: dadosOP.cliente,
+          responsavel_op: dadosOP.responsavel
         });
       }
 
