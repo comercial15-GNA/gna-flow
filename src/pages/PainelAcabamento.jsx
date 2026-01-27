@@ -79,37 +79,20 @@ export default function PainelAcabamento() {
 
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-pink-500">
-              <div className="flex items-center gap-3">
-                <Package className="w-8 h-8" />
-                <div>
-                  <p className="text-3xl font-bold">{itens.length}</p>
-                  <p className="text-sm opacity-90">Total de Itens</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8" />
-                <div>
-                  <p className="text-3xl font-bold">{proximosSeteDias}</p>
-                  <p className="text-sm opacity-90">Próximos 7 Dias</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-8 h-8" />
-                <div>
-                  <p className="text-3xl font-bold">{atrasados}</p>
-                  <p className="text-sm opacity-90">Atrasados</p>
-                </div>
-              </div>
-            </div>
+            <div className="text-slate-400 text-sm">Total de Itens</div>
+            <div className="text-white text-3xl font-bold">{itens.length}</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-yellow-500">
+            <div className="text-slate-400 text-sm">Entregas Próximas (7 dias)</div>
+            <div className="text-white text-3xl font-bold">{proximosSeteDias}</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-red-500">
+            <div className="text-slate-400 text-sm">Atrasados</div>
+            <div className="text-white text-3xl font-bold">{atrasados}</div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="bg-slate-800 rounded-xl overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-700">
               <tr className="text-left text-slate-300 text-sm font-semibold uppercase tracking-wider">
