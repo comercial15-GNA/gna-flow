@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Clock, Package, Truck } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,59 +45,56 @@ export default function PainelExpedicao() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-teal-500 to-teal-700">
+      <div className="flex items-center justify-center min-h-screen bg-slate-900">
         <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-500 to-teal-700 p-6 text-white">
+    <div className="min-h-screen bg-slate-900 p-6 text-white">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-5xl font-bold tracking-tight">EXPEDIÇÃO</h1>
+        <div className="bg-slate-800 rounded-xl p-6 mb-6 border-b-4 border-teal-500">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-teal-500 rounded-xl flex items-center justify-center">
+                <Truck className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-bold tracking-tight">EXPEDIÇÃO</h1>
+                <p className="text-teal-400 text-lg">Próximas 30 Ordens de Produção</p>
+              </div>
+            </div>
             <div className="text-right">
-              <p className="text-3xl font-bold">{format(currentTime, 'HH:mm:ss')}</p>
-              <p className="text-lg opacity-90">{format(currentTime, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <Truck className="w-8 h-8" />
-                <div>
-                  <p className="text-3xl font-bold">{itens.length}</p>
-                  <p className="text-sm opacity-90">Total de Itens</p>
-                </div>
+              <div className="text-white text-2xl font-mono">
+                {format(currentTime, 'HH:mm:ss')}
               </div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8" />
-                <div>
-                  <p className="text-3xl font-bold">{proximosSeteDias}</p>
-                  <p className="text-sm opacity-90">Próximos 7 Dias</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-8 h-8" />
-                <div>
-                  <p className="text-3xl font-bold">{atrasados}</p>
-                  <p className="text-sm opacity-90">Atrasados</p>
-                </div>
+              <div className="text-slate-400 text-sm">
+                {format(currentTime, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-teal-500">
+              <div className="text-slate-400 text-sm">Total de Itens</div>
+              <div className="text-white text-3xl font-bold">{itens.length}</div>
+            </div>
+          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-yellow-500">
+              <div className="text-slate-400 text-sm">Entregas Próximas (7 dias)</div>
+              <div className="text-white text-3xl font-bold">{proximosSeteDias}</div>
+            </div>
+          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-red-500">
+              <div className="text-slate-400 text-sm">Atrasados</div>
+              <div className="text-white text-3xl font-bold">{atrasados}</div>
+            </div>
+          </div>
+
+        <div className="bg-slate-800 rounded-xl overflow-hidden">
           <table className="w-full">
-            <thead>
-              <tr className="bg-white/20 border-b border-white/20">
+            <thead className="bg-slate-700">
+              <tr className="text-left text-slate-300 text-sm font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4 text-left font-bold">OP</th>
                 <th className="px-6 py-4 text-left font-bold">DESCRIÇÃO</th>
                 <th className="px-6 py-4 text-left font-bold">CLIENTE</th>
@@ -107,47 +105,72 @@ export default function PainelExpedicao() {
                 <th className="px-6 py-4 text-left font-bold">STATUS</th>
               </tr>
             </thead>
-            <tbody>
-              {itens.map((item, idx) => {
-                const atrasado = isAtrasado(item.data_entrega);
-                return (
-                  <tr 
-                    key={item.id} 
-                    className={`border-b border-white/10 hover:bg-white/5 transition-colors ${
-                      atrasado ? 'bg-red-500/30' : idx % 2 === 0 ? 'bg-white/5' : ''
-                    }`}
-                  >
-                    <td className="px-6 py-4 font-mono font-bold">{item.numero_op}</td>
-                    <td className="px-6 py-4">
-                      <div className="max-w-xs">
-                        <p className="font-medium truncate">{item.descricao}</p>
-                        {item.codigo_ga && <p className="text-sm opacity-75">Cód: {item.codigo_ga}</p>}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">{item.cliente}</td>
-                    <td className="px-6 py-4 font-bold">{item.quantidade}</td>
-                    <td className="px-6 py-4">{item.peso_expedicao ? `${item.peso_expedicao} kg` : '-'}</td>
-                    <td className="px-6 py-4">{item.volume_expedicao || '-'}</td>
-                    <td className="px-6 py-4">
-                      {item.data_entrega ? (
-                        <span className={atrasado ? 'font-bold text-red-200' : 'font-medium'}>
-                          {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {atrasado ? (
-                        <div className="flex items-center gap-2 text-red-200 font-bold">
-                          <AlertTriangle className="w-5 h-5 animate-pulse" />
-                          ATRASADO
+            <tbody className="divide-y divide-slate-700">
+              {itens.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-12 text-slate-400">
+                    Nenhum item na fila
+                  </td>
+                </tr>
+              ) : (
+                itens.map((item, idx) => {
+                  const atrasado = isAtrasado(item.data_entrega);
+                  return (
+                    <tr 
+                      key={item.id} 
+                      className={`hover:bg-slate-700 transition-colors ${
+                        atrasado ? 'bg-red-900/20' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-4">
+                        <div className="font-mono text-teal-400 font-bold text-lg">
+                          {item.numero_op}
                         </div>
-                      ) : (
-                        <span className="text-green-200 font-medium">No Prazo</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className={`text-white ${atrasado ? 'font-bold' : ''}`}>
+                          {item.descricao}
+                        </div>
+                        {item.codigo_ga && (
+                          <div className="text-slate-400 text-sm">
+                            Cód: {item.codigo_ga}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-white">{item.cliente}</td>
+                      <td className="px-4 py-4 font-bold text-white">{item.quantidade}</td>
+                      <td className="px-4 py-4 text-slate-300">{item.peso_expedicao ? `${item.peso_expedicao} kg` : '-'}</td>
+                      <td className="px-4 py-4 text-slate-300">{item.volume_expedicao || '-'}</td>
+                      <td className="px-4 py-4">
+                        {item.data_entrega ? (
+                          <div className={atrasado ? 'text-red-400 font-bold' : 'text-white'}>
+                            <div className="flex items-center gap-2">
+                              {atrasado && <AlertTriangle className="w-4 h-4" />}
+                              {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
+                            </div>
+                            <div className="text-xs text-slate-400">
+                              {format(new Date(item.data_entrega), 'EEEE', { locale: ptBR })}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        {atrasado ? (
+                          <Badge className="bg-red-600 text-white font-bold animate-pulse">
+                            ATRASADO
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-teal-600 text-white">
+                            NO PRAZO
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
