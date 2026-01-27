@@ -44,6 +44,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OPCard from '@/components/producao/OPCard';
 import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
+import PermissoesTab from '@/components/admin/PermissoesTab';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -281,10 +282,14 @@ export default function Administracao() {
       </div>
 
       <Tabs defaultValue="usuarios" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-6">
           <TabsTrigger value="usuarios" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Usuários
+          </TabsTrigger>
+          <TabsTrigger value="permissoes" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Permissões
           </TabsTrigger>
           <TabsTrigger value="ops" className="flex items-center gap-2">
             <ClipboardList className="w-4 h-4" />
@@ -573,6 +578,10 @@ export default function Administracao() {
           </div>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="permissoes">
+          <PermissoesTab users={users} queryClient={queryClient} updateUserMutation={updateUserMutation} />
         </TabsContent>
 
         <TabsContent value="ops">

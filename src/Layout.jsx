@@ -203,10 +203,22 @@ export default function Layout({ children, currentPageName }) {
   const setorConfig = SETOR_CONFIG[userSetor];
   const SetorIcon = setorConfig?.icon || Settings;
 
+  // Filtrar itens de navegação baseado em setor E páginas permitidas
   const visibleNavItems = NAV_ITEMS.filter(item => {
-    if (item.setor) return userSetor === item.setor;
-    if (item.setores) return item.setores.includes(userSetor);
-    return false;
+    // Verificar se usuário tem acesso ao setor
+    let hasSetorAccess = false;
+    if (item.setor) hasSetorAccess = userSetor === item.setor;
+    if (item.setores) hasSetorAccess = item.setores.includes(userSetor);
+    
+    if (!hasSetorAccess) return false;
+    
+    // Se usuário tem allowed_pages definido, verificar se a página está na lista
+    if (user.allowed_pages && Array.isArray(user.allowed_pages)) {
+      return user.allowed_pages.includes(item.name);
+    }
+    
+    // Se não tem allowed_pages ou está vazio, mostrar todas do setor (comportamento padrão)
+    return true;
   });
 
   // Verificar se é uma página de painel (tela cheia)
