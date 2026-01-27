@@ -14,6 +14,9 @@ import PainelModelagem from './pages/PainelModelagem';
 import PainelUsinagem from './pages/PainelUsinagem';
 import Suprimentos from './pages/Suprimentos';
 import Usinagem from './pages/Usinagem';
+import Acabamento from './pages/Acabamento';
+import Coleta from './pages/Coleta';
+import SuporteIndustrial from './pages/SuporteIndustrial';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +37,9 @@ export const PAGES = {
     "PainelUsinagem": PainelUsinagem,
     "Suprimentos": Suprimentos,
     "Usinagem": Usinagem,
+    "Acabamento": Acabamento,
+    "Coleta": Coleta,
+    "SuporteIndustrial": SuporteIndustrial,
 }
 
 export const pagesConfig = {
