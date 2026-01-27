@@ -55,15 +55,15 @@ export default function PainelAcabamento() {
     <div className="min-h-screen bg-slate-900 p-6 text-white">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-slate-800 rounded-xl p-6 mb-6 border-b-4 border-pink-500">
+        <div className="bg-slate-800 rounded-xl p-6 mb-6 border-b-4 border-red-500">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-pink-500 rounded-xl flex items-center justify-center">
+              <div className="w-16 h-16 bg-red-500 rounded-xl flex items-center justify-center">
                 <Package className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h1 className="text-5xl font-bold tracking-tight">ACABAMENTO</h1>
-                <p className="text-pink-400 text-lg">Próximas 30 Ordens de Produção</p>
+                <p className="text-red-400 text-lg">Próximas 30 Ordens de Produção</p>
               </div>
             </div>
             <div className="text-right">
@@ -78,7 +78,7 @@ export default function PainelAcabamento() {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-pink-500">
+          <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-red-500">
             <div className="text-slate-400 text-sm">Total de Itens</div>
             <div className="text-white text-3xl font-bold">{itens.length}</div>
           </div>
@@ -124,7 +124,7 @@ export default function PainelAcabamento() {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="font-mono text-pink-400 font-bold text-lg">
+                        <div className="font-mono text-red-400 font-bold text-lg">
                           {item.numero_op}
                         </div>
                       </td>
@@ -163,7 +163,7 @@ export default function PainelAcabamento() {
                             ATRASADO
                           </Badge>
                         ) : (
-                          <Badge className="bg-pink-600 text-white">
+                          <Badge className="bg-red-600 text-white">
                             NO PRAZO
                           </Badge>
                         )}

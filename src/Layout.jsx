@@ -67,7 +67,7 @@ const SETOR_CONFIG = {
   acabamento: {
     label: 'Acabamento',
     icon: Sparkles,
-    color: 'bg-pink-500',
+    color: 'bg-red-500',
     pages: ['Acabamento', 'Coleta', 'PainelAcabamento']
   },
   usinagem: {
