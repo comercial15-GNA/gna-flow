@@ -82,6 +82,10 @@ export default function Administracao() {
   const [adminEditOPOpen, setAdminEditOPOpen] = useState(false);
   const [searchOP, setSearchOP] = useState('');
   const [statusFilterOP, setStatusFilterOP] = useState('todos');
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('user');
+  const [inviting, setInviting] = useState(false);
   
   const queryClient = useQueryClient();
 
@@ -224,6 +228,27 @@ export default function Administracao() {
     });
   };
 
+  const handleInviteUser = async () => {
+    if (!inviteEmail.trim()) {
+      toast.error('Email é obrigatório');
+      return;
+    }
+    
+    setInviting(true);
+    try {
+      await base44.users.inviteUser(inviteEmail, inviteRole);
+      toast.success(`Convite enviado para ${inviteEmail}`);
+      setInviteDialogOpen(false);
+      setInviteEmail('');
+      setInviteRole('user');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    } catch (error) {
+      toast.error('Erro ao enviar convite');
+    } finally {
+      setInviting(false);
+    }
+  };
+
   const handleAdminEditOP = (op) => {
     setAdminEditOP(op);
     setAdminEditOPOpen(true);
@@ -330,10 +355,10 @@ export default function Administracao() {
               className="pl-10"
             />
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Mail className="w-4 h-4" />
-            <span>Para adicionar novos usuários, use "Convidar Usuários" no menu do Base44</span>
-          </div>
+          <Button onClick={() => setInviteDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700">
+            <Mail className="w-4 h-4 mr-2" />
+            Convidar Usuário
+          </Button>
         </div>
       </div>
 
@@ -495,6 +520,52 @@ export default function Administracao() {
               </Button>
               <Button onClick={handleSaveEdit} disabled={updateUserMutation.isPending}>
                 {updateUserMutation.isPending ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar Novo Usuário</DialogTitle>
+            <DialogDescription>
+              Envie um convite por email para um novo usuário
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="usuario@exemplo.com"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Função no Sistema</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 mt-1">
+                Após aceitar o convite, você pode configurar o setor do usuário
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleInviteUser} disabled={inviting}>
+                {inviting ? 'Enviando...' : 'Enviar Convite'}
               </Button>
             </div>
           </div>
