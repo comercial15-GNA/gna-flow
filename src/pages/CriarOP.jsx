@@ -229,7 +229,7 @@ export default function CriarOP() {
         equipamento_principal: formData.equipamento_principal,
         cliente: formData.cliente,
         responsavel: formData.responsavel,
-        responsavel_user_id: usuarioSelecionado?.id || null,
+        responsavel_user_id: usuarioSelecionado?.user_id || null,
         arquivos: formData.arquivos,
         status: 'em_andamento',
         data_lancamento: dataLancamento

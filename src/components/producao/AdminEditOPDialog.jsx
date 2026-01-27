@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Upload, X, FileText, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess }) {
@@ -63,7 +63,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess })
       descricao: '',
       codigo_ga: '',
       observacao: '',
-      peso: 0,
+      peso: '',
       quantidade: 1,
       data_entrega: '',
       etapa_atual: 'engenharia',
@@ -121,18 +121,20 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess })
 
       // Criar novos itens
       for (const item of itensNovos) {
+        if (!item.descricao || !item.quantidade) continue;
+        
         await base44.entities.ItemOP.create({
           op_id: op.id,
-          numero_op: op.numero_op,
+          numero_op: dadosOP.numero_op,
           equipamento_principal: dadosOP.equipamento_principal,
           cliente: dadosOP.cliente,
           responsavel_op: dadosOP.responsavel,
           descricao: item.descricao,
-          codigo_ga: item.codigo_ga,
-          observacao: item.observacao,
-          peso: parseFloat(item.peso) || 0,
+          codigo_ga: item.codigo_ga || '',
+          observacao: item.observacao || '',
+          peso: parseFloat(item.peso) || null,
           quantidade: parseInt(item.quantidade) || 1,
-          data_entrega: item.data_entrega,
+          data_entrega: item.data_entrega || null,
           etapa_atual: item.etapa_atual || 'engenharia',
           data_entrada_etapa: new Date().toISOString()
         });
@@ -142,6 +144,8 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess })
       queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
       queryClient.invalidateQueries({ queryKey: ['itens-all'] });
       queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-admin'] });
       toast.success('OP atualizada com sucesso');
       onSuccess?.();
       onOpenChange(false);
@@ -241,10 +245,13 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess })
           </TabsContent>
 
           <TabsContent value="itens" className="space-y-4">
-            <Button onClick={adicionarItem} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Item
-            </Button>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600">{itens.length} {itens.length === 1 ? 'item' : 'itens'} na OP</p>
+              <Button onClick={adicionarItem} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Item
+              </Button>
+            </div>
 
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {itens.map((item, idx) => (
@@ -385,12 +392,22 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess })
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvarMutation.isPending}>
             Cancelar
           </Button>
-          <Button onClick={() => salvarMutation.mutate()} disabled={salvarMutation.isPending}>
-            {salvarMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+          <Button onClick={() => salvarMutation.mutate()} disabled={salvarMutation.isPending} className="bg-purple-600 hover:bg-purple-700">
+            {salvarMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Salvar Alterações
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>
