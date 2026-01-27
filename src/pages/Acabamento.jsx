@@ -1,57 +1,94 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Filter, ChevronDown, ChevronUp, FileDown, AlertTriangle, Package } from 'lucide-react';
-import { format, isBefore, startOfDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Sparkles, 
+  Search,
+  Package,
+  ArrowRight,
+  RotateCcw,
+  FileText,
+  ExternalLink,
+  FileSpreadsheet,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Filter,
+  X
+} from 'lucide-react';
 import { toast } from 'sonner';
-import ItemOPActions from '../components/producao/ItemOPActions';
-import ItensRetornados from '../components/producao/ItensRetornados';
-import { updateOPStatus } from '../components/producao/UpdateOPStatus';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import ItemOPActions from '@/components/producao/ItemOPActions';
+import ItensRetornados from '@/components/producao/ItensRetornados';
+import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Acabamento() {
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [filtroCliente, setFiltroCliente] = useState('todos');
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
   const [filtroData, setFiltroData] = useState('');
-  const [mostrarAtrasados, setMostrarAtrasados] = useState(false);
-  const [opsExpandidas, setOpsExpandidas] = useState({});
-  const [dialogRetorno, setDialogRetorno] = useState({ aberto: false, item: null });
-  const [justificativa, setJustificativa] = useState('');
+  const [filtroAtrasados, setFiltroAtrasados] = useState(false);
   const [loadingItem, setLoadingItem] = useState(null);
-
+  const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
+  const [retornarItem, setRetornarItem] = useState(null);
+  const [justificativa, setJustificativa] = useState('');
+  const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
 
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+  const toggleOP = (opId) => {
+    setExpandedOPs(prev => ({ ...prev, [opId]: !prev[opId] }));
+  };
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
   });
 
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-acabamento'],
-    queryFn: () => base44.entities.ItemOP.filter({ etapa_atual: 'acabamento' })
+    queryFn: async () => {
+      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'acabamento' });
+      return items.sort((a, b) => {
+        if (!a.data_entrega) return 1;
+        if (!b.data_entrega) return -1;
+        return new Date(a.data_entrega) - new Date(b.data_entrega);
+      });
+    }
   });
 
   const { data: ops = [] } = useQuery({
     queryKey: ['ops-all'],
-    queryFn: () => base44.entities.OrdemProducao.list()
+    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
-  const movimentarMutation = useMutation({
-    mutationFn: async ({ item, novaEtapa, justificativa, retornado }) => {
+  const movimentarItem = async (item, novaEtapa, justif = '') => {
+    setLoadingItem(item.id);
+    try {
       await base44.entities.ItemOP.update(item.id, {
         etapa_atual: novaEtapa,
         data_entrada_etapa: new Date().toISOString(),
-        retornado: retornado || false,
-        justificativa_retorno: retornado ? justificativa : ''
+        retornado: false,
+        justificativa_retorno: ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -61,336 +98,442 @@ export default function Acabamento() {
         descricao_item: item.descricao,
         setor_origem: 'acabamento',
         setor_destino: novaEtapa,
-        justificativa: justificativa || '',
-        usuario_email: user?.email,
-        usuario_nome: user?.full_name || user?.apelido,
+        justificativa: justif,
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
       await updateOPStatus(item.op_id);
-    },
-    onSuccess: () => {
+      
       queryClient.invalidateQueries({ queryKey: ['itens-acabamento'] });
       queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success('Item movimentado com sucesso');
-      setDialogRetorno({ aberto: false, item: null });
-      setJustificativa('');
-      setLoadingItem(null);
-    },
-    onError: () => {
+    } catch (error) {
       toast.error('Erro ao movimentar item');
+    } finally {
       setLoadingItem(null);
-    }
-  });
-
-  const handleEnviar = async (item, destino) => {
-    setLoadingItem(item.id);
-    if (item.retornado) {
-      const justif = prompt('Este item foi retornado. Informe a justificativa para reenvio:');
-      if (!justif || !justif.trim()) {
-        toast.error('Justificativa é obrigatória');
-        setLoadingItem(null);
-        return;
-      }
-      await movimentarMutation.mutateAsync({ item, novaEtapa: destino, justificativa: justif, retornado: false });
-    } else {
-      await movimentarMutation.mutateAsync({ item, novaEtapa: destino, justificativa: '', retornado: false });
+      setRetornarDialogOpen(false);
+      setJustificativa('');
     }
   };
 
   const handleRetornar = (item) => {
-    setDialogRetorno({ aberto: true, item });
+    setRetornarItem(item);
     setJustificativa('');
+    setRetornarDialogOpen(true);
   };
 
   const confirmarRetorno = async () => {
     if (!justificativa.trim()) {
-      toast.error('Justificativa é obrigatória');
+      toast.error('Justificativa é obrigatória para retorno');
       return;
     }
-    setLoadingItem(dialogRetorno.item.id);
-    await movimentarMutation.mutateAsync({
-      item: dialogRetorno.item,
-      novaEtapa: 'fundicao',
-      justificativa,
-      retornado: true
-    });
-  };
-
-  const handleReenviarRetornado = async (item, justif) => {
-    setLoadingItem(item.id);
-    await movimentarMutation.mutateAsync({
-      item,
-      novaEtapa: 'acabamento',
-      justificativa: justif,
-      retornado: false
-    });
-  };
-
-  const isAtrasado = (dataEntrega) => {
-    if (!dataEntrega) return false;
-    return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
-  };
-
-  const itensFiltrados = itens.filter(item => {
-    const matchSearch = search === '' || 
-      item.descricao?.toLowerCase().includes(search.toLowerCase()) ||
-      item.numero_op?.toLowerCase().includes(search.toLowerCase()) ||
-      item.codigo_ga?.toLowerCase().includes(search.toLowerCase());
     
-    const matchCliente = filtroCliente === 'todos' || item.cliente === filtroCliente;
-    const matchResponsavel = filtroResponsavel === 'todos' || item.responsavel_op === filtroResponsavel;
-    const matchData = !filtroData || item.data_entrega === filtroData;
-    const matchAtrasado = !mostrarAtrasados || isAtrasado(item.data_entrega);
-    
-    return matchSearch && matchCliente && matchResponsavel && matchData && matchAtrasado;
-  });
+    setLoadingItem(retornarItem.id);
+    try {
+      await base44.entities.ItemOP.update(retornarItem.id, {
+        etapa_atual: 'fundicao',
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: true,
+        justificativa_retorno: justificativa
+      });
 
-  const opsComItens = ops
-    .map(op => ({
-      ...op,
-      itens: itensFiltrados.filter(item => item.op_id === op.id)
-    }))
-    .filter(op => op.itens.length > 0)
-    .sort((a, b) => {
-      const dataA = Math.min(...a.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity));
-      const dataB = Math.min(...b.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity));
-      return dataA - dataB;
-    });
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: retornarItem.id,
+        op_id: retornarItem.op_id,
+        numero_op: retornarItem.numero_op,
+        descricao_item: retornarItem.descricao,
+        setor_origem: 'acabamento',
+        setor_destino: 'fundicao',
+        justificativa: justificativa,
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
 
-  const clientes = [...new Set(itens.map(i => i.cliente).filter(Boolean))];
-  const responsaveis = [...new Set(itens.map(i => i.responsavel_op).filter(Boolean))];
+      await updateOPStatus(retornarItem.op_id);
+      
+      queryClient.invalidateQueries({ queryKey: ['itens-acabamento'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      toast.success('Item retornado para Fundição');
+      setRetornarDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao retornar item');
+    } finally {
+      setLoadingItem(null);
+      setJustificativa('');
+    }
+  };
 
   const gerarRelatorio = () => {
-    const headers = ['OP', 'Cliente', 'Equipamento', 'Item', 'Código GA', 'Quantidade', 'Peso', 'Data Entrega', 'Responsável', 'Observação'];
-    const linhas = itensFiltrados.map(item => [
-      item.numero_op,
-      item.cliente,
-      item.equipamento_principal,
-      item.descricao,
-      item.codigo_ga || '',
-      item.quantidade,
-      item.peso || '',
-      item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '',
-      item.responsavel_op,
-      item.observacao || ''
-    ]);
+    const dados = itensFiltrados.map(item => ({
+      'OP': item.numero_op,
+      'O.C': getOP(item.op_id)?.ordem_compra || '-',
+      'Equipamento': item.equipamento_principal || '-',
+      'Descrição': item.descricao,
+      'Observação': item.observacao || '-',
+      'Código GA': item.codigo_ga || '-',
+      'Peso (kg)': item.peso || '-',
+      'Quantidade': item.quantidade,
+      'Cliente': item.cliente,
+      'Responsável': item.responsavel_op || '-',
+      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
+    }));
 
-    const csv = [headers, ...linhas].map(linha => linha.join(';')).join('\n');
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    if (dados.length === 0) {
+      toast.error('Nenhum dado para exportar');
+      return;
+    }
+
+    const headers = Object.keys(dados[0]).join(';');
+    const rows = dados.map(row => Object.values(row).join(';')).join('\n');
+    const csv = `${headers}\n${rows}`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `relatorio_acabamento_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
     link.click();
+    toast.success('Relatório gerado');
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-800"></div>
-      </div>
-    );
-  }
+  const getOP = (opId) => ops.find(o => o.id === opId);
+
+  const clientesUnicos = [...new Set(itens.map(i => i.cliente))].filter(Boolean).sort();
+  const responsaveisUnicos = [...new Set(itens.map(i => i.responsavel_op))].filter(Boolean).sort();
+
+  const itensFiltrados = itens.filter(item => {
+    const matchSearch = !searchTerm || 
+      item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchCliente = filtroCliente === 'todos' || item.cliente === filtroCliente;
+    const matchResponsavel = filtroResponsavel === 'todos' || item.responsavel_op === filtroResponsavel;
+    const matchData = !filtroData || 
+      (item.data_entrega && new Date(item.data_entrega).toISOString().split('T')[0] === filtroData);
+    const matchAtrasado = !filtroAtrasados || 
+      (item.data_entrega && new Date(item.data_entrega) < new Date());
+    
+    return matchSearch && matchCliente && matchResponsavel && matchData && matchAtrasado;
+  });
+
+  const opsComItens = ops.filter(op => {
+    const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
+    return itensOP.length > 0;
+  }).map(op => {
+    const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
+    return { op, itens: itensOP };
+  }).sort((a, b) => {
+    const dataA = a.itens.length > 0 ? Math.min(...a.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    const dataB = b.itens.length > 0 ? Math.min(...b.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    return dataA - dataB;
+  });
+
+  const limparFiltros = () => {
+    setSearchTerm('');
+    setFiltroCliente('todos');
+    setFiltroResponsavel('todos');
+    setFiltroData('');
+    setFiltroAtrasados(false);
+  };
+
+  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">Acabamento</h1>
-            <p className="text-slate-600">Gerencie itens na etapa de acabamento</p>
+    <div className="max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-pink-600" />
           </div>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="text-lg px-4 py-2">
-              <Package className="w-4 h-4 mr-2" />
-              {itensFiltrados.length} itens
-            </Badge>
-            <Button onClick={gerarRelatorio} variant="outline">
-              <FileDown className="w-4 h-4 mr-2" />
-              Exportar CSV
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Acabamento</h1>
+            <p className="text-slate-500">Itens em processo de acabamento</p>
           </div>
         </div>
-
-        <ItensRetornados
-          itens={itensFiltrados}
-          onReenviar={handleReenviarRetornado}
-          loadingItem={loadingItem}
-          etapaAtual="acabamento"
-        />
-
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-slate-600" />
-            <h3 className="font-semibold text-slate-800">Filtros</h3>
+        <div className="flex items-center gap-3">
+          <div className="bg-pink-100 text-pink-800 px-4 py-2 rounded-full text-sm font-medium">
+            {itens.length} itens • {opsComItens.length} OPs
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Input
-              placeholder="Buscar por OP, item ou código..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            
-            <Select value={filtroCliente} onValueChange={setFiltroCliente}>
-              <SelectTrigger>
-                <SelectValue placeholder="Cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os clientes</SelectItem>
-                {clientes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-
-            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-              <SelectTrigger>
-                <SelectValue placeholder="Responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos responsáveis</SelectItem>
-                {responsaveis.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="date"
-              value={filtroData}
-              onChange={(e) => setFiltroData(e.target.value)}
-            />
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="atrasados"
-                checked={mostrarAtrasados}
-                onCheckedChange={setMostrarAtrasados}
-              />
-              <label htmlFor="atrasados" className="text-sm cursor-pointer">
-                Apenas atrasados
-              </label>
-            </div>
-          </div>
-        </Card>
-
-        <div className="space-y-4">
-          {opsComItens.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Package className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-              <p className="text-slate-600">Nenhum item encontrado</p>
-            </Card>
-          ) : (
-            opsComItens.map(op => (
-              <Card key={op.id} className="p-6">
-                <div
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setOpsExpandidas({...opsExpandidas, [op.id]: !opsExpandidas[op.id]})}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-slate-800">{op.numero_op}</h3>
-                      <Badge className="bg-pink-500">{op.itens.length} itens</Badge>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-slate-600">Cliente:</span>
-                        <span className="ml-2 font-medium">{op.cliente}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-600">Equipamento:</span>
-                        <span className="ml-2 font-medium">{op.equipamento_principal}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-600">Responsável:</span>
-                        <span className="ml-2 font-medium">{op.responsavel}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {opsExpandidas[op.id] ? <ChevronUp /> : <ChevronDown />}
-                </div>
-
-                {opsExpandidas[op.id] && (
-                  <div className="mt-6 space-y-4">
-                    {op.itens.map(item => (
-                      <div key={item.id} className="border-l-4 border-pink-500 pl-4 py-3 bg-slate-50 rounded">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="font-semibold text-slate-800">{item.descricao}</h4>
-                              {item.retornado && <Badge variant="destructive">Retornado</Badge>}
-                              {isAtrasado(item.data_entrega) && (
-                                <Badge variant="destructive" className="animate-pulse">
-                                  <AlertTriangle className="w-3 h-3 mr-1" />
-                                  Atrasado
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="grid grid-cols-4 gap-3 text-sm text-slate-600">
-                              {item.codigo_ga && <div>Código: {item.codigo_ga}</div>}
-                              <div>Qtd: {item.quantidade}</div>
-                              {item.peso && <div>Peso: {item.peso} kg</div>}
-                              {item.data_entrega && (
-                                <div>Entrega: {format(new Date(item.data_entrega), 'dd/MM/yyyy')}</div>
-                              )}
-                            </div>
-                            <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries()} />
-                          </div>
-                          <div className="flex gap-2">
-                            <Select onValueChange={(value) => handleEnviar(item, value)}>
-                              <SelectTrigger className="w-40">
-                                <SelectValue placeholder="Enviar para..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="usinagem">Usinagem</SelectItem>
-                                <SelectItem value="liberacao">Liberação</SelectItem>
-                                <SelectItem value="suporte_industrial">Suporte Industrial</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleRetornar(item)}
-                              disabled={loadingItem === item.id}
-                            >
-                              Retornar
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            ))
+          {itensFiltrados.length > 0 && (
+            <Button onClick={gerarRelatorio} variant="outline">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Relatório
+            </Button>
           )}
         </div>
       </div>
 
-      <Dialog open={dialogRetorno.aberto} onOpenChange={(open) => setDialogRetorno({ aberto: open, item: null })}>
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="w-4 h-4 text-slate-600" />
+          <span className="font-medium text-slate-700">Filtros</span>
+          {temFiltrosAtivos && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="ml-auto">
+              <X className="w-4 h-4 mr-1" />
+              Limpar
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="md:col-span-2">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative mt-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="OP, descrição, código..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Cliente</Label>
+            <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {clientesUnicos.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Responsável</Label>
+            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {responsaveisUnicos.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Data Entrega</Label>
+            <Input
+              type="date"
+              value={filtroData}
+              onChange={(e) => setFiltroData(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="checkbox"
+            id="atrasados"
+            checked={filtroAtrasados}
+            onChange={(e) => setFiltroAtrasados(e.target.checked)}
+            className="rounded"
+          />
+          <label htmlFor="atrasados" className="text-sm text-slate-700 cursor-pointer flex items-center gap-1">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            Mostrar apenas atrasados
+          </label>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+        </div>
+      ) : opsComItens.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
+          <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma OP encontrada</h3>
+          <p className="text-slate-500">Ajuste os filtros ou aguarde novos itens</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {opsComItens.map(({ op, itens: itensOP }) => {
+            const isExpanded = expandedOPs[op.id];
+            const arquivos = op.arquivos || [];
+            
+            return (
+              <div key={op.id} className="bg-white rounded-xl border-2 border-pink-200 shadow-sm overflow-hidden">
+                <button
+                  onClick={() => toggleOP(op.id)}
+                  className="w-full bg-pink-50 border-b border-pink-200 p-4 hover:bg-pink-100 transition-colors text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                        {op.ordem_compra && (
+                          <Badge variant="outline" className="text-blue-700 border-blue-300">
+                            O.C: {op.ordem_compra}
+                          </Badge>
+                        )}
+                        <Badge className="bg-pink-600 text-white">
+                          {itensOP.length} {itensOP.length === 1 ? 'item' : 'itens'}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-600">
+                        <div><strong>Cliente:</strong> {op.cliente}</div>
+                        <div><strong>Equipamento:</strong> {op.equipamento_principal}</div>
+                        {op.responsavel && <div><strong>Responsável:</strong> {op.responsavel}</div>}
+                        {op.data_lancamento && (
+                          <div><strong>Lançamento:</strong> {format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-600" /> : <ChevronDown className="w-5 h-5 text-slate-600" />}
+                    </div>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="p-4">
+                    {arquivos.length > 0 && (
+                      <div className="mb-4 pb-4 border-b border-slate-200">
+                        <p className="text-sm font-medium text-slate-700 mb-2">Arquivos da OP:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {arquivos.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded text-sm text-blue-600 hover:bg-slate-200"
+                            >
+                              <FileText className="w-4 h-4" />
+                              Arquivo {idx + 1}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      {itensOP.map((item) => {
+                        const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+                        return (
+                          <div key={item.id} className="bg-pink-50 rounded-lg border-2 border-pink-300 p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
+                              </div>
+                            </div>
+
+                            <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-acabamento'] })} />
+
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-sm">
+                              <div className="text-slate-600">
+                                <span className="font-medium">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}
+                              </div>
+                              <div className="text-slate-600">
+                                <span className="font-medium">Qtd:</span> {item.quantidade}
+                              </div>
+                              <div className="text-slate-600">
+                                <span className="font-medium">Entrega:</span>{' '}
+                                {item.data_entrega ? (
+                                  <span className={isAtrasado ? 'text-red-600 font-semibold' : ''}>
+                                    {format(new Date(item.data_entrega), 'dd/MM/yy')}
+                                    {isAtrasado && <AlertTriangle className="w-3 h-3 inline ml-1" />}
+                                  </span>
+                                ) : '-'}
+                              </div>
+                              <div className="text-slate-600">
+                                <span className="font-medium">Entrada:</span>{' '}
+                                {item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM HH:mm') : '-'}
+                              </div>
+                              <div className="text-slate-600">
+                                <span className="font-medium">Responsável:</span> {item.responsavel_op || '-'}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => movimentarItem(item, 'usinagem')}
+                                disabled={loadingItem === item.id}
+                                className="bg-slate-800 hover:bg-slate-900"
+                              >
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Enviar p/ Usinagem
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => movimentarItem(item, 'liberacao')}
+                                disabled={loadingItem === item.id}
+                                className="bg-slate-800 hover:bg-slate-900"
+                              >
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Enviar p/ Liberação
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => movimentarItem(item, 'suporte_industrial')}
+                                disabled={loadingItem === item.id}
+                                className="bg-slate-800 hover:bg-slate-900"
+                              >
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Enviar p/ Suporte Industrial
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRetornar(item)}
+                                disabled={loadingItem === item.id}
+                                className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                              >
+                                <RotateCcw className="w-3 h-3 mr-1" />
+                                Retornar p/ Fundição
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Retornar Item para Fundição</DialogTitle>
+            <DialogTitle>Retornar Item</DialogTitle>
+            <DialogDescription>Informe a justificativa do retorno</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-slate-50 p-3 rounded">
-              <p className="font-semibold">{dialogRetorno.item?.descricao}</p>
-              <p className="text-sm text-slate-600">OP: {dialogRetorno.item?.numero_op}</p>
-            </div>
+          <div className="space-y-4 pt-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Justificativa (obrigatória) *</label>
+              <Label>Justificativa *</Label>
               <Textarea
                 value={justificativa}
                 onChange={(e) => setJustificativa(e.target.value)}
                 placeholder="Descreva o motivo do retorno..."
+                className="mt-1"
                 rows={4}
               />
             </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarRetorno} className="bg-amber-600 hover:bg-amber-700">
+                Confirmar Retorno
+              </Button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogRetorno({ aberto: false, item: null })}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarRetorno} disabled={movimentarMutation.isPending}>
-              {movimentarMutation.isPending ? 'Retornando...' : 'Confirmar Retorno'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
