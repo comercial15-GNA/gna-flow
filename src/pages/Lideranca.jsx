@@ -37,6 +37,7 @@ const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os Status' },
   { value: 'em_andamento', label: 'Em Andamento' },
   { value: 'coleta', label: 'Coleta' },
+  { value: 'finalizado', label: 'Finalizado' },
 ];
 
 const ETAPA_OPTIONS = [
@@ -50,8 +51,8 @@ const ETAPA_OPTIONS = [
   { value: 'usinagem', label: 'Usinagem' },
   { value: 'liberacao', label: 'Liberação' },
   { value: 'expedicao', label: 'Expedição' },
-  { value: 'coleta', label: 'Coleta' },
   { value: 'suporte_industrial', label: 'Suporte Industrial' },
+  { value: 'coleta', label: 'Coleta' },
   { value: 'finalizado', label: 'Finalizado' },
 ];
 
@@ -65,8 +66,8 @@ const ETAPA_COLORS = {
   usinagem: 'bg-cyan-100 text-cyan-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
   expedicao: 'bg-teal-100 text-teal-800',
-  coleta: 'bg-amber-100 text-amber-800',
-  suporte_industrial: 'bg-slate-100 text-slate-800',
+  suporte_industrial: 'bg-indigo-100 text-indigo-800',
+  coleta: 'bg-violet-100 text-violet-800',
   finalizado: 'bg-purple-100 text-purple-800'
 };
 
@@ -80,8 +81,8 @@ const ETAPA_LABELS = {
   usinagem: 'Usinagem',
   liberacao: 'Liberação',
   expedicao: 'Expedição',
-  coleta: 'Coleta',
   suporte_industrial: 'Suporte Industrial',
+  coleta: 'Coleta',
   finalizado: 'Finalizado'
 };
 
@@ -185,6 +186,7 @@ export default function Lideranca() {
     totalOPs: ops.length,
     emAndamento: ops.filter(op => op.status === 'em_andamento').length,
     coleta: ops.filter(op => op.status === 'coleta').length,
+    finalizado: ops.filter(op => op.status === 'finalizado').length,
     totalItens: itens.length,
     responsaveis: responsaveisUnicos.length
   };
@@ -216,7 +218,7 @@ export default function Lideranca() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -262,6 +264,17 @@ export default function Lideranca() {
           </div>
         </div>
 
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-800">{stats.finalizado}</p>
+              <p className="text-xs text-slate-500">Finalizadas</p>
+            </div>
+          </div>
+        </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -415,8 +428,13 @@ export default function Lideranca() {
                                   O.C: {op.ordem_compra}
                                 </Badge>
                               )}
-                              <Badge className={op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}>
-                                {op.status === 'em_andamento' ? 'Em Andamento' : 'Coleta'}
+                              <Badge className={
+                                op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 
+                                op.status === 'coleta' ? 'bg-purple-100 text-purple-800' :
+                                'bg-emerald-100 text-emerald-800'
+                              }>
+                                {op.status === 'em_andamento' ? 'Em Andamento' : 
+                                 op.status === 'coleta' ? 'Coleta' : 'Finalizado'}
                               </Badge>
                             </div>
                             <p className="text-sm text-slate-600">{op.equipamento_principal} • {op.cliente}</p>

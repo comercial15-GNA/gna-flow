@@ -34,28 +34,31 @@ import {
   Save,
   History,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import OPCard from '@/components/producao/OPCard';
+import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
 import { toast } from 'sonner';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
-import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
-import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('em_andamento');
   const [editingItem, setEditingItem] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
+  const [itemReenviar, setItemReenviar] = useState(null);
+  const [justificativaReenvio, setJustificativaReenvio] = useState('');
   const [editForm, setEditForm] = useState({});
   const [loadingItem, setLoadingItem] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
-  const [adminEditOP, setAdminEditOP] = useState(null);
-  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [editingOP, setEditingOP] = useState(null);
+  const [adminEditDialogOpen, setAdminEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const toggleHistorico = (itemId) => {
@@ -152,40 +155,43 @@ export default function Comercial() {
     }
   };
 
-  const enviarParaEngenharia = async (item) => {
-    const justif = prompt('Informe a justificativa para reenvio do item:');
-    if (!justif || !justif.trim()) {
-      toast.error('Justificativa é obrigatória');
+  const abrirDialogReenviar = (item) => {
+    setItemReenviar(item);
+    setJustificativaReenvio('');
+    setReenviarDialogOpen(true);
+  };
+
+  const enviarParaEngenharia = async () => {
+    if (!justificativaReenvio.trim()) {
+      toast.error('Justificativa é obrigatória para reenvio');
       return;
     }
-    
-    setLoadingItem(item.id);
+
+    setLoadingItem(itemReenviar.id);
     try {
-      await base44.entities.ItemOP.update(item.id, {
+      await base44.entities.ItemOP.update(itemReenviar.id, {
         etapa_atual: 'engenharia',
         data_entrada_etapa: new Date().toISOString(),
-        retornado: false,
-        justificativa_retorno: ''
+        retornado: true,
+        justificativa_retorno: justificativaReenvio
       });
 
       await base44.entities.HistoricoMovimentacao.create({
-        item_id: item.id,
-        op_id: item.op_id,
-        numero_op: item.numero_op,
-        descricao_item: item.descricao,
+        item_id: itemReenviar.id,
+        op_id: itemReenviar.op_id,
+        numero_op: itemReenviar.numero_op,
+        descricao_item: itemReenviar.descricao,
         setor_origem: 'comercial',
         setor_destino: 'engenharia',
-        justificativa: justif,
+        justificativa: justificativaReenvio,
         usuario_email: currentUser?.email,
         usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
-      await updateOPStatus(item.op_id);
-
       queryClient.invalidateQueries({ queryKey: ['itens-all'] });
-      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       toast.success('Item enviado para Engenharia');
+      setReenviarDialogOpen(false);
     } catch (error) {
       toast.error('Erro ao enviar item');
     } finally {
@@ -193,14 +199,14 @@ export default function Comercial() {
     }
   };
 
-  const handleAdminEdit = (op) => {
-    setAdminEditOP(op);
-    setAdminDialogOpen(true);
-  };
-
   const getOPArquivos = (opId) => {
     const op = ops.find(o => o.id === opId);
     return op?.arquivos || [];
+  };
+
+  const handleAdminEditOP = (op) => {
+    setEditingOP(op);
+    setAdminEditDialogOpen(true);
   };
 
   return (
@@ -223,7 +229,7 @@ export default function Comercial() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -258,6 +264,19 @@ export default function Comercial() {
                 {opsVisiveis.filter(op => op.status === 'coleta').length}
               </p>
               <p className="text-xs text-slate-500">Coleta</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-800">
+                {opsVisiveis.filter(op => op.status === 'finalizado').length}
+              </p>
+              <p className="text-xs text-slate-500">Finalizadas</p>
             </div>
           </div>
         </div>
@@ -396,15 +415,15 @@ export default function Comercial() {
                   )}
 
                   <div className="flex flex-wrap gap-2 pt-3 border-t border-amber-200">
-                    <Button
-                      size="sm"
-                      onClick={() => enviarParaEngenharia(item)}
-                      disabled={loadingItem === item.id}
-                      className="bg-slate-800 hover:bg-slate-900"
-                    >
-                      <ArrowRight className="w-3 h-3 mr-1" />
-                      Enviar p/ Engenharia
-                    </Button>
+                  <Button
+                  size="sm"
+                  onClick={() => abrirDialogReenviar(item)}
+                  disabled={loadingItem === item.id}
+                  className="bg-slate-800 hover:bg-slate-900"
+                  >
+                  <ArrowRight className="w-3 h-3 mr-1" />
+                  Enviar p/ Engenharia
+                  </Button>
                   </div>
                 </div>
               );
@@ -434,6 +453,7 @@ export default function Comercial() {
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
                 <SelectItem value="coleta">Coleta</SelectItem>
+                <SelectItem value="finalizado">Finalizadas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -464,13 +484,57 @@ export default function Comercial() {
               op={op} 
               itens={itens} 
               showItens={true}
-              isAdmin={currentUser?.setor === 'administrador'}
-              onAdminEdit={handleAdminEdit}
               onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
+              isAdmin={currentUser?.setor === 'administrador'}
+              onAdminEdit={() => handleAdminEditOP(op)}
             />
           ))}
         </div>
       )}
+
+      {/* Dialog Admin Edit OP */}
+      {currentUser?.setor === 'administrador' && (
+        <AdminEditOPDialog
+          op={editingOP}
+          open={adminEditDialogOpen}
+          onOpenChange={setAdminEditDialogOpen}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
+            queryClient.invalidateQueries({ queryKey: ['itens-all'] });
+          }}
+        />
+      )}
+
+      {/* Dialog Reenviar Item */}
+      <Dialog open={reenviarDialogOpen} onOpenChange={setReenviarDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reenviar Item para Engenharia</DialogTitle>
+            <DialogDescription>Informe a justificativa do reenvio após revisão</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>Justificativa *</Label>
+              <Textarea
+                value={justificativaReenvio}
+                onChange={(e) => setJustificativaReenvio(e.target.value)}
+                placeholder="Descreva as correções realizadas..."
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setReenviarDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={enviarParaEngenharia} disabled={loadingItem} className="bg-slate-800 hover:bg-slate-900">
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Enviar para Engenharia
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog Editar Item */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -541,16 +605,6 @@ export default function Comercial() {
           </div>
         </DialogContent>
       </Dialog>
-
-      <AdminEditOPDialog
-        op={adminEditOP}
-        open={adminDialogOpen}
-        onOpenChange={setAdminDialogOpen}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
-          queryClient.invalidateQueries({ queryKey: ['itens-all'] });
-        }}
-      />
     </div>
   );
 }
