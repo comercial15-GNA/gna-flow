@@ -81,13 +81,10 @@ export default function CriarOP() {
     sincronizarResponsaveis();
   }, [todosUsers]);
 
-  // Buscar responsáveis ativos (visível para todos)
+  // Buscar responsáveis ativos
   const { data: usuarios = [] } = useQuery({
     queryKey: ['responsaveis-op'],
-    queryFn: async () => {
-      const responsaveis = await base44.entities.ResponsavelOP.filter({ ativo: true });
-      return responsaveis;
-    }
+    queryFn: () => base44.entities.ResponsavelOP.filter({ ativo: true })
   });
 
   const { data: sequencias = [] } = useQuery({

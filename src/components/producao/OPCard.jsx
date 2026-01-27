@@ -11,7 +11,8 @@ import {
   ExternalLink,
   Package,
   Edit2,
-  History
+  History,
+  Settings
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,22 +21,27 @@ import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
 const STATUS_CONFIG = {
   em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
-  finalizada: { label: 'Finalizada', color: 'bg-green-100 text-green-800' },
+  coleta: { label: 'Coleta', color: 'bg-yellow-100 text-yellow-800' },
+  finalizado: { label: 'Finalizado', color: 'bg-green-100 text-green-800' },
   cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
 };
 
 const ETAPA_COLORS = {
+  comercial: 'bg-blue-100 text-blue-800',
   engenharia: 'bg-green-100 text-green-800',
   modelagem: 'bg-yellow-100 text-yellow-800',
   suprimentos: 'bg-orange-100 text-orange-800',
   fundicao: 'bg-red-100 text-red-800',
+  acabamento: 'bg-pink-100 text-pink-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
   expedicao: 'bg-teal-100 text-teal-800',
+  coleta: 'bg-amber-100 text-amber-800',
+  suporte_industrial: 'bg-slate-100 text-slate-800',
   finalizado: 'bg-purple-100 text-purple-800'
 };
 
-export default function OPCard({ op, itens = [], showItens = false, onItemUpdate }) {
+export default function OPCard({ op, itens = [], showItens = false, onItemUpdate, isAdmin = false, onAdminEdit }) {
   const [expanded, setExpanded] = useState(false);
   const [editingObservacao, setEditingObservacao] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
@@ -71,9 +77,24 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
               <p className="text-sm text-slate-500">{op.equipamento_principal}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm">
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </Button>
+          <div className="flex gap-2">
+            {isAdmin && onAdminEdit && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdminEdit(op);
+                }}
+                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="sm">
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-4 mt-3 text-sm">

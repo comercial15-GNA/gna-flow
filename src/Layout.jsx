@@ -17,23 +17,28 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  BarChart3,
+  Hammer
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+const { Package, Hammer } = require('lucide-react');
 
 const SETOR_CONFIG = {
   administrador: {
     label: 'Administrador',
     icon: Settings,
     color: 'bg-purple-500',
-    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Usinagem', 'Liberacao', 'Expedicao', 'Lideranca']
+    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso']
   },
   comercial: {
     label: 'Comercial',
     icon: ClipboardList,
     color: 'bg-blue-500',
-    pages: ['CriarOP', 'Comercial']
+    pages: ['CriarOP', 'Comercial', 'RelatoriosPeso']
   },
   engenharia: {
     label: 'Engenharia',
@@ -59,6 +64,12 @@ const SETOR_CONFIG = {
     color: 'bg-red-500',
     pages: ['Fundicao']
   },
+  acabamento: {
+    label: 'Acabamento',
+    icon: Sparkles,
+    color: 'bg-pink-500',
+    pages: ['Acabamento', 'Coleta']
+  },
   usinagem: {
     label: 'Usinagem',
     icon: Wrench,
@@ -69,19 +80,19 @@ const SETOR_CONFIG = {
     label: 'Liberação',
     icon: CheckCircle,
     color: 'bg-emerald-500',
-    pages: ['Liberacao']
+    pages: ['Liberacao', 'Coleta', 'SuporteIndustrial']
   },
   expedicao: {
     label: 'Expedição',
     icon: Truck,
     color: 'bg-teal-500',
-    pages: ['Expedicao']
+    pages: ['Expedicao', 'Coleta']
   },
   lideranca: {
     label: 'Liderança',
     icon: Users,
     color: 'bg-indigo-500',
-    pages: ['Lideranca']
+    pages: ['Lideranca', 'SuporteIndustrial']
   }
 };
 
@@ -89,13 +100,17 @@ const NAV_ITEMS = [
   { name: 'Administracao', label: 'Administração', icon: Settings, setor: 'administrador' },
   { name: 'CriarOP', label: 'Criar OP', icon: ClipboardList, setores: ['administrador', 'comercial'] },
   { name: 'Comercial', label: 'Comercial', icon: ClipboardList, setores: ['administrador', 'comercial'] },
+  { name: 'RelatoriosPeso', label: 'Relatórios', icon: BarChart3, setores: ['administrador', 'comercial'] },
   { name: 'Engenharia', label: 'Engenharia', icon: Cog, setores: ['administrador', 'engenharia'] },
   { name: 'Modelagem', label: 'Modelagem', icon: Box, setores: ['administrador', 'modelagem'] },
   { name: 'Suprimentos', label: 'Suprimentos', icon: Truck, setores: ['administrador', 'suprimentos'] },
   { name: 'Fundicao', label: 'Fundição', icon: Flame, setores: ['administrador', 'fundicao'] },
+  { name: 'Acabamento', label: 'Acabamento', icon: Sparkles, setores: ['administrador', 'acabamento'] },
   { name: 'Usinagem', label: 'Usinagem', icon: Wrench, setores: ['administrador', 'usinagem'] },
   { name: 'Liberacao', label: 'Liberação', icon: CheckCircle, setores: ['administrador', 'liberacao'] },
   { name: 'Expedicao', label: 'Expedição', icon: Truck, setores: ['administrador', 'expedicao'] },
+  { name: 'Coleta', label: 'Coleta', icon: Package, setores: ['administrador', 'expedicao', 'liberacao', 'acabamento'] },
+  { name: 'SuporteIndustrial', label: 'Suporte Industrial', icon: Hammer, setores: ['administrador', 'lideranca', 'liberacao'] },
   { name: 'Lideranca', label: 'Liderança', icon: LayoutDashboard, setores: ['administrador', 'lideranca'] },
 ];
 
