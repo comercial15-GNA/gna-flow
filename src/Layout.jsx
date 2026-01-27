@@ -32,7 +32,7 @@ const SETOR_CONFIG = {
     label: 'Administrador',
     icon: Settings,
     color: 'bg-purple-500',
-    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso']
+    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso', 'PainelEngenharia', 'PainelModelagem', 'PainelFundicao', 'PainelAcabamento', 'PainelUsinagem', 'PainelSuprimentos', 'PainelLiberacao', 'PainelExpedicao']
   },
   comercial: {
     label: 'Comercial',
@@ -44,49 +44,49 @@ const SETOR_CONFIG = {
     label: 'Engenharia',
     icon: Cog,
     color: 'bg-green-500',
-    pages: ['Engenharia']
+    pages: ['Engenharia', 'PainelEngenharia']
   },
   modelagem: {
     label: 'Modelagem',
     icon: Box,
     color: 'bg-yellow-500',
-    pages: ['Modelagem']
+    pages: ['Modelagem', 'PainelModelagem']
   },
   suprimentos: {
     label: 'Suprimentos',
     icon: Truck,
     color: 'bg-orange-500',
-    pages: ['Suprimentos']
+    pages: ['Suprimentos', 'PainelSuprimentos']
   },
   fundicao: {
     label: 'Fundição',
     icon: Flame,
     color: 'bg-red-500',
-    pages: ['Fundicao']
+    pages: ['Fundicao', 'PainelFundicao']
   },
   acabamento: {
     label: 'Acabamento',
     icon: Sparkles,
     color: 'bg-pink-500',
-    pages: ['Acabamento', 'Coleta']
+    pages: ['Acabamento', 'Coleta', 'PainelAcabamento']
   },
   usinagem: {
     label: 'Usinagem',
     icon: Wrench,
     color: 'bg-cyan-500',
-    pages: ['Usinagem']
+    pages: ['Usinagem', 'PainelUsinagem']
   },
   liberacao: {
     label: 'Liberação',
     icon: CheckCircle,
     color: 'bg-emerald-500',
-    pages: ['Liberacao', 'Coleta', 'SuporteIndustrial']
+    pages: ['Liberacao', 'Coleta', 'SuporteIndustrial', 'PainelLiberacao']
   },
   expedicao: {
     label: 'Expedição',
     icon: Truck,
     color: 'bg-teal-500',
-    pages: ['Expedicao', 'Coleta']
+    pages: ['Expedicao', 'Coleta', 'PainelExpedicao']
   },
   lideranca: {
     label: 'Liderança',

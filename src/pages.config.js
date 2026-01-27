@@ -19,6 +19,9 @@ import Coleta from './pages/Coleta';
 import SuporteIndustrial from './pages/SuporteIndustrial';
 import RelatoriosPeso from './pages/RelatoriosPeso';
 import PainelAcabamento from './pages/PainelAcabamento';
+import PainelSuprimentos from './pages/PainelSuprimentos';
+import PainelLiberacao from './pages/PainelLiberacao';
+import PainelExpedicao from './pages/PainelExpedicao';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +47,9 @@ export const PAGES = {
     "SuporteIndustrial": SuporteIndustrial,
     "RelatoriosPeso": RelatoriosPeso,
     "PainelAcabamento": PainelAcabamento,
+    "PainelSuprimentos": PainelSuprimentos,
+    "PainelLiberacao": PainelLiberacao,
+    "PainelExpedicao": PainelExpedicao,
 }
 
 export const pagesConfig = {
