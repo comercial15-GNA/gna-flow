@@ -14,9 +14,13 @@ const ETAPA_COLORS = {
   modelagem: 'bg-yellow-100 text-yellow-800',
   suprimentos: 'bg-orange-100 text-orange-800',
   fundicao: 'bg-red-100 text-red-800',
+  acabamento: 'bg-pink-100 text-pink-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
-  expedicao: 'bg-teal-100 text-teal-800'
+  expedicao: 'bg-teal-100 text-teal-800',
+  coleta: 'bg-amber-100 text-amber-800',
+  suporte_industrial: 'bg-slate-100 text-slate-800',
+  finalizado: 'bg-purple-100 text-purple-800'
 };
 
 const ETAPA_LABELS = {
@@ -25,9 +29,13 @@ const ETAPA_LABELS = {
   modelagem: 'Modelagem',
   suprimentos: 'Suprimentos',
   fundicao: 'Fundição',
+  acabamento: 'Acabamento',
   usinagem: 'Usinagem',
   liberacao: 'Liberação',
-  expedicao: 'Expedição'
+  expedicao: 'Expedição',
+  coleta: 'Coleta',
+  suporte_industrial: 'Suporte Industrial',
+  finalizado: 'Finalizado'
 };
 
 const ETAPAS_ORDEM = [
@@ -36,9 +44,13 @@ const ETAPAS_ORDEM = [
   'modelagem',
   'suprimentos',
   'fundicao',
+  'acabamento',
   'usinagem',
   'liberacao',
-  'expedicao'
+  'expedicao',
+  'coleta',
+  'suporte_industrial',
+  'finalizado'
 ];
 
 export default function OPProgressPanel({ op, itens }) {
@@ -52,7 +64,7 @@ export default function OPProgressPanel({ op, itens }) {
 
   // Calcular progresso geral
   const totalItens = itens.length;
-  const etapasMaisAvancadas = ['liberacao', 'expedicao'];
+  const etapasMaisAvancadas = ['liberacao', 'expedicao', 'coleta', 'finalizado'];
   const itensAvancados = itens.filter(i => etapasMaisAvancadas.includes(i.etapa_atual)).length;
   const progressoGeral = Math.round((itensAvancados / totalItens) * 100);
 
@@ -71,9 +83,13 @@ export default function OPProgressPanel({ op, itens }) {
         <div className="text-right">
           <Badge className={cn(
             "mb-2",
-            op.status === 'em_andamento' ? 'bg-blue-500 text-white' : 'bg-teal-500 text-white'
+            op.status === 'em_andamento' ? 'bg-blue-500 text-white' : 
+            op.status === 'coleta' ? 'bg-amber-500 text-white' :
+            op.status === 'finalizado' ? 'bg-purple-500 text-white' : 'bg-slate-500 text-white'
           )}>
-            {op.status === 'em_andamento' ? 'Em Andamento' : 'Coleta'}
+            {op.status === 'em_andamento' ? 'Em Andamento' : 
+             op.status === 'coleta' ? 'Coleta' :
+             op.status === 'finalizado' ? 'Finalizado' : op.status}
           </Badge>
           <div className="text-sm text-slate-500">
             <Package className="w-4 h-4 inline mr-1" />

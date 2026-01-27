@@ -11,6 +11,7 @@ const SETOR_REDIRECT = {
   modelagem: 'Modelagem',
   suprimentos: 'Suprimentos',
   fundicao: 'Fundicao',
+  acabamento: 'Acabamento',
   usinagem: 'Usinagem',
   liberacao: 'Liberacao',
   expedicao: 'Expedicao',
