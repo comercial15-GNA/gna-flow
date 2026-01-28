@@ -212,12 +212,12 @@ export default function Layout({ children, currentPageName }) {
     
     if (!hasSetorAccess) return false;
     
-    // Se usuário tem allowed_pages definido, verificar se a página está na lista
-    if (user.allowed_pages && Array.isArray(user.allowed_pages)) {
+    // Se usuário tem allowed_pages definido e não está vazio, verificar se a página está na lista
+    if (user.allowed_pages && Array.isArray(user.allowed_pages) && user.allowed_pages.length > 0) {
       return user.allowed_pages.includes(item.name);
     }
-    
-    // Se não tem allowed_pages ou está vazio, mostrar todas do setor (comportamento padrão)
+
+    // Se não tem allowed_pages, está vazio ou é null, mostrar todas do setor (comportamento padrão)
     return true;
   });
 

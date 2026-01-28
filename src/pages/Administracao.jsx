@@ -244,7 +244,7 @@ export default function Administracao() {
   const handleSavePermissions = () => {
     updateUserMutation.mutate({
       id: editingUser.id,
-      data: { allowed_pages: selectedPages }
+      data: { allowed_pages: selectedPages.length > 0 ? selectedPages : null }
     });
   };
 
