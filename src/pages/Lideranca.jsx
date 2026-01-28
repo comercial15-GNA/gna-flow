@@ -172,7 +172,7 @@ export default function Lideranca() {
 
     const headers = Object.keys(dados[0]).join(';');
     const rows = dados.map(row => Object.values(row).join(';')).join('\n');
-    const csv = `${headers}\n${rows}`;
+    const csv = `\uFEFF${headers}\n${rows}`;
     
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
