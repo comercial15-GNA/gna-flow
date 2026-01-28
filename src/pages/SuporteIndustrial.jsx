@@ -401,20 +401,20 @@ export default function SuporteIndustrial() {
                       </TableCell>
                       <TableCell className="text-sm">{item.codigo_ga || '-'}</TableCell>
                       <TableCell>
-                        {item.categoria_suporte ? (
-                          <Badge className={getCategoriaColor(item.categoria_suporte)}>
-                            {getCategoriaLabel(item.categoria_suporte)}
-                          </Badge>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => abrirDialogCategoria(item)}
-                            className="text-xs"
-                          >
-                            Categorizar
-                          </Button>
-                        )}
+                        <Button
+                          size="sm"
+                          variant={item.categoria_suporte ? "ghost" : "outline"}
+                          onClick={() => abrirDialogCategoria(item)}
+                          className="text-xs"
+                        >
+                          {item.categoria_suporte ? (
+                            <Badge className={getCategoriaColor(item.categoria_suporte)}>
+                              {getCategoriaLabel(item.categoria_suporte)}
+                            </Badge>
+                          ) : (
+                            'Categorizar'
+                          )}
+                        </Button>
                       </TableCell>
                       <TableCell className="text-center">{item.quantidade}</TableCell>
                       <TableCell>
