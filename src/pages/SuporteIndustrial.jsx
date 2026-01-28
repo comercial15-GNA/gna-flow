@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -20,14 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { 
   Hammer, 
   Search,
@@ -36,13 +29,21 @@ import {
   FileSpreadsheet,
   Filter,
   X,
-  ArrowUpDown,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  User,
+  FileText,
+  Clock,
+  Weight,
+  Hash,
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import ItemOPActions from '@/components/producao/ItemOPActions';
 
 export default function SuporteIndustrial() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +56,7 @@ export default function SuporteIndustrial() {
   const [justificativa, setJustificativa] = useState('');
   const [etapaDestino, setEtapaDestino] = useState('');
   const [novaCategoria, setNovaCategoria] = useState('');
-  const [ordenacao, setOrdenacao] = useState({ campo: 'data_entrega', direcao: 'asc' });
+  const [expandedItems, setExpandedItems] = useState({});
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -79,6 +80,26 @@ export default function SuporteIndustrial() {
     queryKey: ['ops-all'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
+
+  const { data: historicos = [] } = useQuery({
+    queryKey: ['historico-movimentacao'],
+    queryFn: () => base44.entities.HistoricoMovimentacao.list('-data_movimentacao'),
+  });
+
+  const toggleExpand = (itemId) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  const getHistoricoItem = (itemId) => {
+    return historicos.filter(h => h.item_id === itemId);
+  };
+
+  const getOPData = (opId) => {
+    return ops.find(op => op.id === opId);
+  };
 
   const abrirDialogCategoria = (item) => {
     setSelectedItem(item);
@@ -226,31 +247,6 @@ export default function SuporteIndustrial() {
     return matchSearch && matchCategoria && matchCliente;
   });
 
-  const itensOrdenados = [...itensFiltrados].sort((a, b) => {
-    const { campo, direcao } = ordenacao;
-    let valorA = a[campo];
-    let valorB = b[campo];
-
-    if (campo === 'data_entrega') {
-      valorA = valorA ? new Date(valorA).getTime() : Infinity;
-      valorB = valorB ? new Date(valorB).getTime() : Infinity;
-    }
-
-    if (valorA === null || valorA === undefined) return 1;
-    if (valorB === null || valorB === undefined) return -1;
-
-    if (valorA < valorB) return direcao === 'asc' ? -1 : 1;
-    if (valorA > valorB) return direcao === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const toggleOrdenacao = (campo) => {
-    setOrdenacao(prev => ({
-      campo,
-      direcao: prev.campo === campo && prev.direcao === 'asc' ? 'desc' : 'asc'
-    }));
-  };
-
   const limparFiltros = () => {
     setSearchTerm('');
     setFiltroCategoria('todos');
@@ -352,81 +348,77 @@ export default function SuporteIndustrial() {
           <p className="text-slate-500">Ajuste os filtros ou aguarde novos itens</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="cursor-pointer" onClick={() => toggleOrdenacao('numero_op')}>
-                    <div className="flex items-center gap-1">
-                      OP <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => toggleOrdenacao('cliente')}>
-                    <div className="flex items-center gap-1">
-                      Cliente <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Código GA</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => toggleOrdenacao('categoria_suporte')}>
-                    <div className="flex items-center gap-1">
-                      Categoria <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-center">Qtd</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => toggleOrdenacao('data_entrega')}>
-                    <div className="flex items-center gap-1">
-                      Entrega <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {itensOrdenados.map((item) => {
-                  const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.numero_op}</TableCell>
-                      <TableCell>{item.cliente}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-sm">{item.descricao}</p>
-                          {item.observacao && (
-                            <p className="text-xs text-slate-500">{item.observacao}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{item.codigo_ga || '-'}</TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant={item.categoria_suporte ? "ghost" : "outline"}
-                          onClick={() => abrirDialogCategoria(item)}
-                          className="text-xs"
-                        >
-                          {item.categoria_suporte ? (
+        <div className="space-y-4">
+          {itensFiltrados.map((item) => {
+            const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+            const isExpanded = expandedItems[item.id];
+            const opData = getOPData(item.op_id);
+            const historicoItem = getHistoricoItem(item.id);
+            
+            return (
+              <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <CardContent className="p-0">
+                  {/* Header do Card */}
+                  <div className="p-4 bg-slate-50 border-b border-slate-200">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="font-mono">
+                            {item.numero_op}
+                          </Badge>
+                          {item.categoria_suporte && (
                             <Badge className={getCategoriaColor(item.categoria_suporte)}>
                               {getCategoriaLabel(item.categoria_suporte)}
                             </Badge>
-                          ) : (
-                            'Categorizar'
                           )}
-                        </Button>
-                      </TableCell>
-                      <TableCell className="text-center">{item.quantidade}</TableCell>
-                      <TableCell>
-                        {item.data_entrega ? (
-                          <span className={isAtrasado ? 'text-red-600 font-semibold flex items-center gap-1' : ''}>
-                            {format(new Date(item.data_entrega), 'dd/MM/yy')}
-                            {isAtrasado && <AlertTriangle className="w-3 h-3" />}
+                          {isAtrasado && (
+                            <Badge className="bg-red-100 text-red-700 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Atrasado
+                            </Badge>
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-lg text-slate-800 mb-1">
+                          {item.descricao}
+                        </h3>
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                          <span className="flex items-center gap-1">
+                            <User className="w-4 h-4" />
+                            {item.cliente}
                           </span>
-                        ) : '-'}
-                      </TableCell>
-                      <TableCell className="text-sm">{item.responsavel_op || '-'}</TableCell>
-                      <TableCell className="text-right">
+                          <span className="flex items-center gap-1">
+                            <Package className="w-4 h-4" />
+                            {item.equipamento_principal}
+                          </span>
+                          {item.data_entrega && (
+                            <span className={`flex items-center gap-1 ${isAtrasado ? 'text-red-600 font-semibold' : ''}`}>
+                              <Calendar className="w-4 h-4" />
+                              {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!item.categoria_suporte && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => abrirDialogCategoria(item)}
+                            className="text-xs"
+                          >
+                            Categorizar
+                          </Button>
+                        )}
+                        {item.categoria_suporte && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => abrirDialogCategoria(item)}
+                            className="text-xs"
+                          >
+                            Editar Categoria
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -437,13 +429,203 @@ export default function SuporteIndustrial() {
                           <RotateCcw className="w-3 h-3 mr-1" />
                           Retornar
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleExpand(item.id)}
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detalhes Expandidos */}
+                  {isExpanded && (
+                    <div className="p-4 space-y-4">
+                      {/* Informações do Item */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Detalhes do Item
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 rounded-lg p-4">
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">Código GA</p>
+                            <p className="font-medium text-slate-800">{item.codigo_ga || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">Quantidade</p>
+                            <p className="font-medium text-slate-800 flex items-center gap-1">
+                              <Hash className="w-3 h-3" />
+                              {item.quantidade} un
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">Peso</p>
+                            <p className="font-medium text-slate-800 flex items-center gap-1">
+                              <Weight className="w-3 h-3" />
+                              {item.peso ? `${item.peso} kg` : '-'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">Responsável OP</p>
+                            <p className="font-medium text-slate-800">{item.responsavel_op || '-'}</p>
+                          </div>
+                          {item.peso_expedicao && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Peso Expedição</p>
+                              <p className="font-medium text-slate-800">{item.peso_expedicao} kg</p>
+                            </div>
+                          )}
+                          {item.volume_expedicao && (
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Volume Expedição</p>
+                              <p className="font-medium text-slate-800">{item.volume_expedicao}</p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">Entrada na Etapa</p>
+                            <p className="font-medium text-slate-800 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yy HH:mm') : '-'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {item.observacao && (
+                          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p className="text-xs text-amber-700 mb-1 flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3" />
+                              Observação
+                            </p>
+                            <p className="text-sm text-slate-700">{item.observacao}</p>
+                          </div>
+                        )}
+
+                        {item.informacoes_expedicao && (
+                          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-xs text-blue-700 mb-1">Informações de Expedição</p>
+                            <p className="text-sm text-slate-700">{item.informacoes_expedicao}</p>
+                          </div>
+                        )}
+
+                        {item.retornado && item.justificativa_retorno && (
+                          <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="text-xs text-red-700 mb-1 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Item Retornado - Justificativa
+                            </p>
+                            <p className="text-sm text-slate-700">{item.justificativa_retorno}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Informações da OP */}
+                      {opData && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                            <Package className="w-4 h-4" />
+                            Dados da Ordem de Produção
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-blue-50 rounded-lg p-4">
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Número OP</p>
+                              <p className="font-medium text-slate-800">{opData.numero_op}</p>
+                            </div>
+                            {opData.ordem_compra && (
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">Ordem de Compra</p>
+                                <p className="font-medium text-slate-800">{opData.ordem_compra}</p>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Status</p>
+                              <Badge variant={opData.status === 'finalizado' ? 'default' : 'secondary'}>
+                                {opData.status === 'em_andamento' ? 'Em Andamento' : 
+                                 opData.status === 'coleta' ? 'Coleta' : 
+                                 opData.status === 'finalizado' ? 'Finalizado' : 
+                                 opData.status === 'cancelada' ? 'Cancelada' : opData.status}
+                              </Badge>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">Data Lançamento</p>
+                              <p className="font-medium text-slate-800">
+                                {opData.data_lancamento ? format(new Date(opData.data_lancamento), 'dd/MM/yyyy HH:mm') : '-'}
+                              </p>
+                            </div>
+                            {opData.arquivos && opData.arquivos.length > 0 && (
+                              <div className="col-span-full">
+                                <p className="text-xs text-slate-500 mb-2">Arquivos Anexos</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {opData.arquivos.map((url, idx) => (
+                                    <a
+                                      key={idx}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                    >
+                                      <FileText className="w-3 h-3" />
+                                      Arquivo {idx + 1}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Histórico de Movimentação */}
+                      {historicoItem.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            Histórico de Movimentação
+                          </h4>
+                          <div className="space-y-2">
+                            {historicoItem.map((hist) => (
+                              <div key={hist.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Badge variant="outline" className="text-xs">
+                                      {hist.setor_origem}
+                                    </Badge>
+                                    <ArrowRight className="w-3 h-3 text-slate-400" />
+                                    <Badge variant="outline" className="text-xs">
+                                      {hist.setor_destino}
+                                    </Badge>
+                                  </div>
+                                  <span className="text-xs text-slate-500">
+                                    {format(new Date(hist.data_movimentacao), 'dd/MM/yy HH:mm')}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-600">
+                                  <p className="mb-1">
+                                    <strong>Usuário:</strong> {hist.usuario_nome || hist.usuario_email}
+                                  </p>
+                                  {hist.justificativa && (
+                                    <p className="text-slate-700 bg-amber-50 border border-amber-200 rounded p-2 mt-2">
+                                      <strong>Justificativa:</strong> {hist.justificativa}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
