@@ -81,10 +81,17 @@ export default function CriarOP() {
     sincronizarResponsaveis();
   }, [todosUsers]);
 
-  // Buscar responsáveis ativos
+  // Buscar responsáveis ativos e ordenar alfabeticamente
   const { data: usuarios = [] } = useQuery({
     queryKey: ['responsaveis-op'],
-    queryFn: () => base44.entities.ResponsavelOP.filter({ ativo: true })
+    queryFn: async () => {
+      const resp = await base44.entities.ResponsavelOP.filter({ ativo: true });
+      return resp.sort((a, b) => {
+        const nomeA = (a.apelido || a.nome_completo || a.email || '').toLowerCase();
+        const nomeB = (b.apelido || b.nome_completo || b.email || '').toLowerCase();
+        return nomeA.localeCompare(nomeB);
+      });
+    }
   });
 
   const { data: sequencias = [] } = useQuery({
