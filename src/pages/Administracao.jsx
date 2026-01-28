@@ -140,23 +140,21 @@ export default function Administracao() {
     mutationFn: async ({ id, data }) => {
       await base44.entities.User.update(id, data);
       
-      // Sincronizar com ResponsavelOP
-      const user = users.find(u => u.id === id);
-      if (user) {
-        const existingResp = await base44.entities.ResponsavelOP.filter({ user_id: id });
-        
-        const respData = {
-          user_id: id,
-          apelido: data.apelido || user.apelido,
-          nome_completo: data.full_name || user.full_name,
-          email: user.email,
-          ativo: data.ativo !== undefined ? data.ativo : (user.ativo !== false)
-        };
-        
-        if (existingResp.length > 0) {
-          await base44.entities.ResponsavelOP.update(existingResp[0].id, respData);
-        } else {
-          await base44.entities.ResponsavelOP.create(respData);
+      // Sincronizar com ResponsavelOP apenas se houver mudanças relevantes
+      if (data.apelido !== undefined || data.full_name !== undefined || data.ativo !== undefined) {
+        const user = users.find(u => u.id === id);
+        if (user) {
+          const existingResp = await base44.entities.ResponsavelOP.filter({ user_id: id });
+          
+          const respData = {
+            apelido: data.apelido !== undefined ? data.apelido : user.apelido,
+            nome_completo: data.full_name !== undefined ? data.full_name : user.full_name,
+            ativo: data.ativo !== undefined ? data.ativo : (user.ativo !== false)
+          };
+          
+          if (existingResp.length > 0) {
+            await base44.entities.ResponsavelOP.update(existingResp[0].id, respData);
+          }
         }
       }
     },
