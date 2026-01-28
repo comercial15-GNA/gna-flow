@@ -205,12 +205,12 @@ export default function Layout({ children, currentPageName }) {
 
   // Filtrar itens de navegação baseado em permissões personalizadas OU setor
   const visibleNavItems = NAV_ITEMS.filter(item => {
-    // Se usuário tem allowed_pages definido e não está vazio, usar APENAS essa lista (ignora setor)
-    if (user.allowed_pages && Array.isArray(user.allowed_pages) && user.allowed_pages.length > 0) {
+    // Se usuário tem allowed_pages definido E não está vazio E não é null, usar APENAS essa lista (ignora setor)
+    if (user.allowed_pages && Array.isArray(user.allowed_pages) && user.allowed_pages.length > 0 && user.allowed_pages[0] !== null) {
       return user.allowed_pages.includes(item.name);
     }
 
-    // Se não tem allowed_pages definido, usar lógica padrão de setor
+    // Se não tem allowed_pages válido, usar lógica padrão de setor
     let hasSetorAccess = false;
     if (item.setor) hasSetorAccess = userSetor === item.setor;
     if (item.setores) hasSetorAccess = item.setores.includes(userSetor);
