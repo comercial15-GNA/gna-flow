@@ -104,7 +104,7 @@ export default function Suprimentos() {
         setor_destino: novaEtapa,
         justificativa: justif,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 

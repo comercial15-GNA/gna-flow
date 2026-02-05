@@ -103,7 +103,7 @@ export default function Expedicao() {
         setor_destino: 'coleta',
         justificativa: informacoes || '',
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
@@ -150,7 +150,7 @@ export default function Expedicao() {
         setor_destino: 'liberacao',
         justificativa: justificativa,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
