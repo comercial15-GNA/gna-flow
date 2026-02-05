@@ -24,10 +24,10 @@ export default function EspelhoImpressao() {
   });
 
   useEffect(() => {
-    if (op && !isLoadingOp && !isLoadingItens) {
+    if (op && itens.length > 0 && !isLoadingOp && !isLoadingItens) {
       setTimeout(() => window.print(), 500);
     }
-  }, [op, isLoadingOp, isLoadingItens]);
+  }, [op, itens, isLoadingOp, isLoadingItens]);
 
   if (isLoadingOp || isLoadingItens) {
     return (
