@@ -12,10 +12,12 @@ import {
   Package,
   Edit2,
   History,
-  Settings
+  Settings,
+  Printer
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { createPageUrl } from '../../utils';
 import EditObservacaoDialog from './EditObservacaoDialog';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
@@ -78,6 +80,18 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
             </div>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(createPageUrl('EspelhoImpressao') + '?opId=' + op.id, '_blank');
+              }}
+              className="text-slate-600 hover:text-slate-700 hover:bg-slate-100"
+              title="Imprimir OP"
+            >
+              <Printer className="w-4 h-4" />
+            </Button>
             {isAdmin && onAdminEdit && (
               <Button 
                 variant="ghost" 
