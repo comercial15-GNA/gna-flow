@@ -153,6 +153,11 @@ export default function CriarOP() {
     setItens(newItens);
   };
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -222,7 +227,22 @@ export default function CriarOP() {
         data_entrada_etapa: dataLancamento
       }));
 
-      await base44.entities.ItemOP.bulkCreate(itensParaCriar);
+      const itensCriados = await base44.entities.ItemOP.bulkCreate(itensParaCriar);
+
+      // Registrar histórico de criação para cada item
+      const historicosParaCriar = itensCriados.map(item => ({
+        item_id: item.id,
+        op_id: op.id,
+        numero_op: numeroOP,
+        descricao_item: item.descricao,
+        setor_origem: 'comercial',
+        setor_destino: 'engenharia',
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: dataLancamento
+      }));
+
+      await base44.entities.HistoricoMovimentacao.bulkCreate(historicosParaCriar);
 
       queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
       toast.success(`${numeroOP} criada com sucesso!`);
