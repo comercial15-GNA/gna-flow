@@ -6,7 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -29,17 +36,7 @@ import {
   FileSpreadsheet,
   Filter,
   X,
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  Calendar,
-  User,
-  FileText,
-  Clock,
-  Weight,
-  Hash,
-  ArrowRight,
-  MessageSquare
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -56,7 +53,6 @@ export default function SuporteIndustrial() {
   const [justificativa, setJustificativa] = useState('');
   const [etapaDestino, setEtapaDestino] = useState('');
   const [novaCategoria, setNovaCategoria] = useState('');
-  const [expandedItems, setExpandedItems] = useState({});
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -76,30 +72,7 @@ export default function SuporteIndustrial() {
     }
   });
 
-  const { data: ops = [] } = useQuery({
-    queryKey: ['ops-all'],
-    queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
-  });
 
-  const { data: historicos = [] } = useQuery({
-    queryKey: ['historico-movimentacao'],
-    queryFn: () => base44.entities.HistoricoMovimentacao.list('-data_movimentacao'),
-  });
-
-  const toggleExpand = (itemId) => {
-    setExpandedItems(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
-  };
-
-  const getHistoricoItem = (itemId) => {
-    return historicos.filter(h => h.item_id === itemId);
-  };
-
-  const getOPData = (opId) => {
-    return ops.find(op => op.id === opId);
-  };
 
   const abrirDialogCategoria = (item) => {
     setSelectedItem(item);
@@ -181,7 +154,7 @@ export default function SuporteIndustrial() {
   const gerarRelatorio = () => {
     const dados = itensFiltrados.map(item => ({
       'OP': item.numero_op,
-      'Equipamento': item.equipamento_principal || '-',
+      'Equipamento OP': item.equipamento_principal || '-',
       'Descrição': item.descricao,
       'Código GA': item.codigo_ga || '-',
       'Categoria': item.categoria_suporte ? getCategoriaLabel(item.categoria_suporte) : 'Não categorizado',
@@ -216,7 +189,8 @@ export default function SuporteIndustrial() {
       caldeiraria: 'Caldeiraria',
       montagem: 'Montagem',
       materia_prima: 'Matéria Prima',
-      reforma: 'Reforma'
+      reforma: 'Reforma',
+      equipamento: 'Equipamento'
     };
     return labels[categoria] || categoria;
   };
@@ -227,7 +201,8 @@ export default function SuporteIndustrial() {
       caldeiraria: 'bg-orange-100 text-orange-800',
       montagem: 'bg-blue-100 text-blue-800',
       materia_prima: 'bg-green-100 text-green-800',
-      reforma: 'bg-purple-100 text-purple-800'
+      reforma: 'bg-purple-100 text-purple-800',
+      equipamento: 'bg-indigo-100 text-indigo-800'
     };
     return colors[categoria] || 'bg-slate-100 text-slate-800';
   };
@@ -317,6 +292,7 @@ export default function SuporteIndustrial() {
                 <SelectItem value="montagem">Montagem</SelectItem>
                 <SelectItem value="materia_prima">Matéria Prima</SelectItem>
                 <SelectItem value="reforma">Reforma</SelectItem>
+                <SelectItem value="equipamento">Equipamento</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -348,284 +324,91 @@ export default function SuporteIndustrial() {
           <p className="text-slate-500">Ajuste os filtros ou aguarde novos itens</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {itensFiltrados.map((item) => {
-            const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
-            const isExpanded = expandedItems[item.id];
-            const opData = getOPData(item.op_id);
-            const historicoItem = getHistoricoItem(item.id);
-            
-            return (
-              <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  {/* Header do Card */}
-                  <div className="p-4 bg-slate-50 border-b border-slate-200">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="font-mono">
-                            {item.numero_op}
-                          </Badge>
-                          {item.categoria_suporte && (
-                            <Badge className={getCategoriaColor(item.categoria_suporte)}>
-                              {getCategoriaLabel(item.categoria_suporte)}
-                            </Badge>
-                          )}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead className="font-semibold">OP</TableHead>
+                <TableHead className="font-semibold">Equipamento</TableHead>
+                <TableHead className="font-semibold">Descrição</TableHead>
+                <TableHead className="font-semibold">Código GA</TableHead>
+                <TableHead className="font-semibold">Categoria</TableHead>
+                <TableHead className="font-semibold text-center">Qtd</TableHead>
+                <TableHead className="font-semibold">Cliente</TableHead>
+                <TableHead className="font-semibold">Entrega</TableHead>
+                <TableHead className="font-semibold text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {itensFiltrados.map((item) => {
+                const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+                
+                return (
+                  <TableRow key={item.id} className="hover:bg-slate-50">
+                    <TableCell className="font-mono text-sm">{item.numero_op}</TableCell>
+                    <TableCell className="text-sm">{item.equipamento_principal || '-'}</TableCell>
+                    <TableCell className="max-w-xs">
+                      <div className="font-medium text-slate-800">{item.descricao}</div>
+                      {item.observacao && (
+                        <div className="text-xs text-slate-500 mt-1 truncate">{item.observacao}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">{item.codigo_ga || '-'}</TableCell>
+                    <TableCell>
+                      {item.categoria_suporte ? (
+                        <Badge className={getCategoriaColor(item.categoria_suporte)}>
+                          {getCategoriaLabel(item.categoria_suporte)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-slate-400">
+                          Sem categoria
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">{item.quantidade}</TableCell>
+                    <TableCell className="text-sm">{item.cliente}</TableCell>
+                    <TableCell>
+                      {item.data_entrega ? (
+                        <div className={`text-sm ${isAtrasado ? 'text-red-600 font-semibold' : ''}`}>
+                          {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
                           {isAtrasado && (
-                            <Badge className="bg-red-100 text-red-700 flex items-center gap-1">
+                            <div className="flex items-center gap-1 mt-1">
                               <AlertTriangle className="w-3 h-3" />
-                              Atrasado
-                            </Badge>
+                              <span className="text-xs">Atrasado</span>
+                            </div>
                           )}
                         </div>
-                        <h3 className="font-semibold text-lg text-slate-800 mb-1">
-                          {item.descricao}
-                        </h3>
-                        <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {item.cliente}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Package className="w-4 h-4" />
-                            {item.equipamento_principal}
-                          </span>
-                          {item.data_entrega && (
-                            <span className={`flex items-center gap-1 ${isAtrasado ? 'text-red-600 font-semibold' : ''}`}>
-                              <Calendar className="w-4 h-4" />
-                              {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!item.categoria_suporte && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => abrirDialogCategoria(item)}
-                            className="text-xs"
-                          >
-                            Categorizar
-                          </Button>
-                        )}
-                        {item.categoria_suporte && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => abrirDialogCategoria(item)}
-                            className="text-xs"
-                          >
-                            Editar Categoria
-                          </Button>
-                        )}
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => abrirDialogCategoria(item)}
+                          className="text-xs h-7"
+                        >
+                          {item.categoria_suporte ? 'Editar' : 'Categorizar'}
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => abrirDialogRetorno(item)}
                           disabled={loadingItem === item.id}
-                          className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                          className="text-amber-600 border-amber-300 hover:bg-amber-50 text-xs h-7"
                         >
                           <RotateCcw className="w-3 h-3 mr-1" />
                           Retornar
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleExpand(item.id)}
-                        >
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Detalhes Expandidos */}
-                  {isExpanded && (
-                    <div className="p-4 space-y-4">
-                      {/* Informações do Item */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                          <FileText className="w-4 h-4" />
-                          Detalhes do Item
-                        </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 rounded-lg p-4">
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Código GA</p>
-                            <p className="font-medium text-slate-800">{item.codigo_ga || '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Quantidade</p>
-                            <p className="font-medium text-slate-800 flex items-center gap-1">
-                              <Hash className="w-3 h-3" />
-                              {item.quantidade} un
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Peso</p>
-                            <p className="font-medium text-slate-800 flex items-center gap-1">
-                              <Weight className="w-3 h-3" />
-                              {item.peso ? `${item.peso} kg` : '-'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Responsável OP</p>
-                            <p className="font-medium text-slate-800">{item.responsavel_op || '-'}</p>
-                          </div>
-                          {item.peso_expedicao && (
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Peso Expedição</p>
-                              <p className="font-medium text-slate-800">{item.peso_expedicao} kg</p>
-                            </div>
-                          )}
-                          {item.volume_expedicao && (
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Volume Expedição</p>
-                              <p className="font-medium text-slate-800">{item.volume_expedicao}</p>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">Entrada na Etapa</p>
-                            <p className="font-medium text-slate-800 flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yy HH:mm') : '-'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {item.observacao && (
-                          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <p className="text-xs text-amber-700 mb-1 flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" />
-                              Observação
-                            </p>
-                            <p className="text-sm text-slate-700">{item.observacao}</p>
-                          </div>
-                        )}
-
-                        {item.informacoes_expedicao && (
-                          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <p className="text-xs text-blue-700 mb-1">Informações de Expedição</p>
-                            <p className="text-sm text-slate-700">{item.informacoes_expedicao}</p>
-                          </div>
-                        )}
-
-                        {item.retornado && item.justificativa_retorno && (
-                          <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
-                            <p className="text-xs text-red-700 mb-1 flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" />
-                              Item Retornado - Justificativa
-                            </p>
-                            <p className="text-sm text-slate-700">{item.justificativa_retorno}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Informações da OP */}
-                      {opData && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                            <Package className="w-4 h-4" />
-                            Dados da Ordem de Produção
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-blue-50 rounded-lg p-4">
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Número OP</p>
-                              <p className="font-medium text-slate-800">{opData.numero_op}</p>
-                            </div>
-                            {opData.ordem_compra && (
-                              <div>
-                                <p className="text-xs text-slate-500 mb-1">Ordem de Compra</p>
-                                <p className="font-medium text-slate-800">{opData.ordem_compra}</p>
-                              </div>
-                            )}
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Status</p>
-                              <Badge variant={opData.status === 'finalizado' ? 'default' : 'secondary'}>
-                                {opData.status === 'em_andamento' ? 'Em Andamento' : 
-                                 opData.status === 'coleta' ? 'Coleta' : 
-                                 opData.status === 'finalizado' ? 'Finalizado' : 
-                                 opData.status === 'cancelada' ? 'Cancelada' : opData.status}
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Data Lançamento</p>
-                              <p className="font-medium text-slate-800">
-                                {opData.data_lancamento ? format(new Date(opData.data_lancamento), 'dd/MM/yyyy HH:mm') : '-'}
-                              </p>
-                            </div>
-                            {opData.arquivos && opData.arquivos.length > 0 && (
-                              <div className="col-span-full">
-                                <p className="text-xs text-slate-500 mb-2">Arquivos Anexos</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {opData.arquivos.map((url, idx) => (
-                                    <a
-                                      key={idx}
-                                      href={url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                                    >
-                                      <FileText className="w-3 h-3" />
-                                      Arquivo {idx + 1}
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Histórico de Movimentação */}
-                      {historicoItem.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            Histórico de Movimentação
-                          </h4>
-                          <div className="space-y-2">
-                            {historicoItem.map((hist) => (
-                              <div key={hist.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <Badge variant="outline" className="text-xs">
-                                      {hist.setor_origem}
-                                    </Badge>
-                                    <ArrowRight className="w-3 h-3 text-slate-400" />
-                                    <Badge variant="outline" className="text-xs">
-                                      {hist.setor_destino}
-                                    </Badge>
-                                  </div>
-                                  <span className="text-xs text-slate-500">
-                                    {format(new Date(hist.data_movimentacao), 'dd/MM/yy HH:mm')}
-                                  </span>
-                                </div>
-                                <div className="text-xs text-slate-600">
-                                  <p className="mb-1">
-                                    <strong>Usuário:</strong> {hist.usuario_nome || hist.usuario_email}
-                                  </p>
-                                  {hist.justificativa && (
-                                    <p className="text-slate-700 bg-amber-50 border border-amber-200 rounded p-2 mt-2">
-                                      <strong>Justificativa:</strong> {hist.justificativa}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -648,6 +431,7 @@ export default function SuporteIndustrial() {
                   <SelectItem value="montagem">Montagem</SelectItem>
                   <SelectItem value="materia_prima">Matéria Prima</SelectItem>
                   <SelectItem value="reforma">Reforma</SelectItem>
+                  <SelectItem value="equipamento">Equipamento</SelectItem>
                 </SelectContent>
               </Select>
             </div>
