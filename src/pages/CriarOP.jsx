@@ -45,57 +45,17 @@ export default function CriarOP() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Buscar todos os usuários para sincronizar
-  const { data: todosUsers = [] } = useQuery({
-    queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list(),
-  });
-
-  // Sincronizar usuários com ResponsavelOP
-  React.useEffect(() => {
-    const sincronizarResponsaveis = async () => {
-      if (!todosUsers || todosUsers.length === 0) return;
-      
-      try {
-        const responsaveisExistentes = await base44.entities.ResponsavelOP.list();
-        const idsExistentes = responsaveisExistentes.map(r => r.user_id);
-        
-        for (const user of todosUsers) {
-          if (!idsExistentes.includes(user.id)) {
-            await base44.entities.ResponsavelOP.create({
-              user_id: user.id,
-              apelido: user.apelido || user.full_name || user.email.split('@')[0],
-              nome_completo: user.full_name || '',
-              email: user.email,
-              ativo: user.ativo !== false
-            });
-          }
-        }
-        
-        queryClient.invalidateQueries({ queryKey: ['responsaveis-op'] });
-      } catch (error) {
-        console.error('Erro ao sincronizar responsáveis:', error);
-      }
-    };
-    
-    sincronizarResponsaveis();
-  }, [todosUsers]);
-
-  // Buscar responsáveis ativos e ordenar alfabeticamente - apenas usuários que existem
+  // Buscar responsáveis ativos diretamente
   const { data: usuarios = [] } = useQuery({
     queryKey: ['responsaveis-op'],
     queryFn: async () => {
       const resp = await base44.entities.ResponsavelOP.filter({ ativo: true });
-      const userIds = todosUsers.map(u => u.id);
-      // Filtrar apenas responsáveis que correspondem a usuários existentes
-      const respFiltrados = resp.filter(r => userIds.includes(r.user_id));
-      return respFiltrados.sort((a, b) => {
+      return resp.sort((a, b) => {
         const nomeA = (a.apelido || a.nome_completo || a.email || '').toLowerCase();
         const nomeB = (b.apelido || b.nome_completo || b.email || '').toLowerCase();
         return nomeA.localeCompare(nomeB);
       });
-    },
-    enabled: todosUsers.length > 0
+    }
   });
 
   const { data: sequencias = [] } = useQuery({
