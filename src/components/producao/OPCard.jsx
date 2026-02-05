@@ -80,18 +80,16 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(createPageUrl('EspelhoImpressao') + '?opId=' + op.id, '_blank');
-              }}
-              className="text-slate-600 hover:text-slate-700 hover:bg-slate-100"
+            <a 
+              href={createPageUrl('EspelhoImpressao') + '?opId=' + op.id}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center justify-center h-9 w-9 text-slate-600 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
               title="Imprimir OP"
             >
               <Printer className="w-4 h-4" />
-            </Button>
+            </a>
             {isAdmin && onAdminEdit && (
               <Button 
                 variant="ghost" 
