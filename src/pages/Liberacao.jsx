@@ -131,7 +131,7 @@ export default function Liberacao() {
         setor_origem: 'liberacao',
         setor_destino: 'expedicao',
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
@@ -183,7 +183,7 @@ export default function Liberacao() {
         setor_destino: selectedEtapa,
         justificativa: justificativa,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
