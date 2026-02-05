@@ -101,7 +101,7 @@ export default function Coleta() {
         setor_destino: 'finalizado',
         justificativa: justificativa,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
@@ -150,7 +150,7 @@ export default function Coleta() {
         setor_destino: 'expedicao',
         justificativa: justificativa,
         usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.full_name || currentUser?.apelido || currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
 
