@@ -363,7 +363,10 @@ export default function Suprimentos() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-lg text-slate-800">{op.numero_op}</h3>
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="font-bold text-lg text-slate-800">{op.numero_op}</h3>
+                          <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
+                        </div>
                         {op.ordem_compra && (
                           <Badge variant="outline" className="text-blue-700 border-blue-300">
                             O.C: {op.ordem_compra}
@@ -374,8 +377,6 @@ export default function Suprimentos() {
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-slate-600 flex-wrap mt-1">
-                        <span>{op.equipamento_principal}</span>
-                        <span>•</span>
                         <span>{op.cliente}</span>
                         {op.responsavel && (
                           <>
