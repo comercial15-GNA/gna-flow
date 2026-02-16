@@ -367,13 +367,8 @@ export default function Engenharia() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
-                        {op.ordem_compra && (
-                          <Badge variant="outline" className="text-blue-700 border-blue-300">
-                            O.C: {op.ordem_compra}
-                          </Badge>
-                        )}
                         <Badge className="bg-green-600 text-white">
                           {itensOP.length} {itensOP.length === 1 ? 'item' : 'itens'}
                         </Badge>
