@@ -68,6 +68,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-bold text-slate-800">{op.numero_op}</h3>
+                <span className="text-slate-400">•</span>
+                <span className="font-medium text-slate-700">{op.equipamento_principal}</span>
                 {op.ordem_compra && (
                   <Badge variant="outline" className="text-blue-700 border-blue-300">
                     O.C: {op.ordem_compra}
@@ -75,7 +77,6 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                 )}
                 <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
               </div>
-              <p className="text-sm text-slate-500">{op.equipamento_principal}</p>
             </div>
           </div>
           <div className="flex gap-2">
