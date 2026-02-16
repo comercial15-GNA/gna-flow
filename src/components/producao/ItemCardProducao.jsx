@@ -69,8 +69,12 @@ export default function ItemCardProducao({
           </div>
           <div>
             <p className="font-semibold text-slate-800">{item.descricao}</p>
-            <p className="text-xs text-slate-500">{item.numero_op} • {item.equipamento_principal || item.cliente}</p>
-            {item.equipamento_principal && <p className="text-xs text-slate-400">{item.cliente}</p>}
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-slate-700 font-medium">{item.numero_op}</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-600">{item.equipamento_principal}</span>
+            </div>
+            <p className="text-xs text-slate-500">{item.cliente}</p>
           </div>
         </div>
         <Badge className={ETAPA_COLORS[item.etapa_atual]}>
