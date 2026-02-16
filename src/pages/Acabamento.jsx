@@ -369,8 +369,11 @@ export default function Acabamento() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                          <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
+                        </div>
                         {op.ordem_compra && (
                           <Badge variant="outline" className="text-blue-700 border-blue-300">
                             O.C: {op.ordem_compra}
@@ -380,9 +383,8 @@ export default function Acabamento() {
                           {itensOP.length} {itensOP.length === 1 ? 'item' : 'itens'}
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-slate-600">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-slate-600">
                         <div><strong>Cliente:</strong> {op.cliente}</div>
-                        <div><strong>Equipamento:</strong> {op.equipamento_principal}</div>
                         {op.responsavel && <div><strong>Responsável:</strong> {op.responsavel}</div>}
                         {op.data_lancamento && (
                           <div><strong>Lançamento:</strong> {format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</div>
