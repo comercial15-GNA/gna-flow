@@ -496,12 +496,12 @@ export default function Usinagem() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleRetornar(item, 'suprimentos')}
+                                onClick={() => handleRetornar(item, 'caldeiraria')}
                                 disabled={loadingItem === item.id}
                                 className="text-amber-600 border-amber-300 hover:bg-amber-50"
                               >
                                 <RotateCcw className="w-3 h-3 mr-1" />
-                                Retornar p/ Suprimentos
+                                Retornar p/ Caldeiraria
                               </Button>
                             </div>
                           </div>
