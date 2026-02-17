@@ -73,6 +73,7 @@ import SuporteIndustrial from './pages/SuporteIndustrial';
 import Suprimentos from './pages/Suprimentos';
 import Usinagem from './pages/Usinagem';
 import Caldeiraria from './pages/Caldeiraria';
+import PainelCaldeiraria from './pages/PainelCaldeiraria';
 import __Layout from './Layout.jsx';
 
 
@@ -103,6 +104,7 @@ export const PAGES = {
     "Suprimentos": Suprimentos,
     "Usinagem": Usinagem,
     "Caldeiraria": Caldeiraria,
+    "PainelCaldeiraria": PainelCaldeiraria,
 }
 
 export const pagesConfig = {
