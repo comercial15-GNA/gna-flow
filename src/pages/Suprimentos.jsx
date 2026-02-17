@@ -92,7 +92,8 @@ export default function Suprimentos() {
         etapa_atual: novaEtapa,
         data_entrada_etapa: new Date().toISOString(),
         retornado: retornado,
-        justificativa_retorno: retornado ? justif : ''
+        justificativa_retorno: retornado ? justif : '',
+        iniciado: false
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -422,15 +423,27 @@ export default function Suprimentos() {
                   {/* Itens */}
                   {op.itens.map((item) => {
                     const atrasado = isAtrasado(item.data_entrega);
+                    const toggleIniciado = async () => {
+                      try {
+                        await base44.entities.ItemOP.update(item.id, {
+                          iniciado: !item.iniciado
+                        });
+                        queryClient.invalidateQueries({ queryKey: ['itens-suprimentos'] });
+                        toast.success(item.iniciado ? 'Item desmarcado' : 'Item marcado como iniciado');
+                      } catch (error) {
+                        toast.error('Erro ao atualizar status');
+                      }
+                    };
                     return (
-                      <div key={item.id} className={`rounded-lg border p-4 ${atrasado ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white'}`}>
+                      <div key={item.id} className={`rounded-lg border p-4 ${atrasado ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white'} ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 flex-1">
                             <Package className="w-4 h-4 text-slate-400" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                <p className={`text-slate-800 ${item.iniciado ? 'font-bold' : 'font-semibold'}`}>{item.descricao}</p>
                                 {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                                {item.iniciado && <Badge className="bg-blue-600 text-white">Iniciado</Badge>}
                               </div>
                               {atrasado && (
                                 <div className="flex items-center gap-1 text-xs text-red-600 mt-1">
@@ -440,6 +453,14 @@ export default function Suprimentos() {
                               )}
                             </div>
                           </div>
+                          <Button
+                            size="sm"
+                            variant={item.iniciado ? "default" : "outline"}
+                            onClick={toggleIniciado}
+                            className={item.iniciado ? "bg-blue-600 hover:bg-blue-700" : ""}
+                          >
+                            {item.iniciado ? '✓ Iniciado' : 'Iniciar'}
+                          </Button>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3 text-sm">
