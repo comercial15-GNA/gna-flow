@@ -72,6 +72,7 @@ import RelatoriosPeso from './pages/RelatoriosPeso';
 import SuporteIndustrial from './pages/SuporteIndustrial';
 import Suprimentos from './pages/Suprimentos';
 import Usinagem from './pages/Usinagem';
+import Caldeiraria from './pages/Caldeiraria';
 import __Layout from './Layout.jsx';
 
 
@@ -101,6 +102,7 @@ export const PAGES = {
     "SuporteIndustrial": SuporteIndustrial,
     "Suprimentos": Suprimentos,
     "Usinagem": Usinagem,
+    "Caldeiraria": Caldeiraria,
 }
 
 export const pagesConfig = {

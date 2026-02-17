@@ -107,6 +107,7 @@ const NAV_ITEMS = [
   { name: 'Fundicao', label: 'Fundição', icon: Flame, setores: ['administrador', 'fundicao'] },
   { name: 'Acabamento', label: 'Acabamento', icon: Sparkles, setores: ['administrador', 'acabamento'] },
   { name: 'Usinagem', label: 'Usinagem', icon: Wrench, setores: ['administrador', 'usinagem'] },
+  { name: 'Caldeiraria', label: 'Caldeiraria', icon: Hammer, setores: ['administrador'] },
   { name: 'Liberacao', label: 'Liberação', icon: CheckCircle, setores: ['administrador', 'liberacao'] },
   { name: 'Expedicao', label: 'Expedição', icon: Truck, setores: ['administrador', 'expedicao'] },
   { name: 'Coleta', label: 'Coleta', icon: Package, setores: ['administrador', 'expedicao', 'liberacao', 'acabamento'] },
