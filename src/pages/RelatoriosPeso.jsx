@@ -14,6 +14,7 @@ const ETAPAS_PRODUCAO = [
   { value: 'fundicao', label: 'Fundição', color: 'bg-red-100 text-red-800' },
   { value: 'acabamento', label: 'Acabamento', color: 'bg-pink-100 text-pink-800' },
   { value: 'usinagem', label: 'Usinagem', color: 'bg-cyan-100 text-cyan-800' },
+  { value: 'caldeiraria', label: 'Caldeiraria', color: 'bg-amber-100 text-amber-800' },
   { value: 'liberacao', label: 'Liberação', color: 'bg-emerald-100 text-emerald-800' },
   { value: 'expedicao', label: 'Expedição', color: 'bg-teal-100 text-teal-800' },
   { value: 'suporte_industrial', label: 'Suporte Industrial', color: 'bg-purple-100 text-purple-800' },

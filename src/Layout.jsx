@@ -32,7 +32,13 @@ const SETOR_CONFIG = {
     label: 'Administrador',
     icon: Settings,
     color: 'bg-purple-500',
-    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso']
+    pages: ['Administracao', 'CriarOP', 'Comercial', 'Engenharia', 'Modelagem', 'Suprimentos', 'Fundicao', 'Acabamento', 'Usinagem', 'Caldeiraria', 'Liberacao', 'Expedicao', 'Coleta', 'SuporteIndustrial', 'Lideranca', 'RelatoriosPeso']
+  },
+  caldeiraria: {
+    label: 'Caldeiraria',
+    icon: Hammer,
+    color: 'bg-amber-500',
+    pages: ['Caldeiraria']
   },
   comercial: {
     label: 'Comercial',
