@@ -53,6 +53,7 @@ const ETAPAS_RETORNO = [
   { value: 'suprimentos', label: 'Suprimentos' },
   { value: 'fundicao', label: 'Fundição' },
   { value: 'usinagem', label: 'Usinagem' },
+  { value: 'caldeiraria', label: 'Caldeiraria' },
 ];
 
 export default function Liberacao() {
