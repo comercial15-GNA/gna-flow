@@ -49,6 +49,7 @@
  */
 import Acabamento from './pages/Acabamento';
 import Administracao from './pages/Administracao';
+import Caldeiraria from './pages/Caldeiraria';
 import Coleta from './pages/Coleta';
 import Comercial from './pages/Comercial';
 import CriarOP from './pages/CriarOP';
@@ -60,6 +61,7 @@ import Liberacao from './pages/Liberacao';
 import Lideranca from './pages/Lideranca';
 import Modelagem from './pages/Modelagem';
 import PainelAcabamento from './pages/PainelAcabamento';
+import PainelCaldeiraria from './pages/PainelCaldeiraria';
 import PainelColeta from './pages/PainelColeta';
 import PainelEngenharia from './pages/PainelEngenharia';
 import PainelExpedicao from './pages/PainelExpedicao';
@@ -72,14 +74,13 @@ import RelatoriosPeso from './pages/RelatoriosPeso';
 import SuporteIndustrial from './pages/SuporteIndustrial';
 import Suprimentos from './pages/Suprimentos';
 import Usinagem from './pages/Usinagem';
-import Caldeiraria from './pages/Caldeiraria';
-import PainelCaldeiraria from './pages/PainelCaldeiraria';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Acabamento": Acabamento,
     "Administracao": Administracao,
+    "Caldeiraria": Caldeiraria,
     "Coleta": Coleta,
     "Comercial": Comercial,
     "CriarOP": CriarOP,
@@ -91,6 +92,7 @@ export const PAGES = {
     "Lideranca": Lideranca,
     "Modelagem": Modelagem,
     "PainelAcabamento": PainelAcabamento,
+    "PainelCaldeiraria": PainelCaldeiraria,
     "PainelColeta": PainelColeta,
     "PainelEngenharia": PainelEngenharia,
     "PainelExpedicao": PainelExpedicao,
@@ -103,8 +105,6 @@ export const PAGES = {
     "SuporteIndustrial": SuporteIndustrial,
     "Suprimentos": Suprimentos,
     "Usinagem": Usinagem,
-    "Caldeiraria": Caldeiraria,
-    "PainelCaldeiraria": PainelCaldeiraria,
 }
 
 export const pagesConfig = {

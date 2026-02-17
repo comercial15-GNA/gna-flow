@@ -296,8 +296,11 @@ export default function Coleta() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <div className="flex items-baseline gap-2">
+                          <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                          <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
+                        </div>
                         <Badge className="bg-purple-600 text-white">
                           {itensColeta.length} em Coleta
                         </Badge>
