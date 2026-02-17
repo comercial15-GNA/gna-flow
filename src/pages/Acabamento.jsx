@@ -88,7 +88,8 @@ export default function Acabamento() {
         etapa_atual: novaEtapa,
         data_entrada_etapa: new Date().toISOString(),
         retornado: false,
-        justificativa_retorno: ''
+        justificativa_retorno: '',
+        iniciado: false
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -136,7 +137,8 @@ export default function Acabamento() {
         etapa_atual: 'fundicao',
         data_entrada_etapa: new Date().toISOString(),
         retornado: true,
-        justificativa_retorno: justificativa
+        justificativa_retorno: justificativa,
+        iniciado: false
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -423,13 +425,35 @@ export default function Acabamento() {
                     <div className="space-y-3">
                       {itensOP.map((item) => {
                         const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+                        const toggleIniciado = async () => {
+                          try {
+                            await base44.entities.ItemOP.update(item.id, {
+                              iniciado: !item.iniciado
+                            });
+                            queryClient.invalidateQueries({ queryKey: ['itens-acabamento'] });
+                            toast.success(item.iniciado ? 'Item desmarcado' : 'Item marcado como iniciado');
+                          } catch (error) {
+                            toast.error('Erro ao atualizar status');
+                          }
+                        };
                         return (
-                          <div key={item.id} className="bg-red-50 rounded-lg border-2 border-red-300 p-4">
+                          <div key={item.id} className={`bg-red-50 rounded-lg border-2 border-red-300 p-4 ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
-                                <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className={`text-slate-800 ${item.iniciado ? 'font-bold' : 'font-semibold'}`}>{item.descricao}</p>
+                                  {item.iniciado && <Badge className="bg-blue-600 text-white">Iniciado</Badge>}
+                                </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                               </div>
+                              <Button
+                                size="sm"
+                                variant={item.iniciado ? "default" : "outline"}
+                                onClick={toggleIniciado}
+                                className={item.iniciado ? "bg-blue-600 hover:bg-blue-700" : ""}
+                              >
+                                {item.iniciado ? '✓ Iniciado' : 'Iniciar'}
+                              </Button>
                             </div>
 
                             <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-acabamento'] })} />
