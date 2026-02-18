@@ -83,14 +83,14 @@ export default function Engenharia() {
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
-  const movimentarItem = async (item, novaEtapa, justif = '', retornado = false) => {
+  const movimentarItem = async (item, novaEtapa, justif = '') => {
     setLoadingItem(item.id);
     try {
       await base44.entities.ItemOP.update(item.id, {
         etapa_atual: novaEtapa,
         data_entrada_etapa: new Date().toISOString(),
-        retornado: retornado,
-        justificativa_retorno: retornado ? justif : '',
+        alerta_retorno: false,
+        justificativa_retorno: '',
         iniciado: false
       });
 
@@ -128,25 +128,51 @@ export default function Engenharia() {
     setRetornarDialogOpen(true);
   };
 
-  const confirmarRetorno = () => {
+  const confirmarRetorno = async () => {
     if (!justificativa.trim()) {
       toast.error('Justificativa é obrigatória para retorno');
       return;
     }
-    movimentarItem(retornarItem, 'comercial', justificativa, true);
+    
+    setLoadingItem(retornarItem.id);
+    try {
+      await base44.entities.ItemOP.update(retornarItem.id, {
+        etapa_atual: 'comercial',
+        data_entrada_etapa: new Date().toISOString(),
+        alerta_retorno: true,
+        justificativa_retorno: justificativa,
+        iniciado: false
+      });
+
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: retornarItem.id,
+        op_id: retornarItem.op_id,
+        numero_op: retornarItem.numero_op,
+        descricao_item: retornarItem.descricao,
+        setor_origem: 'engenharia',
+        setor_destino: 'comercial',
+        justificativa,
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
+
+      await updateOPStatus(retornarItem.op_id);
+      
+      queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      toast.success('Item retornado para Comercial');
+      setRetornarDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao retornar item');
+    } finally {
+      setLoadingItem(null);
+      setJustificativa('');
+    }
   };
 
   const handleEnviar = async (item, destino) => {
-    if (item.retornado) {
-      const justif = prompt('Este item foi retornado. Informe a justificativa para reenvio:');
-      if (!justif || !justif.trim()) {
-        toast.error('Justificativa é obrigatória');
-        return;
-      }
-      await movimentarItem(item, destino, justif, false);
-    } else {
-      await movimentarItem(item, destino, '', false);
-    }
+    await movimentarItem(item, destino, '');
   };
 
   const gerarRelatorio = () => {
@@ -434,12 +460,17 @@ export default function Engenharia() {
                           }
                         };
                         return (
-                          <div key={item.id} className={`bg-green-50 rounded-lg border-2 border-green-300 p-4 ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
+                          <div key={item.id} className={`rounded-lg border-2 p-4 ${item.alerta_retorno ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-300'} ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                   <p className={`text-slate-800 ${item.iniciado ? 'font-bold' : 'font-semibold'}`}>{item.descricao}</p>
-                                  {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                                  {item.alerta_retorno && (
+                                    <Badge className="bg-red-600 text-white animate-pulse">
+                                      <AlertTriangle className="w-3 h-3 mr-1" />
+                                      ALERTA - Retornado
+                                    </Badge>
+                                  )}
                                   {item.iniciado && <Badge className="bg-blue-600 text-white">Iniciado</Badge>}
                                 </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>

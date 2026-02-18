@@ -14,7 +14,7 @@ export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaA
   const [processando, setProcessando] = useState(null);
   const queryClient = useQueryClient();
 
-  const itensRetornados = itens.filter((item) => item.retornado === true && !itensOcultos.includes(item.id));
+  const itensRetornados = itens.filter((item) => item.alerta_retorno === true && !itensOcultos.includes(item.id));
 
   if (itensRetornados.length === 0) return null;
 

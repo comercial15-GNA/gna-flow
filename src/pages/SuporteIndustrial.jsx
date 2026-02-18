@@ -127,9 +127,8 @@ export default function SuporteIndustrial() {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: etapaDestino,
         data_entrada_etapa: new Date().toISOString(),
-        retornado: true,
-        justificativa_retorno: justificativa,
-        alerta_retorno: alertaRetorno
+        alerta_retorno: true,
+        justificativa_retorno: justificativa
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -494,19 +493,7 @@ export default function SuporteIndustrial() {
                 rows={4}
               />
             </div>
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <input
-                type="checkbox"
-                id="alertaRetorno"
-                checked={alertaRetorno}
-                onChange={(e) => setAlertaRetorno(e.target.checked)}
-                className="w-4 h-4 text-red-600 rounded"
-              />
-              <label htmlFor="alertaRetorno" className="text-sm text-slate-700 cursor-pointer flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <span className="font-medium">Marcar como Alerta de Retorno (item aparecerá em destaque vermelho)</span>
-              </label>
-            </div>
+
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
                 Cancelar
