@@ -537,9 +537,9 @@ export default function Acabamento() {
                     <div className="mt-4 pt-4 border-t border-slate-200">
                       <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                         <Package className="w-4 h-4" />
-                        Todos os Itens da OP - Distribuição por Etapa
+                        Distribuição por Etapa - Todos os Itens da OP
                       </h4>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
                         {['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'acabamento', 'usinagem', 'caldeiraria', 'liberacao', 'expedicao', 'coleta', 'suporte_industrial', 'finalizado'].map(etapa => {
                           const count = todosItensOP.filter(i => i.etapa_atual === etapa).length;
                           const etapaLabels = {
@@ -558,15 +558,53 @@ export default function Acabamento() {
                             finalizado: 'Finalizado'
                           };
                           return count > 0 ? (
-                            <Badge key={etapa} variant="outline" className="text-xs">
-                              {etapaLabels[etapa]}: {count}
-                            </Badge>
+                            <div key={etapa} className="bg-slate-100 rounded p-2 text-center">
+                              <p className="text-xs text-slate-600 mb-1">{etapaLabels[etapa]}</p>
+                              <p className="text-lg font-bold text-slate-800">{count}</p>
+                            </div>
                           ) : null;
                         })}
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
-                        Total de itens na OP: {todosItensOP.length}
-                      </p>
+
+                      {todosItensOP.filter(i => i.etapa_atual !== 'acabamento').length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-slate-600 mb-2">Outros Itens ({todosItensOP.filter(i => i.etapa_atual !== 'acabamento').length})</h4>
+                          <div className="space-y-2">
+                            {todosItensOP.filter(i => i.etapa_atual !== 'acabamento').map((item) => {
+                              const etapaLabels = {
+                                comercial: 'Comercial',
+                                engenharia: 'Engenharia',
+                                modelagem: 'Modelagem',
+                                suprimentos: 'Suprimentos',
+                                fundicao: 'Fundição',
+                                usinagem: 'Usinagem',
+                                caldeiraria: 'Caldeiraria',
+                                liberacao: 'Liberação',
+                                expedicao: 'Expedição',
+                                coleta: 'Coleta',
+                                suporte_industrial: 'Suporte',
+                                finalizado: 'Finalizado'
+                              };
+                              return (
+                                <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                                      <div className="flex items-center gap-3 mt-1">
+                                        <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
+                                        <p className="text-xs text-slate-500">Qtd: {item.quantidade}</p>
+                                      </div>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs">
+                                      {etapaLabels[item.etapa_atual] || item.etapa_atual}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
