@@ -66,6 +66,7 @@ export default function Liberacao() {
   const [justificativa, setJustificativa] = useState('');
   const [pesoExpedicao, setPesoExpedicao] = useState('');
   const [volumeExpedicao, setVolumeExpedicao] = useState('');
+  const [alertaRetorno, setAlertaRetorno] = useState(false);
   const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
 
@@ -153,6 +154,7 @@ export default function Liberacao() {
     setSelectedItem(item);
     setSelectedEtapa('');
     setJustificativa('');
+    setAlertaRetorno(false);
     setRetornarDialogOpen(true);
   };
 
@@ -172,7 +174,8 @@ export default function Liberacao() {
         etapa_atual: selectedEtapa,
         data_entrada_etapa: new Date().toISOString(),
         retornado: true,
-        justificativa_retorno: justificativa
+        justificativa_retorno: justificativa,
+        alerta_retorno: alertaRetorno
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -416,12 +419,18 @@ export default function Liberacao() {
                       </h4>
                       <div className="space-y-3">
                         {itensLiberacao.map((item) => (
-                          <div key={item.id} className="bg-emerald-50 rounded-lg border-2 border-emerald-300 p-4">
+                          <div key={item.id} className={`bg-emerald-50 rounded-lg border-2 ${item.alerta_retorno ? 'border-red-500 bg-red-50' : 'border-emerald-300'} p-4`}>
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
                                   <p className="font-semibold text-slate-800">{item.descricao}</p>
-                                  {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                                  {item.retornado && !item.alerta_retorno && <Badge variant="destructive">Retornado</Badge>}
+                                  {item.alerta_retorno && (
+                                    <Badge className="bg-red-600 text-white animate-pulse">
+                                      <AlertTriangle className="w-3 h-3 mr-1" />
+                                      ALERTA - Retornado
+                                    </Badge>
+                                  )}
                                 </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                               </div>
@@ -622,6 +631,19 @@ export default function Liberacao() {
                 className="mt-1"
                 rows={4}
               />
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <input
+                type="checkbox"
+                id="alertaRetorno"
+                checked={alertaRetorno}
+                onChange={(e) => setAlertaRetorno(e.target.checked)}
+                className="w-4 h-4 text-red-600 rounded"
+              />
+              <label htmlFor="alertaRetorno" className="text-sm text-slate-700 cursor-pointer flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <span className="font-medium">Marcar como Alerta de Retorno (item aparecerá em destaque vermelho)</span>
+              </label>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>

@@ -53,6 +53,7 @@ export default function Usinagem() {
   const [retornarItem, setRetornarItem] = useState(null);
   const [retornarDestino, setRetornarDestino] = useState('');
   const [justificativa, setJustificativa] = useState('');
+  const [alertaRetorno, setAlertaRetorno] = useState(false);
   const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
 
@@ -125,15 +126,53 @@ export default function Usinagem() {
     setRetornarItem(item);
     setRetornarDestino(destino);
     setJustificativa('');
+    setAlertaRetorno(false);
     setRetornarDialogOpen(true);
   };
 
-  const confirmarRetorno = () => {
+  const confirmarRetorno = async () => {
     if (!justificativa.trim()) {
       toast.error('Justificativa é obrigatória para retorno');
       return;
     }
-    movimentarItem(retornarItem, retornarDestino, justificativa, true);
+    
+    setLoadingItem(retornarItem.id);
+    try {
+      await base44.entities.ItemOP.update(retornarItem.id, {
+        etapa_atual: retornarDestino,
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: true,
+        justificativa_retorno: justificativa,
+        alerta_retorno: alertaRetorno,
+        iniciado: false
+      });
+
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: retornarItem.id,
+        op_id: retornarItem.op_id,
+        numero_op: retornarItem.numero_op,
+        descricao_item: retornarItem.descricao,
+        setor_origem: 'usinagem',
+        setor_destino: retornarDestino,
+        justificativa: justificativa,
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
+
+      await updateOPStatus(retornarItem.op_id);
+      
+      queryClient.invalidateQueries({ queryKey: ['itens-usinagem'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      toast.success('Item retornado com sucesso');
+      setRetornarDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao retornar item');
+    } finally {
+      setLoadingItem(null);
+      setJustificativa('');
+      setAlertaRetorno(false);
+    }
   };
 
   const handleEnviar = async (item, destino) => {
@@ -429,12 +468,18 @@ export default function Usinagem() {
                           }
                         };
                         return (
-                          <div key={item.id} className={`bg-cyan-50 rounded-lg border-2 border-cyan-300 p-4 ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
+                          <div key={item.id} className={`bg-cyan-50 rounded-lg border-2 ${item.alerta_retorno ? 'border-red-500 bg-red-50' : 'border-cyan-300'} p-4 ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                   <p className={`text-slate-800 ${item.iniciado ? 'font-bold' : 'font-semibold'}`}>{item.descricao}</p>
-                                  {item.retornado && <Badge variant="destructive">Retornado</Badge>}
+                                  {item.retornado && !item.alerta_retorno && <Badge variant="destructive">Retornado</Badge>}
+                                  {item.alerta_retorno && (
+                                    <Badge className="bg-red-600 text-white animate-pulse">
+                                      <AlertTriangle className="w-3 h-3 mr-1" />
+                                      ALERTA - Retornado
+                                    </Badge>
+                                  )}
                                   {item.iniciado && <Badge className="bg-blue-600 text-white">Iniciado</Badge>}
                                 </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
@@ -554,6 +599,19 @@ export default function Usinagem() {
                 className="mt-1"
                 rows={4}
               />
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <input
+                type="checkbox"
+                id="alertaRetorno"
+                checked={alertaRetorno}
+                onChange={(e) => setAlertaRetorno(e.target.checked)}
+                className="w-4 h-4 text-red-600 rounded"
+              />
+              <label htmlFor="alertaRetorno" className="text-sm text-slate-700 cursor-pointer flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <span className="font-medium">Marcar como Alerta de Retorno (item aparecerá em destaque vermelho)</span>
+              </label>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
