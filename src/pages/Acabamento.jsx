@@ -94,7 +94,6 @@ export default function Acabamento() {
         data_entrada_etapa: new Date().toISOString(),
         retornado: false,
         justificativa_retorno: '',
-        alerta_retorno: false,
         iniciado: false
       });
 
@@ -144,7 +143,6 @@ export default function Acabamento() {
         data_entrada_etapa: new Date().toISOString(),
         retornado: true,
         justificativa_retorno: justificativa,
-        alerta_retorno: true,
         iniciado: false
       });
 

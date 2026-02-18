@@ -41,7 +41,6 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from "@/lib/utils";
 
 export default function SuporteIndustrial() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,8 +126,9 @@ export default function SuporteIndustrial() {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: etapaDestino,
         data_entrada_etapa: new Date().toISOString(),
-        alerta_retorno: alertaRetorno,
-        justificativa_retorno: justificativa
+        retornado: true,
+        justificativa_retorno: justificativa,
+        alerta_retorno: alertaRetorno
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -347,19 +347,13 @@ export default function SuporteIndustrial() {
                 const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
                 
                 return (
-                  <TableRow key={item.id} className={cn("hover:bg-slate-50", item.alerta_retorno && "bg-red-50 border-l-4 border-red-500")}>
+                  <TableRow key={item.id} className="hover:bg-slate-50">
                     <TableCell className="font-mono text-sm">{item.numero_op}</TableCell>
                     <TableCell className="text-sm">{item.equipamento_principal || '-'}</TableCell>
                     <TableCell className="max-w-xs">
                       <div className="font-medium text-slate-800">{item.descricao}</div>
                       {item.observacao && (
                         <div className="text-xs text-slate-500 mt-1 truncate">{item.observacao}</div>
-                      )}
-                      {item.alerta_retorno && (
-                        <Badge className="bg-red-600 text-white animate-pulse mt-1">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          ALERTA - Retornado
-                        </Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-sm">{item.codigo_ga || '-'}</TableCell>

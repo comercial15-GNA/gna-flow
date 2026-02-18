@@ -122,8 +122,7 @@ export default function Liberacao() {
         peso_expedicao: parseFloat(pesoExpedicao),
         volume_expedicao: volumeExpedicao,
         retornado: false,
-        justificativa_retorno: '',
-        alerta_retorno: false
+        justificativa_retorno: ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({

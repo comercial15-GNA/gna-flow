@@ -92,7 +92,6 @@ export default function Usinagem() {
         data_entrada_etapa: new Date().toISOString(),
         retornado: retornado,
         justificativa_retorno: retornado ? justif : '',
-        alerta_retorno: false,
         iniciado: false
       });
 
