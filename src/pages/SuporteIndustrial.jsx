@@ -127,7 +127,7 @@ export default function SuporteIndustrial() {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: etapaDestino,
         data_entrada_etapa: new Date().toISOString(),
-        alerta_retorno: true,
+        alerta_retorno: alertaRetorno,
         justificativa_retorno: justificativa
       });
 
