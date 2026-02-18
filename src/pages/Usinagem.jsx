@@ -497,12 +497,13 @@ export default function Usinagem() {
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => handleEnviar(item, 'suporte_industrial')}
+                                variant="outline"
+                                onClick={() => handleRetornar(item, 'suporte_industrial')}
                                 disabled={loadingItem === item.id}
-                                className="bg-slate-800 hover:bg-slate-900"
+                                className="text-amber-600 border-amber-300 hover:bg-amber-50"
                               >
-                                <ArrowRight className="w-3 h-3 mr-1" />
-                                Enviar p/ Suporte Industrial
+                                <RotateCcw className="w-3 h-3 mr-1" />
+                                Retornar p/ Suporte Industrial
                               </Button>
                               <Button
                                 size="sm"
