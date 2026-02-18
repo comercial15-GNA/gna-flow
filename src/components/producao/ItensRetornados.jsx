@@ -5,16 +5,34 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { base44 } from '@/api/base44Client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaAtual }) {
   const [itensOcultos, setItensOcultos] = useState([]);
+  const [processando, setProcessando] = useState(null);
+  const queryClient = useQueryClient();
 
   const itensRetornados = itens.filter((item) => item.retornado === true && !itensOcultos.includes(item.id));
 
   if (itensRetornados.length === 0) return null;
 
-  const ocultarItem = (itemId) => {
-    setItensOcultos((prev) => [...prev, itemId]);
+  const ocultarItem = async (item) => {
+    setProcessando(item.id);
+    try {
+      await base44.entities.ItemOP.update(item.id, {
+        alerta_retorno: false
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['itens-' + etapaAtual] });
+      toast.success('Alerta removido');
+      setItensOcultos((prev) => [...prev, item.id]);
+    } catch (error) {
+      toast.error('Erro ao remover alerta');
+    } finally {
+      setProcessando(null);
+    }
   };
 
   return (
@@ -53,11 +71,11 @@ export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaA
               }
                 
                 <Button
-                onClick={() => ocultarItem(item.id)}
-                variant="outline" className="bg-slate-700 mt-2 px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-full">
-
-
-                  OK
+                onClick={() => ocultarItem(item)}
+                disabled={processando === item.id}
+                variant="outline" 
+                className="bg-slate-700 text-white hover:bg-slate-600 mt-2 w-full">
+                  {processando === item.id ? 'Processando...' : 'OK'}
                 </Button>
               </div>
             )}
