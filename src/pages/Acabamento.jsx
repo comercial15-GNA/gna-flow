@@ -81,6 +81,11 @@ export default function Acabamento() {
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
+  const { data: todosItens = [] } = useQuery({
+    queryKey: ['todos-itens-ops'],
+    queryFn: () => base44.entities.ItemOP.list(),
+  });
+
   const movimentarItem = async (item, novaEtapa, justif = '') => {
     setLoadingItem(item.id);
     try {
@@ -362,6 +367,7 @@ export default function Acabamento() {
           {opsComItens.map(({ op, itens: itensOP }) => {
             const isExpanded = expandedOPs[op.id];
             const arquivos = op.arquivos || [];
+            const todosItensOP = todosItens.filter(i => i.op_id === op.id);
             
             return (
               <div key={op.id} className="bg-white rounded-xl border-2 border-pink-200 shadow-sm overflow-hidden">
@@ -525,6 +531,42 @@ export default function Acabamento() {
                           </div>
                         );
                       })}
+                    </div>
+
+                    {/* Distribuição por Etapa */}
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Todos os Itens da OP - Distribuição por Etapa
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'acabamento', 'usinagem', 'caldeiraria', 'liberacao', 'expedicao', 'coleta', 'suporte_industrial', 'finalizado'].map(etapa => {
+                          const count = todosItensOP.filter(i => i.etapa_atual === etapa).length;
+                          const etapaLabels = {
+                            comercial: 'Comercial',
+                            engenharia: 'Engenharia',
+                            modelagem: 'Modelagem',
+                            suprimentos: 'Suprimentos',
+                            fundicao: 'Fundição',
+                            acabamento: 'Acabamento',
+                            usinagem: 'Usinagem',
+                            caldeiraria: 'Caldeiraria',
+                            liberacao: 'Liberação',
+                            expedicao: 'Expedição',
+                            coleta: 'Coleta',
+                            suporte_industrial: 'Suporte',
+                            finalizado: 'Finalizado'
+                          };
+                          return count > 0 ? (
+                            <Badge key={etapa} variant="outline" className="text-xs">
+                              {etapaLabels[etapa]}: {count}
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Total de itens na OP: {todosItensOP.length}
+                      </p>
                     </div>
                   </div>
                 )}
