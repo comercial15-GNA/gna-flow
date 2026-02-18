@@ -90,6 +90,7 @@ export default function Fundicao() {
         data_entrada_etapa: new Date().toISOString(),
         retornado: retornado,
         justificativa_retorno: retornado ? justif : '',
+        alerta_retorno: retornado ? false : false,
         iniciado: false
       });
 
@@ -126,12 +127,48 @@ export default function Fundicao() {
     setRetornarDialogOpen(true);
   };
 
-  const confirmarRetorno = () => {
+  const confirmarRetorno = async () => {
     if (!justificativa.trim()) {
       toast.error('Justificativa é obrigatória para retorno');
       return;
     }
-    movimentarItem(retornarItem, 'modelagem', justificativa, true);
+    
+    setLoadingItem(retornarItem.id);
+    try {
+      await base44.entities.ItemOP.update(retornarItem.id, {
+        etapa_atual: 'modelagem',
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: true,
+        justificativa_retorno: justificativa,
+        alerta_retorno: true,
+        iniciado: false
+      });
+
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: retornarItem.id,
+        op_id: retornarItem.op_id,
+        numero_op: retornarItem.numero_op,
+        descricao_item: retornarItem.descricao,
+        setor_origem: 'fundicao',
+        setor_destino: 'modelagem',
+        justificativa: justificativa,
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
+
+      await updateOPStatus(retornarItem.op_id);
+      
+      queryClient.invalidateQueries({ queryKey: ['itens-fundicao'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      toast.success('Item retornado para Modelagem');
+      setRetornarDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao retornar item');
+    } finally {
+      setLoadingItem(null);
+      setJustificativa('');
+    }
   };
 
   const handleEnviar = async (item, destino) => {

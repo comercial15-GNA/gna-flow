@@ -91,6 +91,7 @@ export default function Caldeiraria() {
         data_entrada_etapa: new Date().toISOString(),
         retornado: retornado,
         justificativa_retorno: retornado ? justif : '',
+        alerta_retorno: retornado ? false : false,
         iniciado: false
       });
 
