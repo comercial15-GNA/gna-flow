@@ -451,19 +451,38 @@ export default function Coleta() {
                   <div>
                           <h4 className="text-sm font-medium text-slate-600 mb-2">Outros Itens ({todosItensOP.filter((i) => i.etapa_atual !== 'coleta').length})</h4>
                           <div className="space-y-2">
-                            {todosItensOP.filter((i) => i.etapa_atual !== 'coleta').map((item) =>
-                      <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
-                                    <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
+                            {todosItensOP.filter((i) => i.etapa_atual !== 'coleta').map((item) => {
+                              const etapaLabels = {
+                                comercial: 'Comercial',
+                                engenharia: 'Engenharia',
+                                modelagem: 'Modelagem',
+                                suprimentos: 'Suprimentos',
+                                fundicao: 'Fundição',
+                                acabamento: 'Acabamento',
+                                usinagem: 'Usinagem',
+                                caldeiraria: 'Caldeiraria',
+                                liberacao: 'Liberação',
+                                expedicao: 'Expedição',
+                                suporte_industrial: 'Suporte',
+                                finalizado: 'Finalizado'
+                              };
+                              return (
+                                <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                                      <div className="flex items-center gap-3 mt-1">
+                                        <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
+                                        <p className="text-xs text-slate-500">Qtd: {item.quantidade}</p>
+                                      </div>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs">
+                                      {etapaLabels[item.etapa_atual] || item.etapa_atual}
+                                    </Badge>
                                   </div>
-                                  <Badge variant="outline" className="text-xs">
-                                    {etapaLabels[item.etapa_atual] || item.etapa_atual}
-                                  </Badge>
                                 </div>
-                              </div>
-                      )}
+                              );
+                            })}
                           </div>
                         </div>
                   }
