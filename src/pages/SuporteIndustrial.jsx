@@ -36,7 +36,8 @@ import {
   FileSpreadsheet,
   Filter,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -47,7 +48,7 @@ export default function SuporteIndustrial() {
   const [filtroCategoria, setFiltroCategoria] = useState('todos');
   const [filtroCliente, setFiltroCliente] = useState('todos');
   const [loadingItem, setLoadingItem] = useState(null);
-  const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
+  const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [categoriaDialogOpen, setCategoriaDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [justificativa, setJustificativa] = useState('');
@@ -102,20 +103,16 @@ export default function SuporteIndustrial() {
     }
   };
 
-  const abrirDialogRetorno = (item) => {
+  const abrirDialogEnviar = (item) => {
     setSelectedItem(item);
     setJustificativa('');
     setEtapaDestino('');
-    setRetornarDialogOpen(true);
+    setEnviarDialogOpen(true);
   };
 
-  const confirmarRetorno = async () => {
+  const confirmarEnvio = async () => {
     if (!etapaDestino) {
       toast.error('Selecione a etapa de destino');
-      return;
-    }
-    if (!justificativa.trim()) {
-      toast.error('Justificativa é obrigatória para retorno');
       return;
     }
 
@@ -124,8 +121,8 @@ export default function SuporteIndustrial() {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: etapaDestino,
         data_entrada_etapa: new Date().toISOString(),
-        retornado: true,
-        justificativa_retorno: justificativa
+        retornado: false,
+        justificativa_retorno: ''
       });
 
       await base44.entities.HistoricoMovimentacao.create({
@@ -135,7 +132,45 @@ export default function SuporteIndustrial() {
         descricao_item: selectedItem.descricao,
         setor_origem: 'suporte_industrial',
         setor_destino: etapaDestino,
-        justificativa: justificativa,
+        justificativa: justificativa || 'Enviado do suporte industrial',
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['itens-suporte-industrial'] });
+      toast.success('Item enviado com sucesso');
+      setEnviarDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao enviar item');
+    } finally {
+      setLoadingItem(null);
+    }
+  };
+
+  const confirmarRetorno = async () => {
+    if (!etapaDestino) {
+      toast.error('Selecione a etapa de destino');
+      return;
+    }
+
+    setLoadingItem(selectedItem.id);
+    try {
+      await base44.entities.ItemOP.update(selectedItem.id, {
+        etapa_atual: etapaDestino,
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: true,
+        justificativa_retorno: justificativa || 'Retornado do suporte industrial'
+      });
+
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: selectedItem.id,
+        op_id: selectedItem.op_id,
+        numero_op: selectedItem.numero_op,
+        descricao_item: selectedItem.descricao,
+        setor_origem: 'suporte_industrial',
+        setor_destino: etapaDestino,
+        justificativa: justificativa || 'Retornado do suporte industrial',
         usuario_email: currentUser?.email,
         usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
@@ -143,7 +178,7 @@ export default function SuporteIndustrial() {
 
       queryClient.invalidateQueries({ queryKey: ['itens-suporte-industrial'] });
       toast.success('Item retornado com sucesso');
-      setRetornarDialogOpen(false);
+      setEnviarDialogOpen(false);
     } catch (error) {
       toast.error('Erro ao retornar item');
     } finally {
@@ -395,12 +430,12 @@ export default function SuporteIndustrial() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => abrirDialogRetorno(item)}
+                          onClick={() => abrirDialogEnviar(item)}
                           disabled={loadingItem === item.id}
-                          className="text-amber-600 border-amber-300 hover:bg-amber-50 text-xs h-7"
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50 text-xs h-7"
                         >
-                          <RotateCcw className="w-3 h-3 mr-1" />
-                          Retornar
+                          <Send className="w-3 h-3 mr-1" />
+                          Enviar
                         </Button>
                       </div>
                     </TableCell>
@@ -447,11 +482,11 @@ export default function SuporteIndustrial() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
+      <Dialog open={enviarDialogOpen} onOpenChange={setEnviarDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Retornar Item</DialogTitle>
-            <DialogDescription>Selecione a etapa e informe a justificativa</DialogDescription>
+            <DialogTitle>Enviar Item</DialogTitle>
+            <DialogDescription>Selecione a etapa de destino e informe a justificativa (opcional)</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div>
@@ -475,21 +510,26 @@ export default function SuporteIndustrial() {
               </Select>
             </div>
             <div>
-              <Label>Justificativa *</Label>
+              <Label>Justificativa (opcional)</Label>
               <Textarea
                 value={justificativa}
                 onChange={(e) => setJustificativa(e.target.value)}
-                placeholder="Descreva o motivo do retorno..."
+                placeholder="Descreva informações adicionais sobre o envio..."
                 className="mt-1"
                 rows={4}
               />
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setEnviarDialogOpen(false)}>
                 Cancelar
               </Button>
+              <Button onClick={confirmarEnvio} disabled={loadingItem} className="bg-blue-600 hover:bg-blue-700">
+                <Send className="w-4 h-4 mr-2" />
+                Enviar
+              </Button>
               <Button onClick={confirmarRetorno} disabled={loadingItem} className="bg-amber-600 hover:bg-amber-700">
-                Confirmar Retorno
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retornar
               </Button>
             </div>
           </div>
