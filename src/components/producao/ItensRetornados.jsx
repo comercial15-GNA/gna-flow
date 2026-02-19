@@ -1,35 +1,34 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
-export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaAtual }) {
-  const [dialogAberto, setDialogAberto] = useState(false);
-  const [itemSelecionado, setItemSelecionado] = useState(null);
-  const [justificativa, setJustificativa] = useState('');
+export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaAtual, onAcknowledge }) {
 
   const itensRetornados = itens.filter(item => item.retornado === true);
 
   if (itensRetornados.length === 0) return null;
 
-  const abrirDialog = (item) => {
-    setItemSelecionado(item);
-    setJustificativa('');
-    setDialogAberto(true);
-  };
-
-  const handleReenviar = async () => {
-    if (!justificativa.trim()) {
-      alert('Justificativa é obrigatória');
-      return;
+  const handleAcknowledge = async (item) => {
+    try {
+      await base44.entities.ItemOP.update(item.id, {
+        retornado: false,
+        justificativa_retorno: ''
+      });
+      
+      if (onAcknowledge) {
+        onAcknowledge();
+      }
+      
+      toast.success('Item reconhecido com sucesso');
+    } catch (error) {
+      toast.error('Erro ao atualizar item');
     }
-    await onReenviar(itemSelecionado, justificativa);
-    setDialogAberto(false);
   };
 
   return (
@@ -68,56 +67,18 @@ export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaA
                 )}
                 
                 <Button 
-                  onClick={() => abrirDialog(item)}
+                  onClick={() => handleAcknowledge(item)}
                   disabled={loadingItem === item.id}
-                  className="w-full mt-2"
+                  className="w-full mt-2 bg-green-600 hover:bg-green-700"
                 >
-                  {loadingItem === item.id ? 'Reenviando...' : 'Revisar e Reenviar'}
-                  <ArrowRight className="ml-2 w-4 h-4" />
+                  <Check className="mr-2 w-4 h-4" />
+                  OK
                 </Button>
               </div>
             ))}
           </div>
         </AlertDescription>
       </Alert>
-
-      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reenviar Item</DialogTitle>
-          </DialogHeader>
-          
-          {itemSelecionado && (
-            <div className="space-y-4">
-              <div className="bg-slate-50 p-3 rounded">
-                <p className="font-semibold">{itemSelecionado.descricao}</p>
-                <p className="text-sm text-slate-600">OP: {itemSelecionado.numero_op}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Justificativa para reenvio (obrigatória) *
-                </label>
-                <Textarea
-                  value={justificativa}
-                  onChange={(e) => setJustificativa(e.target.value)}
-                  placeholder="Descreva o que foi corrigido ou revisado..."
-                  rows={4}
-                />
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogAberto(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleReenviar}>
-              Confirmar Reenvio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
