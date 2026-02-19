@@ -7,8 +7,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaAtual, onAcknowledge }) {
+  const queryClient = useQueryClient();
 
   const itensRetornados = itens.filter(item => item.retornado === true);
 
@@ -21,12 +23,23 @@ export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaA
         justificativa_retorno: ''
       });
       
+      // Invalida as queries para recarregar os dados
+      queryClient.invalidateQueries({ queryKey: ['itens-acabamento'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-modelagem'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-suprimentos'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-fundicao'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-usinagem'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-caldeiraria'] });
+      queryClient.invalidateQueries({ queryKey: ['todos-itens-ops'] });
+      
       if (onAcknowledge) {
         onAcknowledge();
       }
       
       toast.success('Item reconhecido com sucesso');
     } catch (error) {
+      console.error('Erro ao atualizar item:', error);
       toast.error('Erro ao atualizar item');
     }
   };
