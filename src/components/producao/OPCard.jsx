@@ -14,7 +14,7 @@ import {
   History,
   Settings
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { createPageUrl } from '../../utils';
 import EditObservacaoDialog from './EditObservacaoDialog';

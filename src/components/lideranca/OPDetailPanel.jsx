@@ -12,7 +12,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import ItemOPActions from '@/components/producao/ItemOPActions';
@@ -201,7 +201,7 @@ export default function OPDetailPanel({ op, itens, onClose }) {
                 <span>Qtd: {item.quantidade}</span>
                 <span>Peso: {item.peso ? `${item.peso}kg` : '-'}</span>
                 {item.data_entrega && (
-                  <span>Entrega: {format(new Date(item.data_entrega), 'dd/MM/yy')}</span>
+                  <span>Entrega: {format(parseISO(item.data_entrega), 'dd/MM/yy')}</span>
                 )}
               </div>
               <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries()} />

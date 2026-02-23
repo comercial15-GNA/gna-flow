@@ -16,7 +16,7 @@ import {
   RotateCcw,
   Tag
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 
@@ -110,7 +110,7 @@ export default function ItemCardSuporte({
                 {item.data_entrega && (
                   <span className={`flex items-center gap-1 ${isAtrasado ? 'text-red-600 font-semibold' : ''}`}>
                     <Calendar className="w-4 h-4" />
-                    {format(new Date(item.data_entrega), "dd/MM/yyyy")}
+                    {format(parseISO(item.data_entrega), "dd/MM/yyyy")}
                     {isAtrasado && <AlertTriangle className="w-4 h-4" />}
                   </span>
                 )}
