@@ -15,7 +15,7 @@ import {
   ChevronUp,
   History
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
@@ -94,7 +94,7 @@ export default function ItemCardProducao({
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-slate-400" />
           <span className="text-slate-600">
-            {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}
+            {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yy') : '-'}
           </span>
         </div>
         <div className="flex items-center gap-2">
