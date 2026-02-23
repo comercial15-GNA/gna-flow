@@ -27,7 +27,7 @@ import {
   AlertTriangle } from
 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
@@ -179,7 +179,7 @@ export default function Coleta() {
       'Peso Expedição': item.peso_expedicao || '-',
       'Volume': item.volume_expedicao || '-',
       'Responsável': item.responsavel_op || '-',
-      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
       'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
     }));
 
@@ -373,7 +373,7 @@ export default function Coleta() {
                                   <span className="font-medium">Entrega:</span>{' '}
                                   {item.data_entrega ? (
                                     <span className={isAtrasado ? 'text-red-600 font-semibold' : ''}>
-                                      {format(new Date(item.data_entrega), 'dd/MM/yy')}
+                                      {format(parseISO(item.data_entrega), 'dd/MM/yy')}
                                       {isAtrasado && <AlertTriangle className="w-3 h-3 inline ml-1" />}
                                     </span>
                                   ) : '-'}

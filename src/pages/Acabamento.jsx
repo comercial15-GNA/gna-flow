@@ -36,7 +36,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import ItensRetornados from '@/components/producao/ItensRetornados';
@@ -475,7 +475,7 @@ export default function Acabamento() {
                                 <span className="font-medium">Entrega:</span>{' '}
                                 {item.data_entrega ? (
                                   <span className={isAtrasado ? 'text-red-600 font-semibold' : ''}>
-                                    {format(new Date(item.data_entrega), 'dd/MM/yy')}
+                                    {format(parseISO(item.data_entrega), 'dd/MM/yy')}
                                     {isAtrasado && <AlertTriangle className="w-3 h-3 inline ml-1" />}
                                   </span>
                                 ) : '-'}
