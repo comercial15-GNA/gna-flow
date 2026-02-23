@@ -160,7 +160,7 @@ export default function Caldeiraria() {
       'Quantidade': item.quantidade,
       'Cliente': item.cliente,
       'Responsável': item.responsavel_op || '-',
-      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
       'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
     }));
 
