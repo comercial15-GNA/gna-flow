@@ -49,6 +49,7 @@ import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes
 export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('em_andamento');
+  const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
   const [editingItem, setEditingItem] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
@@ -105,6 +106,9 @@ export default function Comercial() {
     return op && item.etapa_atual === 'comercial';
   });
 
+  // Derivar lista de responsáveis únicos
+  const responsaveisUnicos = [...new Set(opsVisiveis.map(op => op.responsavel).filter(Boolean))].sort();
+
   // Filtros para OPs
   const opsFiltradas = opsVisiveis.filter(op => {
     const matchSearch = !searchTerm || 
@@ -113,7 +117,8 @@ export default function Comercial() {
       op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'todos' || op.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchResponsavel = filtroResponsavel === 'todos' || op.responsavel === filtroResponsavel;
+    return matchSearch && matchStatus && matchResponsavel;
   }).sort((a, b) => {
     // Ordenar por data de entrega mais próxima dos itens
     const itensA = itens.filter(i => i.op_id === a.id);
@@ -457,6 +462,21 @@ export default function Comercial() {
               </SelectContent>
             </Select>
           </div>
+          {currentUser?.setor === 'administrador' && responsaveisUnicos.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos Responsáveis</SelectItem>
+                  {responsaveisUnicos.map(resp => (
+                    <SelectItem key={resp} value={resp}>{resp}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 
