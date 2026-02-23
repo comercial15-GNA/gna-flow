@@ -38,7 +38,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import ItensRetornados from '@/components/producao/ItensRetornados';
@@ -160,7 +160,7 @@ export default function Suprimentos() {
       'Quantidade': item.quantidade,
       'Cliente': item.cliente,
       'Responsável': item.responsavel_op || '-',
-      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
       'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
     }));
 
@@ -479,7 +479,7 @@ export default function Suprimentos() {
                           <div>
                             <span className="text-slate-400">Entrega:</span>
                             <p className={`font-medium ${atrasado ? 'text-red-600' : ''}`}>
-                              {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-'}
+                              {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}
                             </p>
                           </div>
                           <div>

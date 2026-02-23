@@ -42,7 +42,7 @@ import { createPageUrl } from '@/utils';
 import OPCard from '@/components/producao/OPCard';
 import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
 import { toast } from 'sonner';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 
@@ -363,7 +363,7 @@ export default function Comercial() {
                     <div><span className="text-slate-400">Código GA:</span> {item.codigo_ga || '-'}</div>
                     <div><span className="text-slate-400">Peso:</span> {item.peso ? `${item.peso} kg` : '-'}</div>
                     <div><span className="text-slate-400">Qtd:</span> {item.quantidade}</div>
-                    <div><span className="text-slate-400">Entrega:</span> <span className={atrasado ? 'text-red-600 font-bold' : ''}>{item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-'}</span></div>
+                    <div><span className="text-slate-400">Entrega:</span> <span className={atrasado ? 'text-red-600 font-bold' : ''}>{item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}</span></div>
                     <div><span className="text-slate-400">Responsável:</span> {item.responsavel_op || '-'}</div>
                   </div>
 

@@ -26,7 +26,7 @@ import {
   Calendar,
   AlertTriangle
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import EtapaChart from '@/components/lideranca/EtapaChart';
@@ -162,7 +162,7 @@ export default function Lideranca() {
           'Etapa Atual': ETAPA_LABELS[item.etapa_atual] || item.etapa_atual,
           'Responsável': op.responsavel || '-',
           'Status OP': op.status === 'em_andamento' ? 'Em Andamento' : 'Finalizada',
-          'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+          'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
           'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
         });
       });

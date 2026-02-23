@@ -30,7 +30,7 @@ import {
   ChevronUp } from
 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 import OPProgressPanel from '@/components/producao/OPProgressPanel';
@@ -179,7 +179,7 @@ export default function Expedicao() {
       'Peso Expedição (kg)': item.peso_expedicao || '-',
       'Volume': item.volume_expedicao || '-',
       'Responsável': item.responsavel_op || '-',
-      'Data Entrega': item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yyyy') : '-',
+      'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
       'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
     }));
 
@@ -391,7 +391,7 @@ export default function Expedicao() {
                               </div>
                               <div className="text-slate-600">
                                 <span className="font-medium">Entrega:</span>{' '}
-                                {item.data_entrega ? format(new Date(item.data_entrega), 'dd/MM/yy') : '-'}
+                                {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yy') : '-'}
                               </div>
                               <div className="text-slate-600">
                                 <span className="font-medium">Peso Exp.:</span> {item.peso_expedicao ? `${item.peso_expedicao} kg` : '-'}
