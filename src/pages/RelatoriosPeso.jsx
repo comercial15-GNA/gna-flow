@@ -72,13 +72,21 @@ export default function RelatoriosPeso() {
         if (d.getFullYear() !== selectedYear) return;
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
       });
-    } else {
-      // Baseado na data de lançamento da OP
+    } else if (modoData === 'lancamento') {
       allItems.forEach(item => {
         if (!item.peso) return;
         const op = allOPs.find(o => o.id === item.op_id);
         if (!op?.data_lancamento) return;
         const d = new Date(op.data_lancamento);
+        if (d.getFullYear() !== selectedYear) return;
+        meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
+      });
+    } else {
+      // A Entregar: itens com data de entrega no mês mas ainda em produção (não finalizados)
+      allItems.forEach(item => {
+        if (!item.data_entrega || !item.peso) return;
+        if (item.etapa_atual === 'finalizado') return;
+        const d = parseISO(item.data_entrega);
         if (d.getFullYear() !== selectedYear) return;
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
       });
