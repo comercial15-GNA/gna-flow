@@ -60,19 +60,32 @@ export default function RelatoriosPeso() {
     );
   }
 
-  // Calcular peso por mês para o ano selecionado (baseado em data_entrega dos itens)
+  // Calcular peso por mês para o ano selecionado
   const dadosMensais = useMemo(() => {
     const meses = {};
     for (let m = 1; m <= 12; m++) meses[m] = 0;
-    allItems.forEach(item => {
-      if (!item.data_entrega || !item.peso) return;
-      const d = parseISO(item.data_entrega);
-      if (d.getFullYear() !== selectedYear) return;
-      const m = d.getMonth() + 1;
-      meses[m] += (item.peso || 0) * (item.quantidade || 1);
-    });
+
+    if (modoData === 'entrega') {
+      allItems.forEach(item => {
+        if (!item.data_entrega || !item.peso) return;
+        const d = parseISO(item.data_entrega);
+        if (d.getFullYear() !== selectedYear) return;
+        meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
+      });
+    } else {
+      // Baseado na data de lançamento da OP
+      allItems.forEach(item => {
+        if (!item.peso) return;
+        const op = allOPs.find(o => o.id === item.op_id);
+        if (!op?.data_lancamento) return;
+        const d = new Date(op.data_lancamento);
+        if (d.getFullYear() !== selectedYear) return;
+        meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
+      });
+    }
+
     return meses;
-  }, [allItems, selectedYear]);
+  }, [allItems, allOPs, selectedYear, modoData]);
 
   const pesoTotalAnual = useMemo(() =>
     Object.values(dadosMensais).reduce((s, v) => s + v, 0),
