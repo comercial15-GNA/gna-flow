@@ -1,32 +1,36 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Scale, TrendingUp, Package, Calendar, Filter } from 'lucide-react';
+import { Scale, TrendingUp, Package, Calendar, BarChart2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { parseISO } from 'date-fns';
+import GraficoMensal from '../components/relatorios/GraficoMensal';
+import DetalhesMes from '../components/relatorios/DetalhesMes';
 
 const ETAPAS_PRODUCAO = [
-  { value: 'engenharia', label: 'Engenharia', color: 'bg-green-100 text-green-800' },
-  { value: 'modelagem', label: 'Modelagem', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'suprimentos', label: 'Suprimentos', color: 'bg-orange-100 text-orange-800' },
-  { value: 'fundicao', label: 'Fundição', color: 'bg-red-100 text-red-800' },
-  { value: 'acabamento', label: 'Acabamento', color: 'bg-pink-100 text-pink-800' },
-  { value: 'usinagem', label: 'Usinagem', color: 'bg-cyan-100 text-cyan-800' },
-  { value: 'caldeiraria', label: 'Caldeiraria', color: 'bg-amber-100 text-amber-800' },
-  { value: 'liberacao', label: 'Liberação', color: 'bg-emerald-100 text-emerald-800' },
-  { value: 'expedicao', label: 'Expedição', color: 'bg-teal-100 text-teal-800' },
-  { value: 'suporte_industrial', label: 'Suporte Industrial', color: 'bg-purple-100 text-purple-800' },
-  { value: 'coleta', label: 'Coleta', color: 'bg-indigo-100 text-indigo-800' },
+  { value: 'engenharia', label: 'Engenharia', color: 'bg-green-100 text-green-800', bar: '#22c55e' },
+  { value: 'modelagem', label: 'Modelagem', color: 'bg-yellow-100 text-yellow-800', bar: '#eab308' },
+  { value: 'suprimentos', label: 'Suprimentos', color: 'bg-orange-100 text-orange-800', bar: '#f97316' },
+  { value: 'fundicao', label: 'Fundição', color: 'bg-red-100 text-red-800', bar: '#ef4444' },
+  { value: 'acabamento', label: 'Acabamento', color: 'bg-pink-100 text-pink-800', bar: '#ec4899' },
+  { value: 'usinagem', label: 'Usinagem', color: 'bg-cyan-100 text-cyan-800', bar: '#06b6d4' },
+  { value: 'caldeiraria', label: 'Caldeiraria', color: 'bg-amber-100 text-amber-800', bar: '#f59e0b' },
+  { value: 'liberacao', label: 'Liberação', color: 'bg-emerald-100 text-emerald-800', bar: '#10b981' },
+  { value: 'expedicao', label: 'Expedição', color: 'bg-teal-100 text-teal-800', bar: '#14b8a6' },
+  { value: 'suporte_industrial', label: 'Suporte Industrial', color: 'bg-purple-100 text-purple-800', bar: '#a855f7' },
+  { value: 'coleta', label: 'Coleta', color: 'bg-indigo-100 text-indigo-800', bar: '#6366f1' },
 ];
+
+const formatPeso = (peso) =>
+  new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(peso || 0);
 
 export default function RelatoriosPeso() {
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-  
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [mesSelecionado, setMesSelecionado] = useState(null); // null = visão geral
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -43,7 +47,6 @@ export default function RelatoriosPeso() {
     queryFn: () => base44.entities.OrdemProducao.list(),
   });
 
-  // Verifica permissão de acesso
   if (currentUser && currentUser.setor !== 'comercial' && currentUser.setor !== 'administrador') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -56,202 +59,177 @@ export default function RelatoriosPeso() {
     );
   }
 
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
-  const months = [
-    { value: 1, label: 'Janeiro' },
-    { value: 2, label: 'Fevereiro' },
-    { value: 3, label: 'Março' },
-    { value: 4, label: 'Abril' },
-    { value: 5, label: 'Maio' },
-    { value: 6, label: 'Junho' },
-    { value: 7, label: 'Julho' },
-    { value: 8, label: 'Agosto' },
-    { value: 9, label: 'Setembro' },
-    { value: 10, label: 'Outubro' },
-    { value: 11, label: 'Novembro' },
-    { value: 12, label: 'Dezembro' },
-  ];
-
-  // Cálculos de peso
-  const { pesoTotalAnual, pesoTotalMensal, pesoPorEtapa } = useMemo(() => {
-    const itensComPeso = allItems.filter(item => item.peso && item.peso > 0 && item.etapa_atual !== 'finalizado');
-
-    // Peso total anual
-    const pesoAnual = itensComPeso
-      .filter(item => {
-        const opCorrespondente = allOPs.find(op => op.id === item.op_id);
-        if (!opCorrespondente) return false;
-        const dataLancamento = new Date(opCorrespondente.data_lancamento);
-        return dataLancamento.getFullYear() === selectedYear;
-      })
-      .reduce((acc, item) => acc + (item.peso * (item.quantidade || 1)), 0);
-
-    // Peso total mensal
-    const pesoMensal = itensComPeso
-      .filter(item => {
-        const opCorrespondente = allOPs.find(op => op.id === item.op_id);
-        if (!opCorrespondente) return false;
-        const dataLancamento = new Date(opCorrespondente.data_lancamento);
-        return dataLancamento.getFullYear() === selectedYear && 
-               dataLancamento.getMonth() + 1 === selectedMonth;
-      })
-      .reduce((acc, item) => acc + (item.peso * (item.quantidade || 1)), 0);
-
-    // Peso por etapa (itens em andamento)
-    const pesoEtapas = {};
-    ETAPAS_PRODUCAO.forEach(etapa => {
-      const itensNaEtapa = itensComPeso.filter(item => item.etapa_atual === etapa.value);
-      pesoEtapas[etapa.value] = itensNaEtapa.reduce((acc, item) => acc + (item.peso * (item.quantidade || 1)), 0);
+  // Calcular peso por mês para o ano selecionado (baseado em data_entrega dos itens)
+  const dadosMensais = useMemo(() => {
+    const meses = {};
+    for (let m = 1; m <= 12; m++) meses[m] = 0;
+    allItems.forEach(item => {
+      if (!item.data_entrega || !item.peso) return;
+      const d = parseISO(item.data_entrega);
+      if (d.getFullYear() !== selectedYear) return;
+      const m = d.getMonth() + 1;
+      meses[m] += (item.peso || 0) * (item.quantidade || 1);
     });
+    return meses;
+  }, [allItems, selectedYear]);
 
-    return {
-      pesoTotalAnual: pesoAnual,
-      pesoTotalMensal: pesoMensal,
-      pesoPorEtapa: pesoEtapas,
-    };
-  }, [allItems, allOPs, selectedYear, selectedMonth]);
+  const pesoTotalAnual = useMemo(() =>
+    Object.values(dadosMensais).reduce((s, v) => s + v, 0),
+    [dadosMensais]
+  );
 
-  const formatPeso = (peso) => {
-    return new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(peso);
-  };
+  // Peso por etapa (itens em andamento, qualquer ano)
+  const pesoPorEtapa = useMemo(() => {
+    const etapas = {};
+    ETAPAS_PRODUCAO.forEach(e => { etapas[e.value] = 0; });
+    allItems.forEach(item => {
+      if (!item.peso || item.etapa_atual === 'finalizado') return;
+      if (etapas[item.etapa_atual] !== undefined) {
+        etapas[item.etapa_atual] += (item.peso || 0) * (item.quantidade || 1);
+      }
+    });
+    return etapas;
+  }, [allItems]);
+
+  const pesoTotalEmAndamento = useMemo(() =>
+    Object.values(pesoPorEtapa).reduce((s, v) => s + v, 0),
+    [pesoPorEtapa]
+  );
+
+  if (mesSelecionado) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-6">
+        <DetalhesMes
+          mes={mesSelecionado}
+          ano={selectedYear}
+          itens={allItems}
+          ops={allOPs}
+          onVoltar={() => setMesSelecionado(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Scale className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">Relatório de Peso</h1>
-              <p className="text-slate-500">Acompanhamento de peso por período e etapa</p>
-            </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+            <Scale className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Relatório de Peso</h1>
+            <p className="text-slate-500 text-sm">Visão geral — clique em um mês para detalhar</p>
           </div>
         </div>
+        <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Filter className="w-5 h-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="text-sm text-slate-600 mb-1 block">Ano</label>
-              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <label className="text-sm text-slate-600 mb-1 block">Mês</label>
-              <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value.toString()}>{month.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base text-slate-600">
-              <Calendar className="w-4 h-4" />
-              Peso Total Anual ({selectedYear})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-slate-800">{formatPeso(pesoTotalAnual)}</span>
-              <span className="text-lg text-slate-500">kg</span>
+          <CardContent className="pt-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" /> Total Anual {selectedYear}
+                </p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-4xl font-bold text-slate-800">{formatPeso(pesoTotalAnual)}</span>
+                  <span className="text-slate-400">kg</span>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base text-slate-600">
-              <TrendingUp className="w-4 h-4" />
-              Peso Total Mensal ({months.find(m => m.value === selectedMonth)?.label})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-slate-800">{formatPeso(pesoTotalMensal)}</span>
-              <span className="text-lg text-slate-500">kg</span>
+          <CardContent className="pt-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" /> Em Andamento (todas as etapas)
+                </p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-4xl font-bold text-slate-800">{formatPeso(pesoTotalEmAndamento)}</span>
+                  <span className="text-slate-400">kg</span>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                <Scale className="w-5 h-5 text-orange-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Peso por Etapa */}
+      {/* Gráfico de barras mensal */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            Peso em Andamento por Etapa de Produção
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart2 className="w-4 h-4" />
+            Peso por Mês — {selectedYear}
           </CardTitle>
+          <p className="text-xs text-slate-400">Baseado na data de entrega dos itens · Clique em um mês para ver detalhes</p>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
             </div>
           ) : (
-            <div className="space-y-4">
-              {ETAPAS_PRODUCAO.map(etapa => {
-                const peso = pesoPorEtapa[etapa.value] || 0;
-                const percentual = pesoTotalAnual > 0 ? (peso / pesoTotalAnual) * 100 : 0;
-                
-                return (
-                  <div key={etapa.value} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge className={etapa.color}>{etapa.label}</Badge>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-bold text-slate-800">{formatPeso(peso)}</span>
-                        <span className="text-sm text-slate-500">kg</span>
-                        {percentual > 0 && (
-                          <span className="text-sm text-slate-400">({percentual.toFixed(1)}%)</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${Math.min(percentual, 100)}%` }}
-                      />
+            <GraficoMensal
+              dadosMensais={dadosMensais}
+              mesSelecionado={mesSelecionado}
+              onSelecionarMes={setMesSelecionado}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Peso por etapa em andamento */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Package className="w-4 h-4" />
+            Peso em Andamento por Etapa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {ETAPAS_PRODUCAO.map(etapa => {
+              const peso = pesoPorEtapa[etapa.value] || 0;
+              const pct = pesoTotalEmAndamento > 0 ? (peso / pesoTotalEmAndamento) * 100 : 0;
+              return (
+                <div key={etapa.value}>
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge className={`${etapa.color} text-xs`}>{etapa.label}</Badge>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-base font-bold text-slate-800">{formatPeso(peso)}</span>
+                      <span className="text-xs text-slate-400">kg</span>
+                      {pct > 0 && <span className="text-xs text-slate-400">({pct.toFixed(1)}%)</span>}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <div className="w-full bg-slate-100 rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: etapa.bar }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
     </div>
