@@ -126,6 +126,7 @@ export default function RelatoriosPeso() {
           ano={selectedYear}
           itens={allItems}
           ops={allOPs}
+          modoData={modoData}
           onVoltar={() => setMesSelecionado(null)}
         />
       </div>

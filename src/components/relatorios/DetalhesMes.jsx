@@ -18,16 +18,41 @@ const ETAPA_LABELS = {
 const formatPeso = (peso) =>
   new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(peso || 0);
 
-export default function DetalhesMes({ mes, ano, itens, ops, onVoltar }) {
+const MODO_LABELS = {
+  entrega: 'Data de Entrega',
+  lancamento: 'Data de Lançamento',
+  a_entregar: 'A Entregar',
+};
+
+export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega', onVoltar }) {
   const [expandedOPs, setExpandedOPs] = useState({});
 
   const toggleOP = (opId) => setExpandedOPs(prev => ({ ...prev, [opId]: !prev[opId] }));
 
-  // Filtrar itens do mês
+  // Filtrar itens do mês de acordo com o modo
   const itensMes = itens.filter(item => {
-    if (!item.data_entrega) return false;
-    const d = parseISO(item.data_entrega);
-    return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+    if (!item.peso) return false;
+
+    if (modoData === 'entrega') {
+      if (!item.data_entrega) return false;
+      const d = parseISO(item.data_entrega);
+      return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+    }
+
+    if (modoData === 'lancamento') {
+      const op = ops.find(o => o.id === item.op_id);
+      if (!op?.data_lancamento) return false;
+      const d = new Date(op.data_lancamento);
+      return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+    }
+
+    if (modoData === 'a_entregar') {
+      if (!item.data_entrega || item.etapa_atual === 'finalizado') return false;
+      const d = parseISO(item.data_entrega);
+      return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+    }
+
+    return false;
   });
 
   // Agrupar por OP
