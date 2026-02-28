@@ -221,6 +221,12 @@ export default function RelatoriosPeso() {
               >
                 Data Lançamento
               </button>
+              <button
+                onClick={() => setModoData('a_entregar')}
+                className={`px-3 py-1.5 transition-colors ${modoData === 'a_entregar' ? 'bg-orange-500 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                A Entregar
+              </button>
             </div>
           </div>
         </CardHeader>
