@@ -82,7 +82,9 @@ export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega'
         </Button>
         <div>
           <h2 className="text-xl font-bold text-slate-800">{MESES[mes - 1]} {ano}</h2>
-          <p className="text-slate-500 text-sm">{grupos.length} OPs · {formatPeso(pesoTotal)} kg</p>
+          <p className="text-slate-500 text-sm">
+            {MODO_LABELS[modoData]} · {grupos.length} OPs · {formatPeso(pesoTotal)} kg
+          </p>
         </div>
       </div>
 
