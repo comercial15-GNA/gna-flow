@@ -205,7 +205,7 @@ export default function RelatoriosPeso() {
                 Peso por Mês — {selectedYear}
               </CardTitle>
               <p className="text-xs text-slate-400 mt-1">
-                {modoData === 'entrega' ? 'Data de entrega dos itens' : 'Data de lançamento da OP'} · Clique em um mês para ver detalhes
+                {modoData === 'entrega' ? 'Data de entrega dos itens' : modoData === 'lancamento' ? 'Data de lançamento da OP' : 'Itens em produção com entrega prevista no mês'} · Clique em um mês para ver detalhes
               </p>
             </div>
             <div className="flex border border-slate-200 rounded-lg overflow-hidden text-sm">
