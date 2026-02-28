@@ -91,7 +91,7 @@ export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega'
       {grupos.length === 0 ? (
         <div className="text-center py-16 text-slate-400">
           <Scale className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Nenhum item com data de entrega neste mês.</p>
+          <p>Nenhum item encontrado para este mês com o filtro "{MODO_LABELS[modoData]}".</p>
         </div>
       ) : (
         <div className="space-y-3">
