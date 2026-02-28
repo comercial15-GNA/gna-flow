@@ -240,6 +240,8 @@ export default function RelatoriosPeso() {
               dadosMensais={dadosMensais}
               mesSelecionado={mesSelecionado}
               onSelecionarMes={setMesSelecionado}
+              corBarra={modoData === 'a_entregar' ? '#f97316' : '#3b82f6'}
+              corSelecionada={modoData === 'a_entregar' ? '#c2410c' : '#1e40af'}
             />
           )}
         </CardContent>
