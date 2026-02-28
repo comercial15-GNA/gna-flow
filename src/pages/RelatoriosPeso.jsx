@@ -30,6 +30,7 @@ export default function RelatoriosPeso() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [mesSelecionado, setMesSelecionado] = useState(null); // null = visão geral
+  const [modoData, setModoData] = useState('entrega'); // 'entrega' | 'lancamento'
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   const { data: currentUser } = useQuery({
