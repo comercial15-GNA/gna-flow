@@ -190,11 +190,31 @@ export default function RelatoriosPeso() {
       {/* Gráfico de barras mensal */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BarChart2 className="w-4 h-4" />
-            Peso por Mês — {selectedYear}
-          </CardTitle>
-          <p className="text-xs text-slate-400">Baseado na data de entrega dos itens · Clique em um mês para ver detalhes</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BarChart2 className="w-4 h-4" />
+                Peso por Mês — {selectedYear}
+              </CardTitle>
+              <p className="text-xs text-slate-400 mt-1">
+                {modoData === 'entrega' ? 'Data de entrega dos itens' : 'Data de lançamento da OP'} · Clique em um mês para ver detalhes
+              </p>
+            </div>
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden text-sm">
+              <button
+                onClick={() => setModoData('entrega')}
+                className={`px-3 py-1.5 transition-colors ${modoData === 'entrega' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                Data Entrega
+              </button>
+              <button
+                onClick={() => setModoData('lancamento')}
+                className={`px-3 py-1.5 transition-colors ${modoData === 'lancamento' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                Data Lançamento
+              </button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
