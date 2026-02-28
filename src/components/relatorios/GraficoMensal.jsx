@@ -16,7 +16,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function GraficoMensal({ dadosMensais, mesSelecionado, onSelecionarMes }) {
+export default function GraficoMensal({ dadosMensais, mesSelecionado, onSelecionarMes, corBarra = '#3b82f6', corSelecionada = '#1e40af' }) {
   const data = MESES_ABREV.map((nome, i) => ({
     mes: nome,
     mesNum: i + 1,
@@ -36,7 +36,7 @@ export default function GraficoMensal({ dadosMensais, mesSelecionado, onSelecion
           {data.map((entry) => (
             <Cell
               key={entry.mesNum}
-              fill={entry.mesNum === mesSelecionado ? '#1e40af' : '#3b82f6'}
+              fill={entry.mesNum === mesSelecionado ? corSelecionada : corBarra}
               className="cursor-pointer"
             />
           ))}
