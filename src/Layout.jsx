@@ -298,22 +298,28 @@ export default function Layout({ children, currentPageName }) {
   );
 }
 
-function SidebarContent({ user, setorConfig, SetorIcon, visibleNavItems, currentPageName, onLogout, onClose }) {
+function SidebarContent({ user, setorConfig, SetorIcon, visibleNavItems, currentPageName, onLogout, onClose, collapsed, onToggleCollapse }) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-slate-100">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center">
-              <Factory className="w-5 h-5 text-white" />
+      <div className={cn("border-b border-slate-100 transition-all duration-300", collapsed ? "p-3" : "p-6")}>
+        <div className={cn("flex items-center justify-between", collapsed ? "mb-0" : "mb-4")}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-slate-700 transition-colors"
+              onClick={onToggleCollapse}
+              title={collapsed ? "Expandir menu" : "Recolher menu"}
+            >
+              {collapsed ? <ChevronRight className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
             </div>
-            <div>
-              <h1 className="font-bold text-slate-800 text-lg">Controle GNA</h1>
-              <p className="text-xs text-slate-500">Produção</p>
-            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <h1 className="font-bold text-slate-800 text-lg">Controle GNA</h1>
+                <p className="text-xs text-slate-500">Produção</p>
+              </div>
+            )}
           </div>
-          {onClose && (
+          {onClose && !collapsed && (
             <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
               <X className="w-5 h-5" />
             </Button>
@@ -321,21 +327,30 @@ function SidebarContent({ user, setorConfig, SetorIcon, visibleNavItems, current
         </div>
         
         {/* User Info */}
-        <div className="bg-slate-50 rounded-xl p-3">
-          <div className="flex items-center gap-3">
-            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", setorConfig?.color)}>
-              <SetorIcon className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-slate-800 truncate text-sm">{user.full_name || user.email}</p>
-              <p className="text-xs text-slate-500">{setorConfig?.label}</p>
+        {!collapsed && (
+          <div className="bg-slate-50 rounded-xl p-3">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0", setorConfig?.color)}>
+                <SetorIcon className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-slate-800 truncate text-sm">{user.full_name || user.email}</p>
+                <p className="text-xs text-slate-500">{setorConfig?.label}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+        {collapsed && (
+          <div className="mt-2 flex justify-center">
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", setorConfig?.color)}>
+              <SetorIcon className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav className="flex-1 p-2 overflow-y-auto">
         <div className="space-y-1">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
@@ -346,16 +361,18 @@ function SidebarContent({ user, setorConfig, SetorIcon, visibleNavItems, current
                 key={item.name}
                 to={createPageUrl(item.name)}
                 onClick={onClose}
+                title={collapsed ? item.label : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                  "flex items-center gap-3 rounded-xl transition-all duration-200",
+                  collapsed ? "px-2 py-3 justify-center" : "px-4 py-3",
                   isActive 
                     ? "bg-slate-800 text-white shadow-lg" 
                     : "text-slate-600 hover:bg-slate-100"
                 )}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-                {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {!collapsed && <span className="font-medium">{item.label}</span>}
+                {!collapsed && isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
               </Link>
             );
           })}
@@ -363,14 +380,18 @@ function SidebarContent({ user, setorConfig, SetorIcon, visibleNavItems, current
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-100">
+      <div className="p-2 border-t border-slate-100">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-slate-600 hover:text-red-600 hover:bg-red-50"
+          className={cn(
+            "w-full text-slate-600 hover:text-red-600 hover:bg-red-50",
+            collapsed ? "px-2 justify-center" : "justify-start"
+          )}
           onClick={onLogout}
+          title={collapsed ? "Sair do Sistema" : undefined}
         >
-          <LogOut className="w-5 h-5 mr-3" />
-          Sair do Sistema
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && <span className="ml-3">Sair do Sistema</span>}
         </Button>
       </div>
     </div>
