@@ -272,7 +272,10 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-72 lg:bg-white lg:border-r lg:border-slate-200">
+      <div className={cn(
+        "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:bg-white lg:border-r lg:border-slate-200 transition-all duration-300",
+        sidebarCollapsed ? "lg:w-16" : "lg:w-72"
+      )}>
         <SidebarContent 
           user={user}
           setorConfig={setorConfig}
@@ -280,11 +283,13 @@ export default function Layout({ children, currentPageName }) {
           visibleNavItems={visibleNavItems}
           currentPageName={currentPageName}
           onLogout={handleLogout}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(v => !v)}
         />
       </div>
 
       {/* Main Content */}
-      <main className="lg:pl-72 pt-16 lg:pt-0 min-h-screen">
+      <main className={cn("pt-16 lg:pt-0 min-h-screen transition-all duration-300", sidebarCollapsed ? "lg:pl-16" : "lg:pl-72")}>
         <div className="p-4 lg:p-8">
           {children}
         </div>
