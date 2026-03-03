@@ -108,7 +108,7 @@ async function imprimirViaBrowserPrint(zpl) {
   }
 }
 
-export default function ImprimirEtiquetaZebra({ item }) {
+export default function ImprimirEtiquetaZebra({ item, onImprimir }) {
   const [loading, setLoading] = useState(false);
 
   const handleImprimir = async (e) => {
@@ -118,6 +118,7 @@ export default function ImprimirEtiquetaZebra({ item }) {
       const zpl = gerarZPL(item);
       await imprimirViaBrowserPrint(zpl);
       toast.success('Etiqueta enviada para impressão!');
+      if (onImprimir) await onImprimir(item);
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Erro ao imprimir etiqueta');
