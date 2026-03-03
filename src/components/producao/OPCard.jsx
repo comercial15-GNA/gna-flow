@@ -48,20 +48,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
   const [expanded, setExpanded] = useState(false);
   const [editingObservacao, setEditingObservacao] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
-  const [printingItem, setPrintingItem] = useState(null);
 
-  const handlePrintEtiqueta = async (e, item) => {
-    e.stopPropagation();
-    setPrintingItem(item.id);
-    try {
-      await imprimirEtiqueta({ ...item, equipamento_principal: op.equipamento_principal });
-      toast.success('Etiqueta enviada para impressão!');
-    } catch (err) {
-      toast.error(err.message || 'Erro ao imprimir etiqueta.');
-    } finally {
-      setPrintingItem(null);
-    }
-  };
   const statusConfig = STATUS_CONFIG[op.status] || STATUS_CONFIG.em_andamento;
 
   const itensOP = itens.filter(item => item.op_id === op.id);
