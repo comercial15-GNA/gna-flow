@@ -199,7 +199,7 @@ export default function PainelUsinagem() {
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <ImprimirEtiquetaZebra item={item} />
+                        <ImprimirEtiquetaZebra item={item} onImprimir={registrarHistoricoEtiqueta} />
                       </td>
                     </tr>
                   );
