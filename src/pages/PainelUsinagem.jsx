@@ -182,6 +182,9 @@ export default function PainelUsinagem() {
                           </Badge>
                         )}
                       </td>
+                      <td className="px-4 py-4">
+                        <ImprimirEtiquetaZebra item={item} />
+                      </td>
                     </tr>
                   );
                 })
