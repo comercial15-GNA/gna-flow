@@ -114,7 +114,7 @@ export default function PainelUsinagem() {
             <tbody className="divide-y divide-slate-700">
               {itens.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="text-center py-12 text-slate-400">
+                  <td colSpan="10" className="text-center py-12 text-slate-400">
                     Nenhum item na fila
                   </td>
                 </tr>
