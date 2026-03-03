@@ -19,7 +19,6 @@ import { ptBR } from 'date-fns/locale';
 import { createPageUrl } from '../../utils';
 import EditObservacaoDialog from './EditObservacaoDialog';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
-import ImprimirEtiquetaZebra from './ImprimirEtiquetaZebra';
 
 const STATUS_CONFIG = {
   em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
