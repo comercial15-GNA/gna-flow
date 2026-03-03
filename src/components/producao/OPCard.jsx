@@ -162,17 +162,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-semibold text-slate-800">{item.descricao}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => handlePrintEtiqueta(e, item)}
-                              disabled={printingItem === item.id}
-                              className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-                              title="Imprimir Etiqueta Zebra"
-                            >
-                              <Printer className="w-3.5 h-3.5 mr-1" />
-                              {printingItem === item.id ? 'Imprimindo...' : 'Etiqueta'}
-                            </Button>
+                            <ImprimirEtiquetaZebra item={{ ...item, equipamento_principal: op.equipamento_principal }} />
                           </div>
                           {item.observacao && (
                             <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-start justify-between">
