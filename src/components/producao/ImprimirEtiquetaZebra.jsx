@@ -3,11 +3,34 @@ import { Button } from "@/components/ui/button";
 import { Printer, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Converte caracteres especiais do português para equivalentes ASCII
+// para compatibilidade com impressoras Zebra que não suportam UTF-8
+function normalizarTexto(str) {
+  if (!str) return str;
+  return str
+    .replace(/[àáâãä]/g, 'a')
+    .replace(/[ÀÁÂÃÄ]/g, 'A')
+    .replace(/[èéêë]/g, 'e')
+    .replace(/[ÈÉÊË]/g, 'E')
+    .replace(/[ìíîï]/g, 'i')
+    .replace(/[ÌÍÎÏ]/g, 'I')
+    .replace(/[òóôõö]/g, 'o')
+    .replace(/[ÒÓÔÕÖ]/g, 'O')
+    .replace(/[ùúûü]/g, 'u')
+    .replace(/[ÙÚÛÜ]/g, 'U')
+    .replace(/[ç]/g, 'c')
+    .replace(/[Ç]/g, 'C')
+    .replace(/[ñ]/g, 'n')
+    .replace(/[Ñ]/g, 'N')
+    .replace(/[ý]/g, 'y')
+    .replace(/[Ý]/g, 'Y');
+}
+
 function gerarZPL(item) {
   const numeroOP = (item.numero_op || '-');
-  const descricao = (item.descricao || '-').substring(0, 45);
-  const codigoGA = item.codigo_ga || '-';
-  const equipamento = (item.equipamento_principal || '-').substring(0, 20);
+  const descricao = normalizarTexto((item.descricao || '-').substring(0, 45));
+  const codigoGA = normalizarTexto(item.codigo_ga || '-');
+  const equipamento = normalizarTexto((item.equipamento_principal || '-').substring(0, 20));
   const peso = item.peso ? `${item.peso}` : '-';
 
   const agora = new Date();
