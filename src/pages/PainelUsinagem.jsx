@@ -7,6 +7,22 @@ import ImprimirEtiquetaZebra from '../components/producao/ImprimirEtiquetaZebra'
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+async function registrarHistoricoEtiqueta(item) {
+  const user = await base44.auth.me();
+  await base44.entities.HistoricoMovimentacao.create({
+    item_id: item.id,
+    op_id: item.op_id,
+    numero_op: item.numero_op,
+    descricao_item: item.descricao,
+    setor_origem: 'usinagem',
+    setor_destino: 'usinagem',
+    justificativa: 'Etiqueta Zebra impressa',
+    usuario_email: user?.email || '',
+    usuario_nome: user?.full_name || '',
+    data_movimentacao: new Date().toISOString(),
+  });
+}
+
 export default function PainelUsinagem() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
