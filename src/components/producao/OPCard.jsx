@@ -161,7 +161,6 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-semibold text-slate-800">{item.descricao}</p>
-                            <ImprimirEtiquetaZebra item={{ ...item, equipamento_principal: op.equipamento_principal }} />
                           </div>
                           {item.observacao && (
                             <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-start justify-between">
