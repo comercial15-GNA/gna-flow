@@ -87,12 +87,6 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                   </Badge>
                 )}
                 <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
-                {opEmAtraso && (
-                  <Badge className="bg-red-600 text-white flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    ATRASADA
-                  </Badge>
-                )}
               </div>
             </div>
           </div>
@@ -166,6 +160,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
               <p className="text-xs font-medium text-slate-500 uppercase mb-2">Itens da OP</p>
               <div className="space-y-2">
                 {itensOP.map((item) => {
+                  const itemAtrasado = item.etapa_atual !== 'finalizado' && isAtrasado(item.data_entrega);
                   return (
                     <div
                       key={item.id}
@@ -220,8 +215,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                       <div className="text-slate-600">
                         <span className="text-slate-400">Quantidade:</span> {item.quantidade}
                       </div>
-                      <div className="text-slate-600">
-                        <span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}
+                      <div className={itemAtrasado ? 'text-red-700 font-semibold' : 'text-slate-600'}>
+                        <span className={itemAtrasado ? 'text-red-500' : 'text-slate-400'}>Entrega:</span> {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}
                       </div>
                       <div className="text-slate-600">
                         <span className="text-slate-400">Cliente:</span> {item.cliente || '-'}
