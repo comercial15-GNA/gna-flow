@@ -168,10 +168,10 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                 {itensOP.map((item) => {
                   const itemAtrasado = item.etapa_atual !== 'finalizado' && isAtrasado(item.data_entrega);
                   return (
-                  <div
-                    key={item.id}
-                    className={`rounded-lg p-4 border ${itemAtrasado ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'}`}
-                  >
+                    <div
+                      key={item.id}
+                      className={`rounded-lg p-4 border ${itemAtrasado ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'}`}
+                    >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start gap-3 flex-1">
                         <Package className={`w-4 h-4 mt-1 ${itemAtrasado ? 'text-red-400' : 'text-slate-400'}`} />
