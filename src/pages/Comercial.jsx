@@ -51,6 +51,7 @@ export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('em_andamento');
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
+  const [apenasAtrasados, setApenasAtrasados] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
