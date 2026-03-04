@@ -165,17 +165,25 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase mb-2">Itens da OP</p>
               <div className="space-y-2">
-                {itensOP.map((item) => (
+                {itensOP.map((item) => {
+                  const itemAtrasado = item.etapa_atual !== 'finalizado' && isAtrasado(item.data_entrega);
+                  return (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg p-4 border border-slate-200"
+                    className={`rounded-lg p-4 border ${itemAtrasado ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'}`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start gap-3 flex-1">
-                        <Package className="w-4 h-4 text-slate-400 mt-1" />
+                        <Package className={`w-4 h-4 mt-1 ${itemAtrasado ? 'text-red-400' : 'text-slate-400'}`} />
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-semibold text-slate-800">{item.descricao}</p>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <p className={`font-semibold ${itemAtrasado ? 'text-red-800' : 'text-slate-800'}`}>{item.descricao}</p>
+                            {itemAtrasado && (
+                              <Badge className="bg-red-600 text-white text-xs flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" />
+                                ATRASADO
+                              </Badge>
+                            )}
                           </div>
                           {item.observacao && (
                             <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-start justify-between">
