@@ -13,6 +13,7 @@ import {
   Edit2,
   History,
   Settings,
+  AlertCircle,
 } from 'lucide-react';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
