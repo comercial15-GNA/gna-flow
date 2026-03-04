@@ -236,7 +236,7 @@ export default function Comercial() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-7 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
