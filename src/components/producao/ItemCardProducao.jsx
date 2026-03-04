@@ -13,10 +13,9 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  History,
-  AlertCircle
+  History
 } from 'lucide-react';
-import { format, parseISO, isBefore, startOfDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
@@ -50,11 +49,6 @@ const ETAPA_LABELS = {
   finalizado: 'Finalizado'
 };
 
-const isAtrasado = (dataEntrega) => {
-  if (!dataEntrega) return false;
-  return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
-};
-
 export default function ItemCardProducao({ 
   item, 
   arquivos = [],
@@ -65,23 +59,16 @@ export default function ItemCardProducao({
   loading = false
 }) {
   const [showHistorico, setShowHistorico] = useState(false);
-  const atrasado = isAtrasado(item.data_entrega);
 
   return (
-    <div className={`rounded-xl border shadow-sm p-4 ${atrasado ? 'border-red-200 bg-red-50' : 'bg-white border-slate-100'}`}>
+    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${atrasado ? 'bg-red-100' : 'bg-slate-100'}`}>
-            <Package className={`w-4 h-4 ${atrasado ? 'text-red-500' : 'text-slate-600'}`} />
+          <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+            <Package className="w-4 h-4 text-slate-600" />
           </div>
           <div>
             <p className="font-semibold text-slate-800">{item.descricao}</p>
-            {atrasado && (
-              <div className="flex items-center gap-1 text-xs text-red-600 mt-0.5">
-                <AlertCircle className="w-3 h-3" />
-                <span>Atrasado</span>
-              </div>
-            )}
             <p className="text-xs text-slate-500">{item.numero_op} • {item.equipamento_principal || item.cliente}</p>
             {item.equipamento_principal && <p className="text-xs text-slate-400">{item.cliente}</p>}
           </div>
@@ -105,8 +92,8 @@ export default function ItemCardProducao({
           <span className="text-slate-600">Qtd: {item.quantidade}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Calendar className={`w-4 h-4 ${atrasado ? 'text-red-400' : 'text-slate-400'}`} />
-          <span className={atrasado ? 'text-red-600 font-semibold' : 'text-slate-600'}>
+          <Calendar className="w-4 h-4 text-slate-400" />
+          <span className="text-slate-600">
             {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yy') : '-'}
           </span>
         </div>

@@ -35,8 +35,7 @@ import {
   History,
   ChevronDown,
   ChevronUp,
-  CheckCircle,
-  AlertTriangle
+  CheckCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -51,7 +50,6 @@ export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('em_andamento');
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
-
   const [editingItem, setEditingItem] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
@@ -311,7 +309,6 @@ export default function Comercial() {
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Seção de Itens Retornados */}

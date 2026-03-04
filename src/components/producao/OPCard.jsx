@@ -13,9 +13,8 @@ import {
   Edit2,
   History,
   Settings,
-  AlertCircle,
 } from 'lucide-react';
-import { format, parseISO, isBefore, startOfDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { createPageUrl } from '../../utils';
 import EditObservacaoDialog from './EditObservacaoDialog';
@@ -54,11 +53,6 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
 
   const toggleHistorico = (itemId) => {
     setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
-  };
-
-  const isAtrasado = (dataEntrega) => {
-    if (!dataEntrega) return false;
-    return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
   };
 
   return (
@@ -155,25 +149,18 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase mb-2">Itens da OP</p>
               <div className="space-y-2">
-                {itensOP.map((item) => {
-                  const atrasado = isAtrasado(item.data_entrega);
-                  return (<div
+                {itensOP.map((item) => (
+                  <div
                     key={item.id}
-                    className={`rounded-lg p-4 border ${atrasado ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}
+                    className="bg-white rounded-lg p-4 border border-slate-200"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-start gap-3 flex-1">
-                        <Package className={`w-4 h-4 mt-1 ${atrasado ? 'text-red-400' : 'text-slate-400'}`} />
+                        <Package className="w-4 h-4 text-slate-400 mt-1" />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-semibold text-slate-800">{item.descricao}</p>
                           </div>
-                          {atrasado && (
-                            <div className="flex items-center gap-1 text-xs text-red-600 mb-1">
-                              <AlertCircle className="w-3 h-3" />
-                              <span>Atrasado</span>
-                            </div>
-                          )}
                           {item.observacao && (
                             <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-start justify-between">
                               <p className="text-xs text-blue-900 flex-1">
@@ -216,8 +203,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                       <div className="text-slate-600">
                         <span className="text-slate-400">Quantidade:</span> {item.quantidade}
                       </div>
-                      <div className={atrasado ? 'text-red-600 font-semibold' : 'text-slate-600'}>
-                        <span className="text-slate-400">Entrega:</span> <span className={atrasado ? 'text-red-600 font-bold' : ''}>{item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}</span>
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}
                       </div>
                       <div className="text-slate-600">
                         <span className="text-slate-400">Cliente:</span> {item.cliente || '-'}
@@ -258,8 +245,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                         </div>
                       )}
                     </div>
-                  </div>);
-                  })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
