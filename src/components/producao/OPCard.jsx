@@ -87,6 +87,12 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                   </Badge>
                 )}
                 <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                {opEmAtraso && (
+                  <Badge className="bg-red-600 text-white flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    ATRASADA
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
