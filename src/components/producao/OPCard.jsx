@@ -56,6 +56,11 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
     setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
+  const isAtrasado = (dataEntrega) => {
+    if (!dataEntrega) return false;
+    return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
+  };
+
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
       <div 
