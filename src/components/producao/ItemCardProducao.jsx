@@ -105,8 +105,8 @@ export default function ItemCardProducao({
           <span className="text-slate-600">Qtd: {item.quantidade}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <span className="text-slate-600">
+          <Calendar className={`w-4 h-4 ${atrasado ? 'text-red-400' : 'text-slate-400'}`} />
+          <span className={atrasado ? 'text-red-600 font-semibold' : 'text-slate-600'}>
             {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yy') : '-'}
           </span>
         </div>
