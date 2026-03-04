@@ -157,8 +157,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
               <div className="space-y-2">
                 {itensOP.map((item) => {
                   const atrasado = isAtrasado(item.data_entrega);
-                  return (
-                  <div
+                  return (<div
                     key={item.id}
                     className={`rounded-lg p-4 border ${atrasado ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}
                   >
