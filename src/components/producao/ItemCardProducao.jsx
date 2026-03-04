@@ -15,7 +15,7 @@ import {
   ChevronUp,
   History
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
 
