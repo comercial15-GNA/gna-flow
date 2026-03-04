@@ -57,6 +57,10 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
 
   const itensOP = itens.filter(item => item.op_id === op.id);
 
+  // OP em atraso: pelo menos um item ativo (não finalizado) com data de entrega vencida
+  const opEmAtraso = op.status !== 'finalizado' && op.status !== 'cancelada' &&
+    itensOP.some(item => item.etapa_atual !== 'finalizado' && isAtrasado(item.data_entrega));
+
   const toggleHistorico = (itemId) => {
     setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
