@@ -48,7 +48,13 @@ export default function RelatoriosPeso() {
     queryFn: () => base44.entities.OrdemProducao.list(),
   });
 
-  if (currentUser && currentUser.setor !== 'comercial' && currentUser.setor !== 'administrador') {
+  const temAcesso = currentUser && (
+    currentUser.setor === 'comercial' ||
+    currentUser.setor === 'administrador' ||
+    (currentUser.allowed_pages && Array.isArray(currentUser.allowed_pages) && currentUser.allowed_pages.includes('RelatoriosPeso'))
+  );
+
+  if (currentUser && !temAcesso) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
