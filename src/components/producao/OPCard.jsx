@@ -270,7 +270,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
