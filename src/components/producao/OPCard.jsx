@@ -220,8 +220,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                       <div className="text-slate-600">
                         <span className="text-slate-400">Quantidade:</span> {item.quantidade}
                       </div>
-                      <div className={itemAtrasado ? 'text-red-700 font-semibold' : 'text-slate-600'}>
-                        <span className={itemAtrasado ? 'text-red-500' : 'text-slate-400'}>Entrega:</span> {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}
+                      <div className="text-slate-600">
+                        <span className="text-slate-400">Entrega:</span> {item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-'}
                       </div>
                       <div className="text-slate-600">
                         <span className="text-slate-400">Cliente:</span> {item.cliente || '-'}
