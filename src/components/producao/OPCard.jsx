@@ -66,9 +66,9 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className={`rounded-xl border shadow-sm overflow-hidden ${opEmAtraso ? 'bg-red-50 border-red-300' : 'bg-white border-slate-100'}`}>
       <div 
-        className="p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+        className={`p-4 cursor-pointer transition-colors ${opEmAtraso ? 'hover:bg-red-100' : 'hover:bg-slate-50'}`}
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start justify-between">
