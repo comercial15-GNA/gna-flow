@@ -111,11 +111,6 @@ export default function Comercial() {
   // Derivar lista de responsáveis únicos
   const responsaveisUnicos = [...new Set(opsVisiveis.map(op => op.responsavel).filter(Boolean))].sort();
 
-  // Contar OPs com itens atrasados
-  const opsComItensAtrasados = opsVisiveis.filter(op =>
-    itens.some(i => i.op_id === op.id && i.etapa_atual !== 'finalizado' && isAtrasado(i.data_entrega))
-  ).length;
-
   // Filtros para OPs
   const opsFiltradas = opsVisiveis.filter(op => {
     const matchSearch = !searchTerm || 
@@ -125,8 +120,7 @@ export default function Comercial() {
       op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'todos' || op.status === statusFilter;
     const matchResponsavel = filtroResponsavel === 'todos' || op.responsavel === filtroResponsavel;
-    const matchAtrasado = !apenasAtrasados || itens.some(i => i.op_id === op.id && i.etapa_atual !== 'finalizado' && isAtrasado(i.data_entrega));
-    return matchSearch && matchStatus && matchResponsavel && matchAtrasado;
+    return matchSearch && matchStatus && matchResponsavel;
   }).sort((a, b) => {
     // Ordenar por data de entrega mais próxima dos itens
     const itensA = itens.filter(i => i.op_id === a.id);
