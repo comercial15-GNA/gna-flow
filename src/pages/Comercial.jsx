@@ -317,6 +317,20 @@ export default function Comercial() {
             </div>
           </div>
         </div>
+        <div
+          className={`rounded-xl p-4 shadow-sm border cursor-pointer transition-colors ${apenasAtrasados ? 'bg-red-600 border-red-600' : 'bg-white border-slate-100 hover:bg-red-50'}`}
+          onClick={() => setApenasAtrasados(v => !v)}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${apenasAtrasados ? 'bg-red-500' : 'bg-red-100'}`}>
+              <AlertTriangle className={`w-5 h-5 ${apenasAtrasados ? 'text-white' : 'text-red-600'}`} />
+            </div>
+            <div>
+              <p className={`text-2xl font-bold ${apenasAtrasados ? 'text-white' : 'text-red-600'}`}>{opsComItensAtrasados}</p>
+              <p className={`text-xs ${apenasAtrasados ? 'text-red-100' : 'text-slate-500'}`}>OPs Atrasadas</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Seção de Itens Retornados */}
