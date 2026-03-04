@@ -13,9 +13,15 @@ import {
   Edit2,
   History,
   Settings,
+  AlertTriangle,
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const isAtrasado = (dataEntrega) => {
+  if (!dataEntrega) return false;
+  return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
+};
 import { createPageUrl } from '../../utils';
 import EditObservacaoDialog from './EditObservacaoDialog';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
