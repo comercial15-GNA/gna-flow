@@ -22,6 +22,7 @@ const MODO_LABELS = {
   entrega: 'Data de Entrega',
   lancamento: 'Data de Lançamento',
   a_entregar: 'A Entregar',
+  finalizados: 'Finalizados',
 };
 
 export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega', onVoltar }) {
@@ -49,6 +50,12 @@ export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega'
     if (modoData === 'a_entregar') {
       if (!item.data_entrega || item.etapa_atual === 'finalizado') return false;
       const d = parseISO(item.data_entrega);
+      return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+    }
+
+    if (modoData === 'finalizados') {
+      if (item.etapa_atual !== 'finalizado' || !item.data_entrada_etapa) return false;
+      const d = new Date(item.data_entrada_etapa);
       return d.getFullYear() === ano && d.getMonth() + 1 === mes;
     }
 
