@@ -87,12 +87,21 @@ export default function RelatoriosPeso() {
         if (d.getFullYear() !== selectedYear) return;
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
       });
-    } else {
+    } else if (modoData === 'a_entregar') {
       // A Entregar: itens com data de entrega no mês mas ainda em produção (não finalizados)
       allItems.forEach(item => {
         if (!item.data_entrega || !item.peso) return;
         if (item.etapa_atual === 'finalizado') return;
         const d = parseISO(item.data_entrega);
+        if (d.getFullYear() !== selectedYear) return;
+        meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
+      });
+    } else if (modoData === 'finalizados') {
+      // Finalizados: itens que entraram na etapa finalizado no mês (data_entrada_etapa)
+      allItems.forEach(item => {
+        if (!item.peso || item.etapa_atual !== 'finalizado') return;
+        if (!item.data_entrada_etapa) return;
+        const d = new Date(item.data_entrada_etapa);
         if (d.getFullYear() !== selectedYear) return;
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
       });
@@ -212,7 +221,7 @@ export default function RelatoriosPeso() {
                 Peso por Mês — {selectedYear}
               </CardTitle>
               <p className="text-xs text-slate-400 mt-1">
-                {modoData === 'entrega' ? 'Data de entrega dos itens' : modoData === 'lancamento' ? 'Data de lançamento da OP' : 'Itens em produção com entrega prevista no mês'} · Clique em um mês para ver detalhes
+                {modoData === 'entrega' ? 'Data de entrega dos itens' : modoData === 'lancamento' ? 'Data de lançamento da OP' : modoData === 'a_entregar' ? 'Itens em produção com entrega prevista no mês' : 'Itens finalizados no mês'} · Clique em um mês para ver detalhes
               </p>
             </div>
             <div className="flex border border-slate-200 rounded-lg overflow-hidden text-sm">
@@ -234,6 +243,12 @@ export default function RelatoriosPeso() {
               >
                 A Entregar
               </button>
+              <button
+                onClick={() => setModoData('finalizados')}
+                className={`px-3 py-1.5 transition-colors ${modoData === 'finalizados' ? 'bg-green-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                Finalizados
+              </button>
             </div>
           </div>
         </CardHeader>
@@ -247,8 +262,8 @@ export default function RelatoriosPeso() {
               dadosMensais={dadosMensais}
               mesSelecionado={mesSelecionado}
               onSelecionarMes={setMesSelecionado}
-              corBarra={modoData === 'a_entregar' ? '#f97316' : '#3b82f6'}
-              corSelecionada={modoData === 'a_entregar' ? '#c2410c' : '#1e40af'}
+              corBarra={modoData === 'a_entregar' ? '#f97316' : modoData === 'finalizados' ? '#16a34a' : '#3b82f6'}
+              corSelecionada={modoData === 'a_entregar' ? '#c2410c' : modoData === 'finalizados' ? '#15803d' : '#1e40af'}
             />
           )}
         </CardContent>
