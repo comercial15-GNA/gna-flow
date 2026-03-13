@@ -58,11 +58,11 @@ export default function CriarVolumeDialog({ open, onOpenChange, op, itensLiberac
 
     setLoading(true);
     try {
-      // Gerar número do volume
       const agora = new Date();
+      const agoraISO = agora.toISOString();
       const numeroVolume = `VOL-${op.numero_op}-${agora.getTime().toString().slice(-6)}`;
 
-      // Criar o volume
+      // Criar o volume já na etapa expedição
       const volume = await base44.entities.VolumeExpedicao.create({
         numero_volume: numeroVolume,
         op_id: op.id,
@@ -73,23 +73,47 @@ export default function CriarVolumeDialog({ open, onOpenChange, op, itensLiberac
         peso_total_itens: pesoTotalItens,
         peso_expedicao: parseFloat(pesoExpedicao),
         volume_expedicao: volumeExpedicao,
-        etapa_atual: 'liberacao',
+        etapa_atual: 'expedicao',
         criado_por_email: currentUser?.email,
         criado_por_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
       });
 
-      // Vincular os itens ao volume
+      // Mover os itens para expedição e vincular ao volume
       await Promise.all(
-        itensSelecionados.map(itemId =>
-          base44.entities.ItemOP.update(itemId, {
+        itensSelecionados.map(itemId => {
+          const item = itensDisponiveis.find(i => i.id === itemId);
+          return base44.entities.ItemOP.update(itemId, {
             volume_id: volume.id,
+            etapa_atual: 'expedicao',
+            data_entrada_etapa: agoraISO,
             peso_expedicao: parseFloat(pesoExpedicao),
             volume_expedicao: volumeExpedicao,
-          })
-        )
+            retornado: false,
+            justificativa_retorno: '',
+          });
+        })
       );
 
-      toast.success(`Volume ${numeroVolume} criado com ${itensSelecionados.length} itens`);
+      // Registrar histórico para cada item
+      await Promise.all(
+        itensSelecionados.map(itemId => {
+          const item = itensDisponiveis.find(i => i.id === itemId);
+          return base44.entities.HistoricoMovimentacao.create({
+            item_id: itemId,
+            op_id: op.id,
+            numero_op: op.numero_op,
+            descricao_item: item?.descricao || '',
+            setor_origem: 'liberacao',
+            setor_destino: 'expedicao',
+            justificativa: `Criação do volume ${numeroVolume}`,
+            usuario_email: currentUser?.email,
+            usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+            data_movimentacao: agoraISO,
+          });
+        })
+      );
+
+      toast.success(`Volume ${numeroVolume} criado e enviado para Expedição com ${itensSelecionados.length} itens`);
       onSuccess();
       handleClose();
     } catch (error) {
