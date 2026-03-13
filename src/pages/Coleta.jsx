@@ -7,44 +7,35 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle } from
-"@/components/ui/dialog";
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
-  PackageCheck,
-  Search,
-  Package,
-  RotateCcw,
-  Check,
-  FileText,
-  ExternalLink,
-  FileSpreadsheet,
-  ChevronDown,
-  ChevronUp,
-  AlertTriangle } from
-'lucide-react';
+  PackageCheck, Search, Package, RotateCcw, Check, FileText,
+  ExternalLink, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
+import VolumeCard from '@/components/expedicao/VolumeCard';
 
 export default function Coleta() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingItem, setLoadingItem] = useState(null);
+  const [loadingVolume, setLoadingVolume] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [finalizarDialogOpen, setFinalizarDialogOpen] = useState(false);
+  const [retornarVolumeDialogOpen, setRetornarVolumeDialogOpen] = useState(false);
+  const [finalizarVolumeDialogOpen, setFinalizarVolumeDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedVolume, setSelectedVolume] = useState(null);
+  const [selectedVolumeItens, setSelectedVolumeItens] = useState([]);
   const [justificativa, setJustificativa] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
 
-  const toggleOP = (opId) => {
-    setExpandedOPs((prev) => ({ ...prev, [opId]: !prev[opId] }));
-  };
+  const toggleOP = (opId) => setExpandedOPs(prev => ({ ...prev, [opId]: !prev[opId] }));
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -63,6 +54,11 @@ export default function Coleta() {
     }
   });
 
+  const { data: volumes = [] } = useQuery({
+    queryKey: ['volumes-coleta'],
+    queryFn: () => base44.entities.VolumeExpedicao.filter({ etapa_atual: 'coleta' }),
+  });
+
   const { data: ops = [] } = useQuery({
     queryKey: ['ops-all'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento')
@@ -73,6 +69,14 @@ export default function Coleta() {
     queryFn: () => base44.entities.ItemOP.list()
   });
 
+  const invalidarQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['itens-coleta'] });
+    queryClient.invalidateQueries({ queryKey: ['volumes-coleta'] });
+    queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+    queryClient.invalidateQueries({ queryKey: ['todos-itens-ops'] });
+  };
+
+  // --- Finalizar item individual ---
   const abrirDialogFinalizar = (item) => {
     setSelectedItem(item);
     setJustificativa('');
@@ -80,18 +84,13 @@ export default function Coleta() {
   };
 
   const finalizarItem = async () => {
-    if (!justificativa.trim()) {
-      toast.error('Justificativa é obrigatória');
-      return;
-    }
-
+    if (!justificativa.trim()) { toast.error('Justificativa é obrigatória'); return; }
     setLoadingItem(selectedItem.id);
     try {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: 'finalizado',
         data_entrada_etapa: new Date().toISOString()
       });
-
       await base44.entities.HistoricoMovimentacao.create({
         item_id: selectedItem.id,
         op_id: selectedItem.op_id,
@@ -104,13 +103,8 @@ export default function Coleta() {
         usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
-
-      // Atualizar status da OP
       await updateOPStatus(selectedItem.op_id);
-      
-      queryClient.invalidateQueries({ queryKey: ['itens-coleta'] });
-      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
-      queryClient.invalidateQueries({ queryKey: ['todos-itens-ops'] });
+      invalidarQueries();
       toast.success('Item finalizado com sucesso');
       setFinalizarDialogOpen(false);
     } catch (error) {
@@ -120,6 +114,7 @@ export default function Coleta() {
     }
   };
 
+  // --- Retornar item individual ---
   const abrirDialogRetorno = (item) => {
     setSelectedItem(item);
     setJustificativa('');
@@ -127,11 +122,7 @@ export default function Coleta() {
   };
 
   const confirmarRetorno = async () => {
-    if (!justificativa.trim()) {
-      toast.error('Justificativa é obrigatória para retorno');
-      return;
-    }
-
+    if (!justificativa.trim()) { toast.error('Justificativa é obrigatória'); return; }
     setLoadingItem(selectedItem.id);
     try {
       await base44.entities.ItemOP.update(selectedItem.id, {
@@ -140,7 +131,6 @@ export default function Coleta() {
         retornado: true,
         justificativa_retorno: justificativa
       });
-
       await base44.entities.HistoricoMovimentacao.create({
         item_id: selectedItem.id,
         op_id: selectedItem.op_id,
@@ -153,11 +143,8 @@ export default function Coleta() {
         usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
         data_movimentacao: new Date().toISOString()
       });
-
       await updateOPStatus(selectedItem.op_id);
-      
-      queryClient.invalidateQueries({ queryKey: ['itens-coleta'] });
-      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      invalidarQueries();
       toast.success('Item retornado para Expedição');
       setRetornarDialogOpen(false);
     } catch (error) {
@@ -167,32 +154,127 @@ export default function Coleta() {
     }
   };
 
-  const gerarRelatorio = () => {
-    const dados = itensFiltrados.map((item) => ({
-      'OP': item.numero_op,
-      'Equipamento': item.equipamento_principal || '-',
-      'Descrição': item.descricao,
-      'Código GA': item.codigo_ga || '-',
-      'Peso (kg)': item.peso || '-',
-      'Quantidade': item.quantidade,
-      'Cliente': item.cliente,
-      'Peso Expedição': item.peso_expedicao || '-',
-      'Volume': item.volume_expedicao || '-',
-      'Responsável': item.responsavel_op || '-',
-      'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
-      'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
-    }));
+  // --- Finalizar VOLUME (todos os itens) ---
+  const abrirFinalizarVolume = (volume, itensDoVolume) => {
+    setSelectedVolume(volume);
+    setSelectedVolumeItens(itensDoVolume);
+    setJustificativa('');
+    setFinalizarVolumeDialogOpen(true);
+  };
 
-    if (dados.length === 0) {
-      toast.error('Nenhum dado para exportar');
-      return;
+  const confirmarFinalizarVolume = async () => {
+    if (!justificativa.trim()) { toast.error('Justificativa é obrigatória'); return; }
+    if (!selectedVolume) return;
+    setLoadingVolume(selectedVolume.id);
+    try {
+      const agora = new Date().toISOString();
+      // Finalizar todos os itens do volume com a mesma justificativa
+      await Promise.all(
+        selectedVolumeItens.map(item =>
+          base44.entities.ItemOP.update(item.id, {
+            etapa_atual: 'finalizado',
+            data_entrada_etapa: agora,
+          })
+        )
+      );
+      // Registrar histórico para cada item
+      await Promise.all(
+        selectedVolumeItens.map(item =>
+          base44.entities.HistoricoMovimentacao.create({
+            item_id: item.id,
+            op_id: item.op_id,
+            numero_op: item.numero_op,
+            descricao_item: item.descricao,
+            setor_origem: 'coleta',
+            setor_destino: 'finalizado',
+            justificativa: `Volume ${selectedVolume.numero_volume}: ${justificativa}`,
+            usuario_email: currentUser?.email,
+            usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+            data_movimentacao: agora,
+          })
+        )
+      );
+      // Finalizar o volume
+      await base44.entities.VolumeExpedicao.update(selectedVolume.id, {
+        etapa_atual: 'finalizado',
+      });
+      await updateOPStatus(selectedVolume.op_id);
+      invalidarQueries();
+      toast.success(`Volume ${selectedVolume.numero_volume} finalizado com ${selectedVolumeItens.length} itens`);
+      setFinalizarVolumeDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao finalizar volume');
+    } finally {
+      setLoadingVolume(null);
     }
+  };
 
+  // --- Retornar VOLUME para Expedição ---
+  const abrirRetornarVolume = (volume, itensDoVolume) => {
+    setSelectedVolume(volume);
+    setSelectedVolumeItens(itensDoVolume);
+    setJustificativa('');
+    setRetornarVolumeDialogOpen(true);
+  };
+
+  const confirmarRetornarVolume = async () => {
+    if (!justificativa.trim()) { toast.error('Justificativa é obrigatória'); return; }
+    if (!selectedVolume) return;
+    setLoadingVolume(selectedVolume.id);
+    try {
+      const agora = new Date().toISOString();
+      await Promise.all(
+        selectedVolumeItens.map(item =>
+          base44.entities.ItemOP.update(item.id, {
+            etapa_atual: 'expedicao',
+            data_entrada_etapa: agora,
+            retornado: true,
+            justificativa_retorno: justificativa,
+          })
+        )
+      );
+      await Promise.all(
+        selectedVolumeItens.map(item =>
+          base44.entities.HistoricoMovimentacao.create({
+            item_id: item.id,
+            op_id: item.op_id,
+            numero_op: item.numero_op,
+            descricao_item: item.descricao,
+            setor_origem: 'coleta',
+            setor_destino: 'expedicao',
+            justificativa: `Retorno Volume ${selectedVolume.numero_volume}: ${justificativa}`,
+            usuario_email: currentUser?.email,
+            usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+            data_movimentacao: agora,
+          })
+        )
+      );
+      await base44.entities.VolumeExpedicao.update(selectedVolume.id, {
+        etapa_atual: 'expedicao',
+      });
+      await updateOPStatus(selectedVolume.op_id);
+      invalidarQueries();
+      toast.success(`Volume ${selectedVolume.numero_volume} retornado para Expedição`);
+      setRetornarVolumeDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao retornar volume');
+    } finally {
+      setLoadingVolume(null);
+    }
+  };
+
+  const gerarRelatorio = () => {
+    const dados = itens.map(item => ({
+      'OP': item.numero_op, 'Descrição': item.descricao,
+      'Código GA': item.codigo_ga || '-', 'Quantidade': item.quantidade,
+      'Cliente': item.cliente, 'Peso Expedição': item.peso_expedicao || '-',
+      'Volume': item.volume_expedicao || '-', 'Volume ID': item.volume_id || '-',
+      'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
+    }));
+    if (dados.length === 0) { toast.error('Nenhum dado para exportar'); return; }
     const headers = Object.keys(dados[0]).join(';');
-    const rows = dados.map((row) => Object.values(row).join(';')).join('\n');
-    const csv = `${headers}\n${rows}`;
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const rows = dados.map(row => Object.values(row).join(';')).join('\n');
+    const blob = new Blob([`${headers}\n${rows}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `relatorio_coleta_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
@@ -200,39 +282,33 @@ export default function Coleta() {
     toast.success('Relatório gerado');
   };
 
-  const itensFiltrados = itens.filter((item) =>
-  item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const opsComItensColeta = ops.filter((op) => {
-    const itensOP = itens.filter((i) => i.op_id === op.id);
-    const temItensColeta = itensOP.length > 0;
-
+  const opsComItensColeta = ops.filter(op => {
+    const itensOP = itens.filter(i => i.op_id === op.id);
+    const volumesOP = volumes.filter(v => v.op_id === op.id);
+    if (itensOP.length === 0 && volumesOP.length === 0) return false;
     if (searchTerm) {
       const matchOP = op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchItens = itensOP.some((item) =>
-      item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase())
+        op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchItens = itensOP.some(item =>
+        item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      return temItensColeta && (matchOP || matchItens);
+      return matchOP || matchItens;
     }
-
-    return temItensColeta;
-  }).map((op) => {
-    const todosItensOP = todosItens.filter((i) => i.op_id === op.id);
-    return { op, itens: todosItensOP };
+    return true;
+  }).map(op => {
+    const todosItensOP = todosItens.filter(i => i.op_id === op.id);
+    const itensColeta = itens.filter(i => i.op_id === op.id);
+    const volumesOP = volumes.filter(v => v.op_id === op.id);
+    return { op, todosItensOP, itensColeta, volumesOP };
   }).sort((a, b) => {
-    const itensColetaA = a.itens.filter((i) => i.etapa_atual === 'coleta');
-    const itensColetaB = b.itens.filter((i) => i.etapa_atual === 'coleta');
-    const dataA = itensColetaA.length > 0 ? Math.min(...itensColetaA.map((i) => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
-    const dataB = itensColetaB.length > 0 ? Math.min(...itensColetaB.map((i) => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
+    const dataA = Math.min(...a.itensColeta.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity));
+    const dataB = Math.min(...b.itensColeta.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity));
     return dataA - dataB;
   });
+
+  const totalItensIndividuais = itens.filter(i => !i.volume_id).length;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -248,52 +324,45 @@ export default function Coleta() {
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium">
-            {itens.length} itens em Coleta • {opsComItensColeta.length} OPs
+            {totalItensIndividuais} individuais • {volumes.length} volumes • {opsComItensColeta.length} OPs
           </div>
-          {itens.length > 0 &&
-          <Button onClick={gerarRelatorio} variant="outline">
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Relatório
+          {itens.length > 0 && (
+            <Button onClick={gerarRelatorio} variant="outline">
+              <FileSpreadsheet className="w-4 h-4 mr-2" />Relatório
             </Button>
-          }
+          )}
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Buscar por OP, cliente, equipamento ou item..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10" />
-
+          <Input placeholder="Buscar por OP, cliente ou item..." value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
       </div>
 
-      {isLoading ?
-      <div className="flex items-center justify-center py-12">
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
-        </div> :
-      opsComItensColeta.length === 0 ?
-      <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
+        </div>
+      ) : opsComItensColeta.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
           <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma OP com itens em Coleta</h3>
           <p className="text-slate-500">Todos os itens foram processados</p>
-        </div> :
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {opsComItensColeta.map(({ op, todosItensOP, itensColeta, volumesOP }) => {
+            const arquivos = op.arquivos || [];
+            const isExpanded = expandedOPs[op.id];
+            const itensSemVolume = itensColeta.filter(i => !i.volume_id);
 
-      <div className="space-y-4">
-          {opsComItensColeta.map(({ op, itens: todosItensOP }) => {
-          const arquivos = op.arquivos || [];
-          const itensColeta = todosItensOP.filter((i) => i.etapa_atual === 'coleta');
-          const isExpanded = expandedOPs[op.id];
-
-          return (
-            <div key={op.id} className="bg-white rounded-xl border-2 border-purple-200 shadow-sm overflow-hidden">
-                <button
-                onClick={() => toggleOP(op.id)}
-                className="w-full bg-purple-50 border-b border-purple-200 p-4 hover:bg-purple-100 transition-colors text-left">
-
+            return (
+              <div key={op.id} className="bg-white rounded-xl border-2 border-purple-200 shadow-sm overflow-hidden">
+                <button onClick={() => toggleOP(op.id)}
+                  className="w-full bg-purple-50 border-b border-purple-200 p-4 hover:bg-purple-100 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
@@ -301,20 +370,18 @@ export default function Coleta() {
                           <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
                           <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
                         </div>
-                        <Badge className="bg-purple-600 text-white">
-                          {itensColeta.length} em Coleta
-                        </Badge>
-                        <Badge variant="outline" className="text-slate-600">
-                          Total: {todosItensOP.length} itens
-                        </Badge>
-                        
+                        <Badge className="bg-purple-600 text-white">{itensColeta.length} em Coleta</Badge>
+                        {volumesOP.length > 0 && (
+                          <Badge className="bg-blue-600 text-white">{volumesOP.length} volume(s)</Badge>
+                        )}
+                        <Badge variant="outline" className="text-slate-600">Total: {todosItensOP.length} itens</Badge>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-slate-600">
                         <div><strong>Cliente:</strong> {op.cliente}</div>
                         {op.responsavel && <div><strong>Responsável:</strong> {op.responsavel}</div>}
-                        {op.data_lancamento &&
-                      <div><strong>Lançamento:</strong> {format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</div>
-                      }
+                        {op.data_lancamento && (
+                          <div><strong>Lançamento:</strong> {format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</div>
+                        )}
                       </div>
                     </div>
                     <div className="ml-4">
@@ -323,178 +390,140 @@ export default function Coleta() {
                   </div>
                 </button>
 
-                {isExpanded &&
-              <div className="p-4">
-                    {arquivos.length > 0 &&
-                <div className="mb-4 pb-4 border-b border-slate-200">
+                {isExpanded && (
+                  <div className="p-4">
+                    {arquivos.length > 0 && (
+                      <div className="mb-4 pb-4 border-b border-slate-200">
                         <p className="text-sm font-medium text-slate-700 mb-2">Arquivos da OP:</p>
                         <div className="flex flex-wrap gap-2">
-                          {arquivos.map((url, idx) =>
-                    <a
-                      key={idx}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded text-sm text-blue-600 hover:bg-slate-200">
-
-                              <FileText className="w-4 h-4" />
-                              Arquivo {idx + 1}
-                              <ExternalLink className="w-3 h-3" />
+                          {arquivos.map((url, idx) => (
+                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded text-sm text-blue-600 hover:bg-slate-200">
+                              <FileText className="w-4 h-4" />Arquivo {idx + 1}<ExternalLink className="w-3 h-3" />
                             </a>
-                    )}
+                          ))}
                         </div>
                       </div>
-                }
+                    )}
 
-                    <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-purple-700 mb-3 flex items-center gap-2">
-                        <PackageCheck className="w-4 h-4" />
-                        Itens em Coleta ({itensColeta.length})
-                      </h4>
-                      <div className="space-y-3">
-                        {itensColeta.map((item) => {
-                      const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
-                      return (
-                        <div key={item.id} className="bg-purple-50 rounded-lg border-2 border-purple-300 p-4">
-                              <div className="flex items-start justify-between mb-3">
-                                <div>
-                                  <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
-                                  <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
-                                </div>
-                              </div>
-
-                              <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-coleta'] })} />
-
-                              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-sm">
-                                <div className="text-slate-600">
-                                  <span className="font-medium">Qtd:</span> {item.quantidade}
-                                </div>
-                                <div className="text-slate-600">
-                                  <span className="font-medium">Entrega:</span>{' '}
-                                  {item.data_entrega ? (
-                                    <span className={isAtrasado ? 'text-red-600 font-semibold' : ''}>
-                                      {format(parseISO(item.data_entrega), 'dd/MM/yy')}
-                                      {isAtrasado && <AlertTriangle className="w-3 h-3 inline ml-1" />}
-                                    </span>
-                                  ) : '-'}
-                                </div>
-                                <div className="text-slate-600">
-                                  <span className="font-medium">Peso Exp.:</span> {item.peso_expedicao ? `${item.peso_expedicao} kg` : '-'}
-                                </div>
-                                <div className="text-slate-600">
-                                  <span className="font-medium">Volume:</span> {item.volume_expedicao || '-'}
-                                </div>
-                                <div className="text-slate-600">
-                                  <span className="font-medium">Responsável:</span> {item.responsavel_op || '-'}
-                                </div>
-                              </div>
-
-                              <div className="flex flex-wrap gap-2">
-                                <Button
-                          size="sm"
-                          onClick={() => abrirDialogFinalizar(item)}
-                          disabled={loadingItem === item.id}
-                          className="bg-purple-600 hover:bg-purple-700">
-
-                                  <Check className="w-3 h-3 mr-1" />
-                                  Finalizar Item
-                                </Button>
-                                <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => abrirDialogRetorno(item)}
-                          disabled={loadingItem === item.id}
-                          className="text-amber-600 border-amber-300 hover:bg-amber-50">
-
-                                  <RotateCcw className="w-3 h-3 mr-1" />
-                                  Retornar p/ Expedição
-                                </Button>
-                              </div>
-                            </div>);
-                      
-                    })}
+                    {/* Volumes */}
+                    {volumesOP.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-blue-700 mb-3 flex items-center gap-2">
+                          <Package className="w-4 h-4" />
+                          Volumes/Paletes ({volumesOP.length})
+                        </h4>
+                        <div className="space-y-3">
+                          {volumesOP.map(volume => {
+                            const itensDoVolume = itensColeta.filter(i => i.volume_id === volume.id);
+                            return (
+                              <VolumeCard
+                                key={volume.id}
+                                volume={volume}
+                                itensDoVolume={itensDoVolume}
+                                etapaAtual="coleta"
+                                onAcao={abrirFinalizarVolume}
+                                onRetornar={abrirRetornarVolume}
+                                loadingVolume={loadingVolume}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                        <Package className="w-4 h-4" />
-                        Distribuição por Etapa - Todos os Itens da OP
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                        {['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'acabamento', 'usinagem', 'caldeiraria', 'liberacao', 'expedicao', 'coleta', 'finalizado'].map((etapa) => {
-                      const count = todosItensOP.filter((i) => i.etapa_atual === etapa).length;
-                      const etapaLabels = {
-                        comercial: 'Comercial',
-                        engenharia: 'Engenharia',
-                        modelagem: 'Modelagem',
-                        suprimentos: 'Suprimentos',
-                        fundicao: 'Fundição',
-                        acabamento: 'Acabamento',
-                        usinagem: 'Usinagem',
-                        caldeiraria: 'Caldeiraria',
-                        liberacao: 'Liberação',
-                        expedicao: 'Expedição',
-                        coleta: 'Coleta',
-                        finalizado: 'Finalizado'
-                      };
-                      return count > 0 ?
-                      <div key={etapa} className="bg-slate-100 rounded p-2 text-center">
-                              <p className="text-xs text-slate-600 mb-1">{etapaLabels[etapa]}</p>
-                              <p className="text-lg font-bold text-slate-800">{count}</p>
-                            </div> :
-                      null;
-                    })}
-                      </div>
-
-                      {todosItensOP.filter((i) => i.etapa_atual !== 'coleta').length > 0 &&
-                  <div>
-                          <h4 className="text-sm font-medium text-slate-600 mb-2">Outros Itens ({todosItensOP.filter((i) => i.etapa_atual !== 'coleta').length})</h4>
-                          <div className="space-y-2">
-                            {todosItensOP.filter((i) => i.etapa_atual !== 'coleta').map((item) => {
-                              const etapaLabels = {
-                                comercial: 'Comercial',
-                                engenharia: 'Engenharia',
-                                modelagem: 'Modelagem',
-                                suprimentos: 'Suprimentos',
-                                fundicao: 'Fundição',
-                                acabamento: 'Acabamento',
-                                usinagem: 'Usinagem',
-                                caldeiraria: 'Caldeiraria',
-                                liberacao: 'Liberação',
-                                expedicao: 'Expedição',
-                                suporte_industrial: 'Suporte',
-                                finalizado: 'Finalizado'
-                              };
-                              return (
-                                <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                      <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
-                                      <div className="flex items-center gap-3 mt-1">
-                                        <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
-                                        <p className="text-xs text-slate-500">Qtd: {item.quantidade}</p>
-                                      </div>
-                                    </div>
-                                    <Badge variant="outline" className="text-xs">
-                                      {etapaLabels[item.etapa_atual] || item.etapa_atual}
-                                    </Badge>
+                    {/* Itens individuais */}
+                    {itensSemVolume.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-purple-700 mb-3 flex items-center gap-2">
+                          <PackageCheck className="w-4 h-4" />
+                          Itens Individuais ({itensSemVolume.length})
+                        </h4>
+                        <div className="space-y-3">
+                          {itensSemVolume.map(item => {
+                            const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+                            return (
+                              <div key={item.id} className="bg-purple-50 rounded-lg border-2 border-purple-300 p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                    <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </div>
+                                <ItemOPActions item={item} onUpdate={invalidarQueries} />
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 text-sm">
+                                  <div className="text-slate-600"><span className="font-medium">Qtd:</span> {item.quantidade}</div>
+                                  <div className="text-slate-600">
+                                    <span className="font-medium">Entrega:</span>{' '}
+                                    {item.data_entrega ? (
+                                      <span className={isAtrasado ? 'text-red-600 font-semibold' : ''}>
+                                        {format(parseISO(item.data_entrega), 'dd/MM/yy')}
+                                        {isAtrasado && <AlertTriangle className="w-3 h-3 inline ml-1" />}
+                                      </span>
+                                    ) : '-'}
+                                  </div>
+                                  <div className="text-slate-600">
+                                    <span className="font-medium">Peso Exp.:</span> {item.peso_expedicao ? `${item.peso_expedicao} kg` : '-'}
+                                  </div>
+                                  <div className="text-slate-600">
+                                    <span className="font-medium">Volume:</span> {item.volume_expedicao || '-'}
+                                  </div>
+                                  <div className="text-slate-600">
+                                    <span className="font-medium">Responsável:</span> {item.responsavel_op || '-'}
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <Button size="sm" onClick={() => abrirDialogFinalizar(item)} disabled={loadingItem === item.id}
+                                    className="bg-purple-600 hover:bg-purple-700">
+                                    <Check className="w-3 h-3 mr-1" />Finalizar Item
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => abrirDialogRetorno(item)} disabled={loadingItem === item.id}
+                                    className="text-amber-600 border-amber-300 hover:bg-amber-50">
+                                    <RotateCcw className="w-3 h-3 mr-1" />Retornar p/ Expedição
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                  }
-                    </div>
+                      </div>
+                    )}
+
+                    {/* Outros Itens */}
+                    {todosItensOP.filter(i => i.etapa_atual !== 'coleta').length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-slate-600 mb-2">
+                          Outros Itens ({todosItensOP.filter(i => i.etapa_atual !== 'coleta').length})
+                        </h4>
+                        <div className="space-y-2">
+                          {todosItensOP.filter(i => i.etapa_atual !== 'coleta').map(item => (
+                            <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                                  <div className="flex items-center gap-3 mt-1">
+                                    <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
+                                    <p className="text-xs text-slate-500">Qtd: {item.quantidade}</p>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {item.etapa_atual}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-              }
-              </div>);
-
-        })}
+                )}
+              </div>
+            );
+          })}
         </div>
-      }
+      )}
 
+      {/* Dialog: finalizar item individual */}
       <Dialog open={finalizarDialogOpen} onOpenChange={setFinalizarDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -504,27 +533,52 @@ export default function Coleta() {
           <div className="space-y-4 pt-4">
             <div>
               <Label>Justificativa *</Label>
-              <Textarea
-                value={justificativa}
-                onChange={(e) => setJustificativa(e.target.value)}
-                placeholder="Descreva o motivo da finalização..."
-                className="mt-1"
-                rows={4} />
-
+              <Textarea value={justificativa} onChange={e => setJustificativa(e.target.value)}
+                placeholder="Descreva o motivo da finalização..." className="mt-1" rows={4} />
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setFinalizarDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={finalizarItem} disabled={loadingItem} className="bg-purple-600 hover:bg-purple-700">
-                <Check className="w-4 h-4 mr-2" />
-                Confirmar Finalização
+              <Button variant="outline" onClick={() => setFinalizarDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={finalizarItem} disabled={!!loadingItem} className="bg-purple-600 hover:bg-purple-700">
+                <Check className="w-4 h-4 mr-2" />Confirmar Finalização
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Dialog: finalizar VOLUME */}
+      <Dialog open={finalizarVolumeDialogOpen} onOpenChange={setFinalizarVolumeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Finalizar Volume</DialogTitle>
+            <DialogDescription>
+              Todos os {selectedVolumeItens.length} itens do volume {selectedVolume?.numero_volume} serão finalizados com a mesma justificativa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            {selectedVolumeItens.length > 0 && (
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 max-h-32 overflow-y-auto">
+                {selectedVolumeItens.map(item => (
+                  <p key={item.id} className="text-sm text-slate-600">• {item.descricao}</p>
+                ))}
+              </div>
+            )}
+            <div>
+              <Label>Justificativa * (aplicada a todos os itens)</Label>
+              <Textarea value={justificativa} onChange={e => setJustificativa(e.target.value)}
+                placeholder="Descreva o motivo da finalização..." className="mt-1" rows={3} />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setFinalizarVolumeDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={confirmarFinalizarVolume} disabled={!!loadingVolume} className="bg-purple-600 hover:bg-purple-700">
+                <Check className="w-4 h-4 mr-2" />Finalizar Todos os Itens
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: retornar item individual */}
       <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -534,25 +588,43 @@ export default function Coleta() {
           <div className="space-y-4 pt-4">
             <div>
               <Label>Justificativa *</Label>
-              <Textarea
-                value={justificativa}
-                onChange={(e) => setJustificativa(e.target.value)}
-                placeholder="Descreva o motivo do retorno..."
-                className="mt-1"
-                rows={4} />
-
+              <Textarea value={justificativa} onChange={e => setJustificativa(e.target.value)}
+                placeholder="Descreva o motivo do retorno..." className="mt-1" rows={4} />
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={confirmarRetorno} disabled={loadingItem} className="bg-amber-600 hover:bg-amber-700">
+              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={confirmarRetorno} disabled={!!loadingItem} className="bg-amber-600 hover:bg-amber-700">
                 Confirmar Retorno
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>);
 
+      {/* Dialog: retornar VOLUME */}
+      <Dialog open={retornarVolumeDialogOpen} onOpenChange={setRetornarVolumeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Retornar Volume para Expedição</DialogTitle>
+            <DialogDescription>
+              Todos os {selectedVolumeItens.length} itens do volume {selectedVolume?.numero_volume} serão retornados para Expedição.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>Justificativa *</Label>
+              <Textarea value={justificativa} onChange={e => setJustificativa(e.target.value)}
+                placeholder="Descreva o motivo do retorno..." className="mt-1" rows={3} />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setRetornarVolumeDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={confirmarRetornarVolume} disabled={!!loadingVolume} className="bg-amber-600 hover:bg-amber-700">
+                Confirmar Retorno do Volume
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
