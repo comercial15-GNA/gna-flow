@@ -552,6 +552,10 @@ export default function Comercial() {
             queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
             queryClient.invalidateQueries({ queryKey: ['itens-all'] });
           }}
+          onDelete={(op) => {
+            setOpParaExcluir(op);
+            confirmarDeleteOP();
+          }}
         />
       )}
 
