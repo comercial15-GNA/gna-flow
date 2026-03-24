@@ -61,6 +61,9 @@ export default function Comercial() {
   const [expandedHistorico, setExpandedHistorico] = useState({});
   const [editingOP, setEditingOP] = useState(null);
   const [adminEditDialogOpen, setAdminEditDialogOpen] = useState(false);
+  const [deleteOPDialogOpen, setDeleteOPDialogOpen] = useState(false);
+  const [opParaExcluir, setOpParaExcluir] = useState(null);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const queryClient = useQueryClient();
 
   const toggleHistorico = (itemId) => {
