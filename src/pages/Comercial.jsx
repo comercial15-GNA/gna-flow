@@ -565,6 +565,42 @@ export default function Comercial() {
         />
       )}
 
+      {/* Dialog Excluir OP */}
+      <Dialog open={deleteOPDialogOpen} onOpenChange={setDeleteOPDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Excluir OP — {opParaExcluir?.numero_op}
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong>irreversível</strong>. Todos os itens da OP também serão excluídos permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-2">
+            {opParaExcluir && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-800">
+                <p><strong>OP:</strong> {opParaExcluir.numero_op}</p>
+                <p><strong>Cliente:</strong> {opParaExcluir.cliente}</p>
+                <p><strong>Equipamento:</strong> {opParaExcluir.equipamento_principal}</p>
+                <p><strong>Itens:</strong> {itens.filter(i => i.op_id === opParaExcluir.id).length} itens serão excluídos</p>
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setDeleteOPDialogOpen(false)}>Cancelar</Button>
+              <Button
+                onClick={confirmarDeleteOP}
+                disabled={loadingDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {loadingDelete ? 'Excluindo...' : 'Confirmar Exclusão'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog Reenviar Item */}
       <Dialog open={reenviarDialogOpen} onOpenChange={setReenviarDialogOpen}>
         <DialogContent>
