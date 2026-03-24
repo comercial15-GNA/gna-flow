@@ -223,18 +223,17 @@ export default function Comercial() {
     setDeleteOPDialogOpen(true);
   };
 
-  const confirmarDeleteOP = async () => {
-    if (!opParaExcluir) return;
+  const confirmarDeleteOP = async (op) => {
+    const alvoOP = op || opParaExcluir;
+    if (!alvoOP) return;
     setLoadingDelete(true);
     try {
-      // Deletar todos os itens da OP
-      const itensOP = itens.filter(i => i.op_id === opParaExcluir.id);
+      const itensOP = itens.filter(i => i.op_id === alvoOP.id);
       await Promise.all(itensOP.map(item => base44.entities.ItemOP.delete(item.id)));
-      // Deletar a OP
-      await base44.entities.OrdemProducao.delete(opParaExcluir.id);
+      await base44.entities.OrdemProducao.delete(alvoOP.id);
       queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
       queryClient.invalidateQueries({ queryKey: ['itens-all'] });
-      toast.success(`OP ${opParaExcluir.numero_op} excluída com sucesso`);
+      toast.success(`OP ${alvoOP.numero_op} excluída com sucesso`);
       setDeleteOPDialogOpen(false);
       setOpParaExcluir(null);
     } catch (error) {
