@@ -218,6 +218,32 @@ export default function Comercial() {
     setAdminEditDialogOpen(true);
   };
 
+  const handleDeleteOP = (op) => {
+    setOpParaExcluir(op);
+    setDeleteOPDialogOpen(true);
+  };
+
+  const confirmarDeleteOP = async () => {
+    if (!opParaExcluir) return;
+    setLoadingDelete(true);
+    try {
+      // Deletar todos os itens da OP
+      const itensOP = itens.filter(i => i.op_id === opParaExcluir.id);
+      await Promise.all(itensOP.map(item => base44.entities.ItemOP.delete(item.id)));
+      // Deletar a OP
+      await base44.entities.OrdemProducao.delete(opParaExcluir.id);
+      queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-all'] });
+      toast.success(`OP ${opParaExcluir.numero_op} excluída com sucesso`);
+      setDeleteOPDialogOpen(false);
+      setOpParaExcluir(null);
+    } catch (error) {
+      toast.error('Erro ao excluir OP');
+    } finally {
+      setLoadingDelete(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
