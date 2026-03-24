@@ -11,12 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess }) {
+export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, onDelete }) {
   const queryClient = useQueryClient();
   const [dadosOP, setDadosOP] = useState({});
   const [itens, setItens] = useState([]);
   const [arquivos, setArquivos] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: responsaveis = [] } = useQuery({
     queryKey: ['responsaveis-ativos'],
