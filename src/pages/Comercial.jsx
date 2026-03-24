@@ -35,7 +35,8 @@ import {
   History,
   ChevronDown,
   ChevronUp,
-  CheckCircle
+  CheckCircle,
+  Trash2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
