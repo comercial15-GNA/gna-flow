@@ -393,23 +393,43 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvarMutation.isPending}>
-            Cancelar
-          </Button>
-          <Button onClick={() => salvarMutation.mutate()} disabled={salvarMutation.isPending} className="bg-purple-600 hover:bg-purple-700">
-            {salvarMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Salvar Alterações
-              </>
-            )}
-          </Button>
+        <div className="mt-6 pt-4 border-t">
+          {confirmDelete ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+              <p className="text-sm text-red-800 font-medium mb-2">Tem certeza que deseja excluir esta OP e todos os seus itens? Esta ação é irreversível.</p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setConfirmDelete(false)}>Cancelar</Button>
+                <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => { onDelete?.(op); onOpenChange(false); }}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Confirmar Exclusão
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          <div className="flex justify-between gap-3">
+            <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setConfirmDelete(true)} disabled={salvarMutation.isPending}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir OP
+            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvarMutation.isPending}>
+                Cancelar
+              </Button>
+              <Button onClick={() => salvarMutation.mutate()} disabled={salvarMutation.isPending} className="bg-purple-600 hover:bg-purple-700">
+                {salvarMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
