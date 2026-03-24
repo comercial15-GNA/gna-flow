@@ -529,25 +529,15 @@ export default function Comercial() {
       ) : (
         <div className="space-y-4">
           {opsFiltradas.map((op) => (
-            <div key={op.id} className="relative">
-              <OPCard 
-                op={op} 
-                itens={itens} 
-                showItens={true}
-                onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
-                isAdmin={currentUser?.setor === 'administrador'}
-                onAdminEdit={() => handleAdminEditOP(op)}
-              />
-              {currentUser?.setor === 'administrador' && (
-                <button
-                  onClick={() => handleDeleteOP(op)}
-                  className="absolute top-3 right-14 p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                  title="Excluir OP"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            <OPCard 
+              key={op.id}
+              op={op} 
+              itens={itens} 
+              showItens={true}
+              onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
+              isAdmin={currentUser?.setor === 'administrador'}
+              onAdminEdit={() => handleAdminEditOP(op)}
+            />
           ))}
         </div>
       )}
