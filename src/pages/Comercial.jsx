@@ -36,7 +36,8 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
-  Trash2
+  Trash2,
+  Ban
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -334,10 +335,25 @@ export default function Comercial() {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-800">{itensRetornados.length}</p>
-              <p className="text-xs text-slate-500">Itens Retornados</p>
+              <p className="text-xs text-slate-500">Retornados</p>
             </div>
           </div>
         </div>
+        {currentUser?.setor === 'administrador' && (
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-orange-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Ban className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">
+                  {opsVisiveis.filter(op => op.status === 'cancelada').length}
+                </p>
+                <p className="text-xs text-slate-500">Canceladas</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Seção de Itens Retornados */}
@@ -488,6 +504,7 @@ export default function Comercial() {
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
                 <SelectItem value="coleta">Coleta</SelectItem>
                 <SelectItem value="finalizado">Finalizadas</SelectItem>
+                <SelectItem value="cancelada">Canceladas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -547,6 +564,7 @@ export default function Comercial() {
           op={editingOP}
           open={adminEditDialogOpen}
           onOpenChange={setAdminEditDialogOpen}
+          currentUser={currentUser}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
             queryClient.invalidateQueries({ queryKey: ['itens-all'] });

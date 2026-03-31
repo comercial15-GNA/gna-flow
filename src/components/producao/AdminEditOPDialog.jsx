@@ -8,16 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle, Ban } from 'lucide-react';
+import CancelarOPDialog from './CancelarOPDialog';
 import { toast } from 'sonner';
 
-export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, onDelete }) {
+export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, onDelete, currentUser }) {
   const queryClient = useQueryClient();
   const [dadosOP, setDadosOP] = useState({});
   const [itens, setItens] = useState([]);
   const [arquivos, setArquivos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cancelarOPOpen, setCancelarOPOpen] = useState(false);
+  const [cancelarItemTarget, setCancelarItemTarget] = useState(null);
 
   const { data: responsaveis = [] } = useQuery({
     queryKey: ['responsaveis-ativos'],
@@ -156,7 +159,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
     }
   });
 
-  return (
+  return (<>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -258,14 +261,31 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
               {itens.map((item, idx) => (
                 <div key={idx} className="border rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-semibold">Item {idx + 1}</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removerItem(idx)}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">Item {idx + 1}</h4>
+                      {item.etapa_atual === 'cancelado' && (
+                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">Cancelado</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {item.id && item.etapa_atual !== 'cancelado' && item.etapa_atual !== 'finalizado' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Cancelar este item"
+                          onClick={() => setCancelarItemTarget(item)}
+                        >
+                          <Ban className="w-4 h-4 text-orange-500" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removerItem(idx)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
@@ -330,6 +350,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                           <SelectItem value="coleta">Coleta</SelectItem>
                           <SelectItem value="suporte_industrial">Suporte Industrial</SelectItem>
                           <SelectItem value="finalizado">Finalizado</SelectItem>
+                          <SelectItem value="cancelado">Cancelado</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -407,10 +428,16 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
             </div>
           ) : null}
           <div className="flex justify-between gap-3">
-            <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setConfirmDelete(true)} disabled={salvarMutation.isPending}>
-              <Trash2 className="w-4 h-4 mr-2" />
-              Excluir OP
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" className="text-orange-500 hover:text-orange-700 hover:bg-orange-50" onClick={() => setCancelarOPOpen(true)} disabled={salvarMutation.isPending || op?.status === 'cancelada'}>
+                <Ban className="w-4 h-4 mr-2" />
+                {op?.status === 'cancelada' ? 'OP Cancelada' : 'Cancelar OP'}
+              </Button>
+              <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setConfirmDelete(true)} disabled={salvarMutation.isPending}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+            </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={salvarMutation.isPending}>
                 Cancelar
@@ -433,5 +460,29 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
         </div>
       </DialogContent>
     </Dialog>
-  );
+
+    {/* Dialog Cancelar OP inteira */}
+    <CancelarOPDialog
+      open={cancelarOPOpen}
+      onOpenChange={setCancelarOPOpen}
+      op={op}
+      itensOP={itens}
+      currentUser={currentUser}
+      onSuccess={() => { onSuccess?.(); onOpenChange(false); }}
+    />
+
+    {/* Dialog Cancelar Item individual */}
+    <CancelarOPDialog
+      open={!!cancelarItemTarget}
+      onOpenChange={(v) => { if (!v) setCancelarItemTarget(null); }}
+      op={op}
+      item={cancelarItemTarget}
+      currentUser={currentUser}
+      onSuccess={() => {
+        setCancelarItemTarget(null);
+        base44.entities.ItemOP.filter({ op_id: op?.id }).then(setItens);
+        onSuccess?.();
+      }}
+    />
+  </>);
 }

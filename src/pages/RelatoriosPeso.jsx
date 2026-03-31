@@ -54,18 +54,6 @@ export default function RelatoriosPeso() {
     (currentUser.allowed_pages && Array.isArray(currentUser.allowed_pages) && currentUser.allowed_pages.includes('RelatoriosPeso'))
   );
 
-  if (currentUser && !temAcesso) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Scale className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-slate-800 mb-2">Acesso Restrito</h2>
-          <p className="text-slate-500">Esta área é exclusiva para Comercial e Administradores.</p>
-        </div>
-      </div>
-    );
-  }
-
   // Calcular peso por mês para o ano selecionado
   const dadosMensais = useMemo(() => {
     const meses = {};
@@ -132,6 +120,18 @@ export default function RelatoriosPeso() {
     Object.values(pesoPorEtapa).reduce((s, v) => s + v, 0),
     [pesoPorEtapa]
   );
+
+  if (currentUser && !temAcesso) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Scale className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Acesso Restrito</h2>
+          <p className="text-slate-500">Esta área é exclusiva para Comercial e Administradores.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (mesSelecionado) {
     return (
