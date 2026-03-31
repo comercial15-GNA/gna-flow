@@ -62,6 +62,7 @@ export default function RelatoriosPeso() {
     if (modoData === 'entrega') {
       allItems.forEach(item => {
         if (!item.data_entrega || !item.peso) return;
+        if (item.etapa_atual === 'cancelado') return;
         const d = parseISO(item.data_entrega);
         if (d.getFullYear() !== selectedYear) return;
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
@@ -69,6 +70,7 @@ export default function RelatoriosPeso() {
     } else if (modoData === 'lancamento') {
       allItems.forEach(item => {
         if (!item.peso) return;
+        if (item.etapa_atual === 'cancelado') return;
         const op = allOPs.find(o => o.id === item.op_id);
         if (!op?.data_lancamento) return;
         const d = new Date(op.data_lancamento);
@@ -79,7 +81,7 @@ export default function RelatoriosPeso() {
       // A Entregar: itens com data de entrega no mês mas ainda em produção (não finalizados)
       allItems.forEach(item => {
         if (!item.data_entrega || !item.peso) return;
-        if (item.etapa_atual === 'finalizado') return;
+        if (item.etapa_atual === 'finalizado' || item.etapa_atual === 'cancelado') return;
         const d = parseISO(item.data_entrega);
         if (d.getFullYear() !== selectedYear) return;
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
@@ -108,7 +110,7 @@ export default function RelatoriosPeso() {
     const etapas = {};
     ETAPAS_PRODUCAO.forEach(e => { etapas[e.value] = 0; });
     allItems.forEach(item => {
-      if (!item.peso || item.etapa_atual === 'finalizado') return;
+      if (!item.peso || item.etapa_atual === 'finalizado' || item.etapa_atual === 'cancelado') return;
       if (etapas[item.etapa_atual] !== undefined) {
         etapas[item.etapa_atual] += (item.peso || 0) * (item.quantidade || 1);
       }

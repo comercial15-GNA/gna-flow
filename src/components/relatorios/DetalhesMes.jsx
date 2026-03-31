@@ -33,6 +33,7 @@ export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega'
   // Filtrar itens do mês de acordo com o modo
   const itensMes = itens.filter(item => {
     if (!item.peso) return false;
+    if (item.etapa_atual === 'cancelado') return false;
 
     if (modoData === 'entrega') {
       if (!item.data_entrega) return false;
@@ -48,7 +49,7 @@ export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega'
     }
 
     if (modoData === 'a_entregar') {
-      if (!item.data_entrega || item.etapa_atual === 'finalizado') return false;
+      if (!item.data_entrega || item.etapa_atual === 'finalizado' || item.etapa_atual === 'cancelado') return false;
       const d = parseISO(item.data_entrega);
       return d.getFullYear() === ano && d.getMonth() + 1 === mes;
     }
