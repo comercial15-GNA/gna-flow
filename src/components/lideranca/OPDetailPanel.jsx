@@ -30,7 +30,8 @@ const ETAPA_COLORS = {
   expedicao: 'bg-teal-100 text-teal-800',
   coleta: 'bg-amber-100 text-amber-800',
   suporte_industrial: 'bg-slate-100 text-slate-800',
-  finalizado: 'bg-purple-100 text-purple-800'
+  finalizado: 'bg-purple-100 text-purple-800',
+  cancelado: 'bg-red-100 text-red-800'
 };
 
 const ETAPA_LABELS = {
@@ -46,7 +47,8 @@ const ETAPA_LABELS = {
   expedicao: 'Expedição',
   coleta: 'Coleta',
   suporte_industrial: 'Suporte Industrial',
-  finalizado: 'Finalizado'
+  finalizado: 'Finalizado',
+  cancelado: 'Cancelado'
 };
 
 const STATUS_CONFIG = {

@@ -38,6 +38,7 @@ const STATUS_OPTIONS = [
   { value: 'em_andamento', label: 'Em Andamento' },
   { value: 'coleta', label: 'Coleta' },
   { value: 'finalizado', label: 'Finalizado' },
+  { value: 'cancelada', label: 'Cancelada' },
 ];
 
 const ETAPA_OPTIONS = [
@@ -70,7 +71,8 @@ const ETAPA_COLORS = {
   expedicao: 'bg-teal-100 text-teal-800',
   suporte_industrial: 'bg-indigo-100 text-indigo-800',
   coleta: 'bg-violet-100 text-violet-800',
-  finalizado: 'bg-purple-100 text-purple-800'
+  finalizado: 'bg-purple-100 text-purple-800',
+  cancelado: 'bg-red-100 text-red-800'
 };
 
 const ETAPA_LABELS = {
@@ -86,7 +88,8 @@ const ETAPA_LABELS = {
   expedicao: 'Expedição',
   suporte_industrial: 'Suporte Industrial',
   coleta: 'Coleta',
-  finalizado: 'Finalizado'
+  finalizado: 'Finalizado',
+  cancelado: 'Cancelado'
 };
 
 export default function Lideranca() {
@@ -434,10 +437,12 @@ export default function Lideranca() {
                               <Badge className={
                                 op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 
                                 op.status === 'coleta' ? 'bg-purple-100 text-purple-800' :
+                                op.status === 'cancelada' ? 'bg-red-100 text-red-800' :
                                 'bg-emerald-100 text-emerald-800'
                               }>
                                 {op.status === 'em_andamento' ? 'Em Andamento' : 
-                                 op.status === 'coleta' ? 'Coleta' : 'Finalizado'}
+                                 op.status === 'coleta' ? 'Coleta' :
+                                 op.status === 'cancelada' ? 'Cancelada' : 'Finalizado'}
                               </Badge>
                             </div>
                             <p className="text-sm text-slate-600">{op.equipamento_principal} • {op.cliente}</p>

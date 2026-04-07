@@ -25,7 +25,8 @@ const ETAPA_LABELS = {
   expedicao: 'Expedição',
   coleta: 'Coleta',
   suporte_industrial: 'Suporte Industrial',
-  finalizado: 'Finalizado'
+  finalizado: 'Finalizado',
+  cancelado: 'Cancelado'
 };
 
 const ETAPA_COLORS = {
@@ -41,7 +42,8 @@ const ETAPA_COLORS = {
   expedicao: 'bg-teal-100 text-teal-800',
   coleta: 'bg-indigo-100 text-indigo-800',
   suporte_industrial: 'bg-slate-200 text-slate-800',
-  finalizado: 'bg-purple-100 text-purple-800'
+  finalizado: 'bg-purple-100 text-purple-800',
+  cancelado: 'bg-red-900 text-white'
 };
 
 export default function HistoricoMovimentacoes({ itemId }) {
