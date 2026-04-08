@@ -3,8 +3,25 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
 import { Flame, AlertTriangle, Calendar, Package, User } from 'lucide-react';
+import ImprimirEtiquetaZebra from '../components/producao/ImprimirEtiquetaZebra';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+async function registrarHistoricoEtiqueta(item) {
+  const user = await base44.auth.me();
+  await base44.entities.HistoricoMovimentacao.create({
+    item_id: item.id,
+    op_id: item.op_id,
+    numero_op: item.numero_op,
+    descricao_item: item.descricao,
+    setor_origem: 'fundicao',
+    setor_destino: 'fundicao',
+    justificativa: 'Etiqueta Zebra impressa',
+    usuario_email: user?.email || '',
+    usuario_nome: user?.full_name || '',
+    data_movimentacao: new Date().toISOString(),
+  });
+}
 
 export default function PainelFundicao() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -107,12 +124,13 @@ export default function PainelFundicao() {
                 <th className="px-4 py-4">Responsável</th>
                 <th className="px-4 py-4">Entrega</th>
                 <th className="px-4 py-4">Status</th>
+                <th className="px-4 py-4">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
               {itens.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="text-center py-12 text-slate-400">
+                  <td colSpan="10" className="text-center py-12 text-slate-400">
                     Nenhum item na fila
                   </td>
                 </tr>
@@ -179,6 +197,9 @@ export default function PainelFundicao() {
                             NO PRAZO
                           </Badge>
                         )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <ImprimirEtiquetaZebra item={item} onImprimir={registrarHistoricoEtiqueta} />
                       </td>
                     </tr>
                   );
