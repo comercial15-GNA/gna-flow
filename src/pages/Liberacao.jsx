@@ -32,6 +32,7 @@ const ETAPAS_RETORNO = [
   { value: 'modelagem', label: 'Modelagem' },
   { value: 'suprimentos', label: 'Suprimentos' },
   { value: 'fundicao', label: 'Fundição' },
+  { value: 'acabamento', label: 'Acabamento' },
   { value: 'usinagem', label: 'Usinagem' },
   { value: 'caldeiraria', label: 'Caldeiraria' },
 ];
