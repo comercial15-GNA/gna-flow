@@ -122,7 +122,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
           {op.data_lancamento && (
             <div className="flex items-center gap-2 text-slate-600">
               <Calendar className="w-4 h-4 text-slate-400" />
-              <span>{format(new Date(op.data_lancamento), "dd/MM/yyyy", { locale: ptBR })}</span>
+              <span>{format(parseISO(op.data_lancamento), "dd/MM/yyyy", { locale: ptBR })}</span>
             </div>
           )}
           <div className="flex items-center gap-2 text-slate-600">
@@ -225,7 +225,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                         <span className="text-slate-400">Responsável:</span> {item.responsavel_op || '-'}
                       </div>
                       <div className="text-slate-600">
-                        <span className="text-slate-400">Entrada Etapa:</span> {item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yy HH:mm') : '-'}
+                        <span className="text-slate-400">Entrada Etapa:</span> {item.data_entrada_etapa ? (() => { try { return format(new Date(item.data_entrada_etapa), 'dd/MM/yy HH:mm'); } catch { return '-'; } })() : '-'}
                       </div>
                       {item.peso_expedicao && (
                         <div className="text-slate-600">
