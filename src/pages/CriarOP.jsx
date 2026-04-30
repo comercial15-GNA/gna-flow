@@ -44,6 +44,7 @@ export default function CriarOP() {
   
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [erros, setErros] = useState({});
 
   // Buscar responsáveis ativos diretamente
   const { data: usuarios = [] } = useQuery({
@@ -163,29 +164,41 @@ export default function CriarOP() {
     queryFn: () => base44.auth.me(),
   });
 
+  const validarFormulario = () => {
+    const novosErros = {};
+
+    if (!formData.equipamento_principal?.trim())
+      novosErros.equipamento_principal = 'Equipamento principal é obrigatório';
+    if (!formData.cliente?.trim())
+      novosErros.cliente = 'Cliente é obrigatório';
+    if (!formData.responsavel)
+      novosErros.responsavel = 'Responsável é obrigatório';
+
+    itens.forEach((item, i) => {
+      if (!item.descricao?.trim())
+        novosErros[`item_${i}_descricao`] = `Item ${i + 1}: Descrição é obrigatória`;
+      if (!item.quantidade || item.quantidade <= 0)
+        novosErros[`item_${i}_quantidade`] = `Item ${i + 1}: Quantidade deve ser maior que zero`;
+      if (!item.data_entrega)
+        novosErros[`item_${i}_data_entrega`] = `Item ${i + 1}: Data de entrega é obrigatória`;
+    });
+
+    setErros(novosErros);
+    return novosErros;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.equipamento_principal || !formData.cliente || !formData.responsavel) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
 
-    // Validar itens
-    for (let i = 0; i < itens.length; i++) {
-      const item = itens[i];
-      if (!item.descricao?.trim()) {
-        toast.error(`Item ${i + 1}: Preencha a descrição`);
-        return;
-      }
-      if (!item.quantidade || item.quantidade <= 0) {
-        toast.error(`Item ${i + 1}: Quantidade deve ser maior que zero`);
-        return;
-      }
-      if (!item.data_entrega) {
-        toast.error(`Item ${i + 1}: Data de entrega é obrigatória`);
-        return;
-      }
+    const novosErros = validarFormulario();
+    if (Object.keys(novosErros).length > 0) {
+      toast.error('Corrija os campos destacados antes de continuar');
+      // Scroll para o primeiro erro
+      setTimeout(() => {
+        const el = document.querySelector('[data-erro="true"]');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+      return;
     }
 
     const itensValidos = itens.filter(item => item.descricao && item.quantidade > 0 && item.data_entrega);
@@ -285,10 +298,12 @@ export default function CriarOP() {
                 <Label>Equipamento Principal *</Label>
                 <Input
                   value={formData.equipamento_principal}
-                  onChange={(e) => setFormData({ ...formData, equipamento_principal: e.target.value })}
+                  onChange={(e) => { setFormData({ ...formData, equipamento_principal: e.target.value }); setErros(p => ({ ...p, equipamento_principal: undefined })); }}
                   placeholder="Ex: GA1300"
-                  className="mt-1"
+                  className={`mt-1 ${erros.equipamento_principal ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  data-erro={!!erros.equipamento_principal}
                 />
+                {erros.equipamento_principal && <p className="text-xs text-red-500 mt-1">{erros.equipamento_principal}</p>}
               </div>
               <div>
                 <Label>Ordem de Compra (O.C)</Label>
@@ -303,19 +318,21 @@ export default function CriarOP() {
                 <Label>Cliente *</Label>
                 <Input
                   value={formData.cliente}
-                  onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
+                  onChange={(e) => { setFormData({ ...formData, cliente: e.target.value }); setErros(p => ({ ...p, cliente: undefined })); }}
                   placeholder="Nome do cliente"
-                  className="mt-1"
+                  className={`mt-1 ${erros.cliente ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  data-erro={!!erros.cliente}
                 />
+                {erros.cliente && <p className="text-xs text-red-500 mt-1">{erros.cliente}</p>}
               </div>
             </div>
             <div>
               <Label>Responsável pela OP *</Label>
               <Select
                 value={formData.responsavel}
-                onValueChange={(value) => setFormData({ ...formData, responsavel: value })}
+                onValueChange={(value) => { setFormData({ ...formData, responsavel: value }); setErros(p => ({ ...p, responsavel: undefined })); }}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className={`mt-1 ${erros.responsavel ? 'border-red-500 ring-red-500' : ''}`} data-erro={!!erros.responsavel}>
                   <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
@@ -326,9 +343,8 @@ export default function CriarOP() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500 mt-1">
-                Selecione um usuário cadastrado como responsável pela OP
-              </p>
+              {erros.responsavel && <p className="text-xs text-red-500 mt-1">{erros.responsavel}</p>}
+              {!erros.responsavel && <p className="text-xs text-slate-500 mt-1">Selecione um usuário cadastrado como responsável pela OP</p>}
             </div>
           </CardContent>
         </Card>
@@ -367,10 +383,12 @@ export default function CriarOP() {
                         <Label className="text-xs">Descrição *</Label>
                         <Input
                           value={item.descricao}
-                          onChange={(e) => updateItem(index, 'descricao', e.target.value)}
+                          onChange={(e) => { updateItem(index, 'descricao', e.target.value); setErros(p => ({ ...p, [`item_${index}_descricao`]: undefined })); }}
                           placeholder="Descrição do item"
-                          className="mt-1"
+                          className={`mt-1 ${erros[`item_${index}_descricao`] ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          data-erro={!!erros[`item_${index}_descricao`]}
                         />
+                        {erros[`item_${index}_descricao`] && <p className="text-xs text-red-500 mt-1">Obrigatório</p>}
                       </div>
                       <div>
                         <Label className="text-xs">Observação</Label>
@@ -409,18 +427,22 @@ export default function CriarOP() {
                           type="number"
                           min="1"
                           value={item.quantidade}
-                          onChange={(e) => updateItem(index, 'quantidade', e.target.value)}
-                          className="mt-1"
+                          onChange={(e) => { updateItem(index, 'quantidade', e.target.value); setErros(p => ({ ...p, [`item_${index}_quantidade`]: undefined })); }}
+                          className={`mt-1 ${erros[`item_${index}_quantidade`] ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          data-erro={!!erros[`item_${index}_quantidade`]}
                         />
+                        {erros[`item_${index}_quantidade`] && <p className="text-xs text-red-500 mt-1">Obrigatório</p>}
                       </div>
                       <div>
                         <Label className="text-xs">Data Entrega *</Label>
                         <Input
                           type="date"
                           value={item.data_entrega}
-                          onChange={(e) => updateItem(index, 'data_entrega', e.target.value)}
-                          className="mt-1"
+                          onChange={(e) => { updateItem(index, 'data_entrega', e.target.value); setErros(p => ({ ...p, [`item_${index}_data_entrega`]: undefined })); }}
+                          className={`mt-1 ${erros[`item_${index}_data_entrega`] ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          data-erro={!!erros[`item_${index}_data_entrega`]}
                         />
+                        {erros[`item_${index}_data_entrega`] && <p className="text-xs text-red-500 mt-1">Obrigatório</p>}
                       </div>
                     </div>
                   </div>
