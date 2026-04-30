@@ -149,6 +149,11 @@ export default function CriarOP() {
 
   const updateItem = (index, field, value) => {
     const newItens = [...itens];
+    if (field === 'data_entrega' && value) {
+      // Limitar o ano a 4 dígitos (formato YYYY-MM-DD)
+      const parts = value.split('-');
+      if (parts[0] && parts[0].length > 4) return;
+    }
     newItens[index][field] = value;
     setItens(newItens);
   };
