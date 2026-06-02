@@ -1,0 +1,52 @@
+{
+  "name": "HistoricoMovimentacao",
+  "type": "object",
+  "properties": {
+    "item_id": {
+      "type": "string",
+      "description": "ID do item movimentado"
+    },
+    "op_id": {
+      "type": "string",
+      "description": "ID da OP"
+    },
+    "numero_op": {
+      "type": "string",
+      "description": "N\u00famero da OP"
+    },
+    "descricao_item": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do item"
+    },
+    "setor_origem": {
+      "type": "string",
+      "description": "Setor de origem"
+    },
+    "setor_destino": {
+      "type": "string",
+      "description": "Setor de destino"
+    },
+    "justificativa": {
+      "type": "string",
+      "description": "Justificativa da movimenta\u00e7\u00e3o (obrigat\u00f3ria em retornos)"
+    },
+    "usuario_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio que fez a movimenta\u00e7\u00e3o"
+    },
+    "usuario_nome": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio"
+    },
+    "data_movimentacao": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "item_id",
+    "setor_origem",
+    "setor_destino",
+    "usuario_email"
+  ]
+}

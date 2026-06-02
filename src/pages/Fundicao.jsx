@@ -190,7 +190,8 @@ export default function Fundicao() {
       item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchCliente = filtroCliente === 'todos' || item.cliente === filtroCliente;
     const matchResponsavel = filtroResponsavel === 'todos' || item.responsavel_op === filtroResponsavel;
@@ -277,7 +278,7 @@ export default function Fundicao() {
             <div className="relative mt-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="OP, descrição, código..."
+                placeholder="OP, cliente, equipamento, item, código GA..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

@@ -1,0 +1,58 @@
+{
+  "name": "OrdemProducao",
+  "type": "object",
+  "properties": {
+    "numero_op": {
+      "type": "string",
+      "description": "N\u00famero autom\u00e1tico OP-AAAA-NNNN"
+    },
+    "ordem_compra": {
+      "type": "string",
+      "description": "N\u00famero da Ordem de Compra (O.C)"
+    },
+    "equipamento_principal": {
+      "type": "string",
+      "description": "Equipamento principal da OP"
+    },
+    "cliente": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "responsavel": {
+      "type": "string",
+      "description": "Nome/Apelido do respons\u00e1vel pela OP"
+    },
+    "responsavel_user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio respons\u00e1vel pela OP"
+    },
+    "arquivos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs dos arquivos anexados"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "em_andamento",
+        "coleta",
+        "finalizado",
+        "cancelada"
+      ],
+      "default": "em_andamento"
+    },
+    "data_lancamento": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de lan\u00e7amento da OP"
+    }
+  },
+  "required": [
+    "numero_op",
+    "equipamento_principal",
+    "cliente",
+    "responsavel"
+  ]
+}

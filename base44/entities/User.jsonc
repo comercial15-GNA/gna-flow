@@ -1,0 +1,44 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "setor": {
+      "type": "string",
+      "enum": [
+        "administrador",
+        "comercial",
+        "engenharia",
+        "modelagem",
+        "suprimentos",
+        "fundicao",
+        "acabamento",
+        "usinagem",
+        "liberacao",
+        "expedicao",
+        "lideranca"
+      ],
+      "description": "Setor do usu\u00e1rio no sistema"
+    },
+    "apelido": {
+      "type": "string",
+      "description": "Nome/Apelido para usar como respons\u00e1vel em OPs"
+    },
+    "ativo": {
+      "type": "boolean",
+      "description": "Se o usu\u00e1rio est\u00e1 ativo no sistema"
+    },
+    "allowed_pages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de p\u00e1ginas que o usu\u00e1rio tem permiss\u00e3o para acessar"
+    }
+  },
+  "required": [
+    "setor",
+    "apelido",
+    "ativo",
+    "allowed_pages"
+  ]
+}

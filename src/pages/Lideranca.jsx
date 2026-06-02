@@ -117,11 +117,14 @@ export default function Lideranca() {
 
   // Filtrar OPs
   const opsFiltradas = ops.filter(op => {
+    const itensOPSearch = itens.filter(i => i.op_id === op.id);
     const matchSearch = !searchTerm || 
       op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
+      op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      itensOPSearch.some(i => i.descricao?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      itensOPSearch.some(i => i.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchResponsavel = responsavelFilter === 'all' || op.responsavel === responsavelFilter;
     const matchCliente = clienteFilter === 'all' || op.cliente === clienteFilter;
     const matchStatus = statusFilter === 'all' || op.status === statusFilter;
@@ -322,7 +325,7 @@ export default function Lideranca() {
               <div className="relative md:col-span-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Buscar OP, cliente, O.C, equipamento..."
+                  placeholder="OP, cliente, equipamento, item, código GA..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"

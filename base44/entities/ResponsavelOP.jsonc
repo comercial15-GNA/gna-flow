@@ -1,0 +1,31 @@
+{
+  "name": "ResponsavelOP",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "apelido": {
+      "type": "string",
+      "description": "Apelido do respons\u00e1vel"
+    },
+    "nome_completo": {
+      "type": "string",
+      "description": "Nome completo"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o respons\u00e1vel est\u00e1 ativo"
+    }
+  },
+  "required": [
+    "user_id",
+    "email"
+  ]
+}

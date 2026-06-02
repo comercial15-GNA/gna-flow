@@ -1,0 +1,18 @@
+{
+  "name": "SequenciaOP",
+  "type": "object",
+  "properties": {
+    "ano": {
+      "type": "integer",
+      "description": "Ano da sequ\u00eancia"
+    },
+    "ultimo_numero": {
+      "type": "integer",
+      "description": "\u00daltimo n\u00famero usado"
+    }
+  },
+  "required": [
+    "ano",
+    "ultimo_numero"
+  ]
+}
