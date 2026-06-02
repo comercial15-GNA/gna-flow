@@ -207,7 +207,8 @@ export default function Liberacao() {
     if (searchTerm) {
       const matchOP = op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+        op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchItens = itensOP.some(item =>
         item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -254,7 +255,7 @@ export default function Liberacao() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Buscar por OP, cliente, equipamento ou item..."
+            placeholder="OP, O.C, cliente, equipamento, item, código GA..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
