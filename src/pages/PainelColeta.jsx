@@ -24,7 +24,7 @@ export default function PainelColeta() {
         if (!a.data_entrega) return 1;
         if (!b.data_entrega) return -1;
         return new Date(a.data_entrega) - new Date(b.data_entrega);
-      }).slice(0, 30);
+      });
     },
     refetchInterval: 120000
   });
@@ -64,7 +64,7 @@ export default function PainelColeta() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white tracking-tight">COLETA</h1>
-              <p className="text-purple-400 text-lg">Próximas 30 Ordens de Produção</p>
+              <p className="text-purple-400 text-lg">Ordens de Produção</p>
             </div>
           </div>
           <div className="text-right">

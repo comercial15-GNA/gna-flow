@@ -25,7 +25,7 @@ export default function PainelCaldeiraria() {
         if (!a.data_entrega) return 1;
         if (!b.data_entrega) return -1;
         return new Date(a.data_entrega) - new Date(b.data_entrega);
-      }).slice(0, 30);
+      });
     },
     refetchInterval: 120000 // Atualiza a cada 2 minutos
   });
@@ -54,7 +54,7 @@ export default function PainelCaldeiraria() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white tracking-tight">CALDEIRARIA</h1>
-              <p className="text-amber-400 text-lg">Próximas 30 Ordens de Produção</p>
+              <p className="text-amber-400 text-lg">Ordens de Produção</p>
             </div>
           </div>
           <div className="text-right">
