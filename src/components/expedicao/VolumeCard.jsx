@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Weight, Box, ChevronDown, ChevronUp, ArrowRight, RotateCcw, Check } from 'lucide-react';
+import { Package, Weight, Box, ChevronDown, ChevronUp, ArrowRight, RotateCcw, Check, Zap } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 const ETAPA_COLORS = {
@@ -93,10 +93,13 @@ export default function VolumeCard({ volume, itensDoVolume, etapaAtual, onAcao, 
             <p className="text-sm font-semibold text-slate-700 mb-2">Itens neste volume:</p>
             <div className="space-y-2">
               {itensDoVolume.map(item => (
-                <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                <div key={item.id} className={`rounded-lg border p-3 ${item.pronta_entrega ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                        {item.pronta_entrega && <Badge className="bg-amber-500 text-white text-xs"><Zap className="w-2.5 h-2.5 mr-0.5" />Pronta Entrega</Badge>}
+                      </div>
                       <div className="flex flex-wrap gap-3 mt-1 text-xs text-slate-500">
                         <span>GA: {item.codigo_ga || '-'}</span>
                         <span>Qtd: {item.quantidade}</span>

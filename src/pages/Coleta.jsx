@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   PackageCheck, Search, Package, RotateCcw, Check, FileText,
-  ExternalLink, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle,
+  ExternalLink, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -443,10 +443,13 @@ export default function Coleta() {
                           {itensSemVolume.map(item => {
                             const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
                             return (
-                              <div key={item.id} className="bg-purple-50 rounded-lg border-2 border-purple-300 p-4">
+                              <div key={item.id} className={`rounded-lg border-2 p-4 ${item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-purple-50 border-purple-300'}`}>
                                 <div className="flex items-start justify-between mb-3">
                                   <div>
-                                    <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                      <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                      {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
+                                    </div>
                                     <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                                   </div>
                                 </div>

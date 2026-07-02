@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Truck, Search, Package, RotateCcw, Check, FileText,
-  ExternalLink, FileSpreadsheet, Info, ChevronDown, ChevronUp,
+  ExternalLink, FileSpreadsheet, Info, ChevronDown, ChevronUp, Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -455,10 +455,13 @@ export default function Expedicao() {
                         </h4>
                         <div className="space-y-3">
                           {itensSemVolume.map(item => (
-                            <div key={item.id} className="bg-teal-50 rounded-lg border-2 border-teal-300 p-4">
+                            <div key={item.id} className={`rounded-lg border-2 p-4 ${item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-teal-50 border-teal-300'}`}>
                               <div className="flex items-start justify-between mb-3">
                                 <div>
-                                  <p className="font-semibold text-slate-800 mb-1">{item.descricao}</p>
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                    {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
+                                  </div>
                                   <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                                 </div>
                               </div>
