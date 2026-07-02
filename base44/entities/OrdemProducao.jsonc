@@ -37,11 +37,13 @@
       "type": "string",
       "enum": [
         "em_andamento",
+        "expedicao",
         "coleta",
         "finalizado",
         "cancelada"
       ],
-      "default": "em_andamento"
+      "default": "em_andamento",
+      "description": "Status calculado automaticamente: em_andamento, expedicao, coleta, finalizado ou cancelada"
     },
     "data_lancamento": {
       "type": "string",

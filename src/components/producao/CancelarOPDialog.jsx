@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Ban, Package, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { updateOPStatus } from './UpdateOPStatus';
 
 /**
  * CancelarOPDialog — cancela uma OP inteira ou um único item.
@@ -72,9 +73,10 @@ export default function CancelarOPDialog({ open, onOpenChange, op, item, itensOP
         });
       }));
 
-      // Se cancelou a OP inteira, atualiza o status da OP também
-      if (!modoItem && op) {
-        await base44.entities.OrdemProducao.update(op.id, { status: 'cancelada' });
+      // Recalcular status da OP baseado nos itens restantes
+      // (cancelada se todos cancelados, finalizado se sobrou finalizado, etc.)
+      if (op) {
+        await updateOPStatus(op.id);
       }
 
       queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });

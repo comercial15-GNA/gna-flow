@@ -502,6 +502,7 @@ export default function Comercial() {
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                <SelectItem value="expedicao">Expedição</SelectItem>
                 <SelectItem value="coleta">Coleta</SelectItem>
                 <SelectItem value="finalizado">Finalizadas</SelectItem>
                 <SelectItem value="cancelada">Canceladas</SelectItem>

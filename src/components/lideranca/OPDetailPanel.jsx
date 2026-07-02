@@ -10,7 +10,8 @@ import {
   ExternalLink,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Truck
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -53,6 +54,7 @@ const ETAPA_LABELS = {
 
 const STATUS_CONFIG = {
   em_andamento: { label: 'Em Andamento', color: 'bg-amber-100 text-amber-800', icon: Clock },
+  expedicao: { label: 'Expedição', color: 'bg-teal-100 text-teal-800', icon: Truck },
   coleta: { label: 'Coleta', color: 'bg-purple-100 text-purple-800', icon: Package },
   finalizado: { label: 'Finalizado', color: 'bg-green-100 text-green-800', icon: CheckCircle },
   cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: AlertCircle }

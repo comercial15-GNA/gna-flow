@@ -24,7 +24,8 @@ import {
   Users,
   Eye,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Truck
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,6 +37,7 @@ import ItemOPActions from '@/components/producao/ItemOPActions';
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os Status' },
   { value: 'em_andamento', label: 'Em Andamento' },
+  { value: 'expedicao', label: 'Expedição' },
   { value: 'coleta', label: 'Coleta' },
   { value: 'finalizado', label: 'Finalizado' },
   { value: 'cancelada', label: 'Cancelada' },
@@ -167,7 +169,7 @@ export default function Lideranca() {
           'Cliente': item.cliente,
           'Etapa Atual': ETAPA_LABELS[item.etapa_atual] || item.etapa_atual,
           'Responsável': op.responsavel || '-',
-          'Status OP': op.status === 'em_andamento' ? 'Em Andamento' : 'Finalizada',
+          'Status OP': op.status === 'em_andamento' ? 'Em Andamento' : op.status === 'expedicao' ? 'Expedição' : op.status === 'coleta' ? 'Coleta' : op.status === 'cancelada' ? 'Cancelada' : 'Finalizado',
           'Data Entrega': item.data_entrega ? format(parseISO(item.data_entrega), 'dd/MM/yyyy') : '-',
           'Entrada Etapa': item.data_entrada_etapa ? format(new Date(item.data_entrada_etapa), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-'
         });
@@ -194,6 +196,7 @@ export default function Lideranca() {
   const stats = {
     totalOPs: ops.length,
     emAndamento: ops.filter(op => op.status === 'em_andamento').length,
+    expedicao: ops.filter(op => op.status === 'expedicao').length,
     coleta: ops.filter(op => op.status === 'coleta').length,
     finalizado: ops.filter(op => op.status === 'finalizado').length,
     totalItens: itens.length,
@@ -227,7 +230,7 @@ export default function Lideranca() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -258,6 +261,17 @@ export default function Lideranca() {
             <div>
               <p className="text-2xl font-bold text-slate-800">{stats.coleta}</p>
               <p className="text-xs text-slate-500">Coleta</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+              <Truck className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-800">{stats.expedicao}</p>
+              <p className="text-xs text-slate-500">Expedição</p>
             </div>
           </div>
         </div>
@@ -439,11 +453,13 @@ export default function Lideranca() {
                               )}
                               <Badge className={
                                 op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 
+                                op.status === 'expedicao' ? 'bg-teal-100 text-teal-800' :
                                 op.status === 'coleta' ? 'bg-purple-100 text-purple-800' :
                                 op.status === 'cancelada' ? 'bg-red-100 text-red-800' :
                                 'bg-emerald-100 text-emerald-800'
                               }>
                                 {op.status === 'em_andamento' ? 'Em Andamento' : 
+                                 op.status === 'expedicao' ? 'Expedição' :
                                  op.status === 'coleta' ? 'Coleta' :
                                  op.status === 'cancelada' ? 'Cancelada' : 'Finalizado'}
                               </Badge>
