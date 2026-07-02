@@ -20,7 +20,8 @@ import {
   FileText,
   X,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +40,7 @@ export default function CriarOP() {
   });
   
   const [itens, setItens] = useState([
-    { descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }
+    { descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '', pronta_entrega: false }
   ]);
   
   const [uploading, setUploading] = useState(false);
@@ -137,7 +138,7 @@ export default function CriarOP() {
   };
 
   const addItem = () => {
-    setItens([...itens, { descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '' }]);
+    setItens([...itens, { descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '', pronta_entrega: false }]);
   };
 
   const removeItem = (index) => {
@@ -242,7 +243,8 @@ export default function CriarOP() {
         etapa_atual: 'engenharia',
         cliente: formData.cliente,
         responsavel_op: formData.responsavel,
-        data_entrada_etapa: dataLancamento
+        data_entrada_etapa: dataLancamento,
+        pronta_entrega: item.pronta_entrega || false
       }));
 
       const itensCriados = await base44.entities.ItemOP.bulkCreate(itensParaCriar);
@@ -444,6 +446,19 @@ export default function CriarOP() {
                         />
                         {erros[`item_${index}_data_entrega`] && <p className="text-xs text-red-500 mt-1">Obrigatório</p>}
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id={`pronta-${index}`}
+                        checked={item.pronta_entrega || false}
+                        onChange={(e) => updateItem(index, 'pronta_entrega', e.target.checked)}
+                        className="rounded"
+                      />
+                      <Label htmlFor={`pronta-${index}`} className="text-xs cursor-pointer flex items-center gap-1 text-slate-700">
+                        <Zap className="w-3 h-3 text-amber-500" />
+                        Pronta Entrega (pula etapas intermediárias — vai direto para Liberação após Engenharia)
+                      </Label>
                     </div>
                   </div>
                 </div>

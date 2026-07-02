@@ -14,6 +14,7 @@ import {
   History,
   Settings,
   AlertTriangle,
+  Zap,
 } from 'lucide-react';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -88,6 +89,9 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                   </Badge>
                 )}
                 <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                {itensOP.some(i => i.pronta_entrega) && (
+                  <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>
+                )}
               </div>
             </div>
           </div>
@@ -173,6 +177,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <p className="font-semibold text-slate-800">{item.descricao}</p>
+                            {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
                           </div>
                           {item.observacao && (
                             <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded flex items-start justify-between">

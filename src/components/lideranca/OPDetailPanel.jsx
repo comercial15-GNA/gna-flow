@@ -11,7 +11,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Truck
+  Truck,
+  Zap
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -192,11 +193,12 @@ export default function OPDetailPanel({ op, itens, onClose }) {
         <h3 className="text-sm font-medium text-slate-700 mb-3">Itens da OP ({itens.length})</h3>
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {itens.map((item) => (
-            <div key={item.id} className="bg-slate-50 rounded-lg p-3">
+            <div key={item.id} className={`rounded-lg p-3 ${item.pronta_entrega ? 'bg-amber-50 border border-amber-300' : 'bg-slate-50'}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <Package className="w-4 h-4 text-slate-400" />
                   <p className="font-medium text-slate-800 text-sm truncate">{item.descricao}</p>
+                  {item.pronta_entrega && <Badge className="bg-amber-500 text-white text-xs"><Zap className="w-2.5 h-2.5 mr-0.5" />PE</Badge>}
                 </div>
                 <Badge className={ETAPA_COLORS[item.etapa_atual]}>
                   {ETAPA_LABELS[item.etapa_atual]}

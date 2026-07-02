@@ -34,7 +34,8 @@ import {
   AlertTriangle,
   Calendar,
   Filter,
-  X
+  X,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -111,7 +112,7 @@ export default function Engenharia() {
       
       queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] });
       queryClient.invalidateQueries({ queryKey: ['ops-all'] });
-      const destinos = { modelagem: 'Modelagem', suprimentos: 'Suprimentos', usinagem: 'Usinagem', suporte_industrial: 'Suporte Industrial', comercial: 'Comercial' };
+      const destinos = { modelagem: 'Modelagem', suprimentos: 'Suprimentos', usinagem: 'Usinagem', suporte_industrial: 'Suporte Industrial', comercial: 'Comercial', liberacao: 'Liberação' };
       toast.success(`Item enviado para ${destinos[novaEtapa]}`);
     } catch (error) {
       toast.error('Erro ao movimentar item');
@@ -435,11 +436,12 @@ export default function Engenharia() {
                           }
                         };
                         return (
-                          <div key={item.id} className={`bg-green-50 rounded-lg border-2 border-green-300 p-4 ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
+                          <div key={item.id} className={`rounded-lg border-2 p-4 ${item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-green-50 border-green-300'} ${item.iniciado ? 'ring-2 ring-blue-500' : ''}`}>
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   <p className={`text-slate-800 ${item.iniciado ? 'font-bold' : 'font-semibold'}`}>{item.descricao}</p>
+                                  {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
                                   {item.retornado && <Badge variant="destructive">Retornado</Badge>}
                                   {item.iniciado && <Badge className="bg-blue-600 text-white">Iniciado</Badge>}
                                 </div>
@@ -483,6 +485,17 @@ export default function Engenharia() {
                             </div>
 
                             <div className="flex flex-wrap gap-2">
+                              {item.pronta_entrega && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleEnviar(item, 'liberacao')}
+                                  disabled={loadingItem === item.id}
+                                  className="bg-amber-500 hover:bg-amber-600"
+                                >
+                                  <Zap className="w-3 h-3 mr-1" />
+                                  Enviar p/ Liberação (recomendado)
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 onClick={() => handleEnviar(item, 'modelagem')}
