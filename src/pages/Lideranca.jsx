@@ -96,7 +96,7 @@ const ETAPA_LABELS = {
 
 export default function Lideranca() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('em_andamento');
   const [etapaFilter, setEtapaFilter] = useState('all');
   const [responsavelFilter, setResponsavelFilter] = useState('all');
   const [clienteFilter, setClienteFilter] = useState('all');
