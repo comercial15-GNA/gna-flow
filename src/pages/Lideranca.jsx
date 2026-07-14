@@ -74,7 +74,7 @@ const ETAPA_COLORS = {
   suporte_industrial: 'bg-indigo-100 text-indigo-800',
   coleta: 'bg-violet-100 text-violet-800',
   finalizado: 'bg-purple-100 text-purple-800',
-  cancelado: 'bg-red-100 text-red-800'
+  cancelado: 'bg-red-900 text-white'
 };
 
 const ETAPA_LABELS = {
@@ -455,7 +455,7 @@ export default function Lideranca() {
                                 op.status === 'em_andamento' ? 'bg-amber-100 text-amber-800' : 
                                 op.status === 'expedicao' ? 'bg-teal-100 text-teal-800' :
                                 op.status === 'coleta' ? 'bg-purple-100 text-purple-800' :
-                                op.status === 'cancelada' ? 'bg-red-100 text-red-800' :
+                                op.status === 'cancelada' ? 'bg-red-900 text-white' :
                                 'bg-emerald-100 text-emerald-800'
                               }>
                                 {op.status === 'em_andamento' ? 'Em Andamento' : 

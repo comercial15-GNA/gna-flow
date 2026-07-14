@@ -33,7 +33,7 @@ const ETAPA_COLORS = {
   coleta: 'bg-amber-100 text-amber-800',
   suporte_industrial: 'bg-slate-100 text-slate-800',
   finalizado: 'bg-purple-100 text-purple-800',
-  cancelado: 'bg-red-100 text-red-800'
+  cancelado: 'bg-red-900 text-white'
 };
 
 const ETAPA_LABELS = {
@@ -58,7 +58,7 @@ const STATUS_CONFIG = {
   expedicao: { label: 'Expedição', color: 'bg-teal-100 text-teal-800', icon: Truck },
   coleta: { label: 'Coleta', color: 'bg-purple-100 text-purple-800', icon: Package },
   finalizado: { label: 'Finalizado', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-  cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: AlertCircle }
+  cancelada: { label: 'Cancelada', color: 'bg-red-900 text-white', icon: AlertCircle }
 };
 
 export default function OPDetailPanel({ op, itens, onClose }) {

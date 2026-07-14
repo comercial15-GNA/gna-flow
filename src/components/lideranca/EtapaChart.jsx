@@ -13,10 +13,11 @@ const ETAPA_CONFIG = {
   expedicao: { label: 'Expedição', color: '#14b8a6' },
   coleta: { label: 'Coleta', color: '#8b5cf6' },
   suporte_industrial: { label: 'Suporte Industrial', color: '#64748b' },
-  finalizado: { label: 'Finalizado', color: '#a855f7' }
+  finalizado: { label: 'Finalizado', color: '#a855f7' },
+  cancelado: { label: 'Cancelado', color: '#7f1d1d' }
 };
 
-const ETAPA_ORDER = ['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'acabamento', 'usinagem', 'caldeiraria', 'liberacao', 'expedicao', 'coleta', 'suporte_industrial', 'finalizado'];
+const ETAPA_ORDER = ['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'acabamento', 'usinagem', 'caldeiraria', 'liberacao', 'expedicao', 'coleta', 'suporte_industrial', 'finalizado', 'cancelado'];
 
 export default function EtapaChart({ itens, onEtapaClick, etapaSelecionada }) {
   // Contar itens por etapa

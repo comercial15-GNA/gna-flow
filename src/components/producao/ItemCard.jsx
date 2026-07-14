@@ -22,7 +22,8 @@ const ETAPA_COLORS = {
   fundicao: 'bg-red-100 text-red-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
-  finalizado: 'bg-purple-100 text-purple-800'
+  finalizado: 'bg-purple-100 text-purple-800',
+  cancelado: 'bg-red-900 text-white'
 };
 
 const ETAPA_LABELS = {
@@ -33,7 +34,8 @@ const ETAPA_LABELS = {
   fundicao: 'Fundição',
   usinagem: 'Usinagem',
   liberacao: 'Liberação',
-  finalizado: 'Finalizado'
+  finalizado: 'Finalizado',
+  cancelado: 'Cancelado'
 };
 
 export default function ItemCard({ 

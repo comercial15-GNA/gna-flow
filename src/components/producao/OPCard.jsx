@@ -32,7 +32,7 @@ const STATUS_CONFIG = {
   expedicao: { label: 'Expedição', color: 'bg-teal-100 text-teal-800' },
   coleta: { label: 'Coleta', color: 'bg-yellow-100 text-yellow-800' },
   finalizado: { label: 'Finalizado', color: 'bg-green-100 text-green-800' },
-  cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-800' }
+  cancelada: { label: 'Cancelada', color: 'bg-red-900 text-white' }
 };
 
 const ETAPA_COLORS = {
@@ -47,7 +47,25 @@ const ETAPA_COLORS = {
   expedicao: 'bg-teal-100 text-teal-800',
   coleta: 'bg-amber-100 text-amber-800',
   suporte_industrial: 'bg-slate-100 text-slate-800',
-  finalizado: 'bg-purple-100 text-purple-800'
+  finalizado: 'bg-purple-100 text-purple-800',
+  cancelado: 'bg-red-900 text-white'
+};
+
+const ETAPA_LABELS = {
+  comercial: 'Comercial',
+  engenharia: 'Engenharia',
+  modelagem: 'Modelagem',
+  suprimentos: 'Suprimentos',
+  fundicao: 'Fundição',
+  acabamento: 'Acabamento',
+  usinagem: 'Usinagem',
+  caldeiraria: 'Caldeiraria',
+  liberacao: 'Liberação',
+  expedicao: 'Expedição',
+  coleta: 'Coleta',
+  suporte_industrial: 'Suporte Industrial',
+  finalizado: 'Finalizado',
+  cancelado: 'Cancelado'
 };
 
 export default function OPCard({ op, itens = [], showItens = false, onItemUpdate, isAdmin = false, onAdminEdit }) {
@@ -208,7 +226,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                         </div>
                       </div>
                       <Badge className={ETAPA_COLORS[item.etapa_atual] || 'bg-slate-100 text-slate-800'}>
-                        {item.etapa_atual}
+                        {ETAPA_LABELS[item.etapa_atual] || item.etapa_atual}
                       </Badge>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
