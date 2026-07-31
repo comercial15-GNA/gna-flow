@@ -345,6 +345,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                           <SelectItem value="fundicao">Fundição</SelectItem>
                           <SelectItem value="acabamento">Acabamento</SelectItem>
                           <SelectItem value="usinagem">Usinagem</SelectItem>
+                          <SelectItem value="caldeiraria">Caldeiraria</SelectItem>
                           <SelectItem value="liberacao">Liberação</SelectItem>
                           <SelectItem value="expedicao">Expedição</SelectItem>
                           <SelectItem value="coleta">Coleta</SelectItem>
