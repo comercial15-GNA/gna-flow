@@ -52,11 +52,14 @@ export default function CancelarOPDialog({ open, onOpenChange, op, item, itensOP
 
     setLoading(true);
     try {
-      // Cancelar cada item
+      const idsCancelados = itensCancelar.map(i => i.id);
+
+      // Cancelar cada item (e desvincular de volume)
       await Promise.all(itensCancelar.map(async (it) => {
         await base44.entities.ItemOP.update(it.id, {
           etapa_atual: 'cancelado',
           data_entrada_etapa: new Date().toISOString(),
+          volume_id: null,
         });
 
         await base44.entities.HistoricoMovimentacao.create({
@@ -73,9 +76,27 @@ export default function CancelarOPDialog({ open, onOpenChange, op, item, itensOP
         });
       }));
 
-      // Recalcular status da OP baseado nos itens restantes
-      // (cancelada se todos cancelados, finalizado se sobrou finalizado, etc.)
+      // Limpeza de volumes: remover itens cancelados e excluir volumes que ficarem vazios
       if (op) {
+        const volumes = await base44.entities.VolumeExpedicao.filter({ op_id: op.id });
+        await Promise.all(volumes.map(async (vol) => {
+          const novosIds = (vol.itens_ids || []).filter(id => !idsCancelados.includes(id));
+          if (novosIds.length === 0) {
+            // Volume sem itens restantes -> excluir
+            await base44.entities.VolumeExpedicao.delete(vol.id);
+          } else if (novosIds.length !== (vol.itens_ids || []).length) {
+            // Recalcular peso com itens restantes ativos (não cancelados)
+            const itensDoVolume = await base44.entities.ItemOP.filter({ volume_id: vol.id });
+            const itensRestantes = itensDoVolume.filter(i => i.etapa_atual !== 'cancelado');
+            const pesoTotal = itensRestantes.reduce((s, i) => s + (i.peso || 0), 0);
+            await base44.entities.VolumeExpedicao.update(vol.id, {
+              itens_ids: novosIds,
+              peso_total_itens: pesoTotal,
+            });
+          }
+        }));
+
+        // Recalcular status da OP baseado nos itens restantes
         await updateOPStatus(op.id);
       }
 
@@ -84,6 +105,10 @@ export default function CancelarOPDialog({ open, onOpenChange, op, item, itensOP
       queryClient.invalidateQueries({ queryKey: ['ops-all'] });
       queryClient.invalidateQueries({ queryKey: ['ops-admin'] });
       queryClient.invalidateQueries({ queryKey: ['itens-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['volumes-expedicao'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
+      queryClient.invalidateQueries({ queryKey: ['volumes-coleta'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-coleta'] });
 
       toast.success(modoItem ? 'Item cancelado com sucesso' : `OP ${op?.numero_op} cancelada com sucesso`);
       setJustificativa('');
