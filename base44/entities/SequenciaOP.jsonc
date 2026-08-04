@@ -6,6 +6,10 @@
       "type": "integer",
       "description": "Ano da sequ\u00eancia"
     },
+    "prefixo": {
+      "type": "string",
+      "description": "Prefixo da sequ\u00eancia: OP, OR ou OF. A sequ\u00eancia \u00e9 \u00fanica por combina\u00e7\u00e3o prefixo+ano"
+    },
     "ultimo_numero": {
       "type": "integer",
       "description": "\u00daltimo n\u00famero usado"
@@ -13,6 +17,7 @@
   },
   "required": [
     "ano",
+    "prefixo",
     "ultimo_numero"
   ]
 }

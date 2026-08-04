@@ -54,6 +54,7 @@
         "expedicao",
         "coleta",
         "suporte_industrial",
+        "montagem",
         "finalizado",
         "cancelado"
       ],

@@ -4,7 +4,17 @@
   "properties": {
     "numero_op": {
       "type": "string",
-      "description": "N\u00famero autom\u00e1tico OP-AAAA-NNNN"
+      "description": "N\u00famero autom\u00e1tico (PREFIXO-AAAA-NNNN). Ex: OP-2026-0001, OR-2026-0001, OF-2026-0001"
+    },
+    "tipo_ordem": {
+      "type": "string",
+      "enum": [
+        "op",
+        "or",
+        "of"
+      ],
+      "default": "op",
+      "description": "Tipo da ordem: op (Produ\u00e7\u00e3o), or (Reforma), of (Fabrica\u00e7\u00e3o)"
     },
     "ordem_compra": {
       "type": "string",
