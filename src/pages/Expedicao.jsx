@@ -18,6 +18,8 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
+import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import VolumeCard from '@/components/expedicao/VolumeCard';
 
 export default function Expedicao() {
@@ -378,7 +380,8 @@ export default function Expedicao() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <div className="flex items-baseline gap-2">
-                          <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                          <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} className="text-sm" />
+                          <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                           <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
                         </div>
                         {op.ordem_compra && (
