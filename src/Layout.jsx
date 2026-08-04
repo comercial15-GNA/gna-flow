@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
-import { 
-  Factory, 
-  ClipboardList, 
-  Settings, 
-  Cog, 
-  Box, 
-  Truck, 
-  Flame, 
-  Wrench, 
-  CheckCircle, 
-  Users, 
+import {
+  Factory,
+  ClipboardList,
+  Settings,
+  Cog,
+  Box,
+  Truck,
+  Flame,
+  Wrench,
+  CheckCircle,
+  Users,
   LayoutDashboard,
   Menu,
   X,
@@ -21,7 +21,8 @@ import {
   Sparkles,
   BarChart3,
   Hammer,
-  Package
+  Package,
+  Layers
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,12 @@ const SETOR_CONFIG = {
     color: 'bg-emerald-500',
     pages: ['Liberacao', 'Coleta', 'SuporteIndustrial', 'PainelLiberacao']
   },
+  montagem: {
+    label: 'Montagem',
+    icon: Layers,
+    color: 'bg-violet-500',
+    pages: ['Montagem']
+  },
   expedicao: {
     label: 'Expedição',
     icon: Truck,
@@ -114,6 +121,7 @@ const NAV_ITEMS = [
   { name: 'Acabamento', label: 'Acabamento', icon: Sparkles, setores: ['administrador', 'acabamento'] },
   { name: 'Usinagem', label: 'Usinagem', icon: Wrench, setores: ['administrador', 'usinagem'] },
   { name: 'Caldeiraria', label: 'Caldeiraria', icon: Hammer, setores: ['administrador'] },
+  { name: 'Montagem', label: 'Montagem', icon: Layers, setores: ['administrador', 'montagem'] },
   { name: 'Liberacao', label: 'Liberação', icon: CheckCircle, setores: ['administrador', 'liberacao'] },
   { name: 'Expedicao', label: 'Expedição', icon: Truck, setores: ['administrador', 'expedicao'] },
   { name: 'Coleta', label: 'Coleta', icon: Package, setores: ['administrador', 'expedicao', 'liberacao', 'acabamento'] },
