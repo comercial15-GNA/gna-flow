@@ -84,6 +84,11 @@ export default function Fundicao() {
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
   });
 
+  const { data: todosItens = [] } = useQuery({
+    queryKey: ['todos-itens-ops'],
+    queryFn: () => base44.entities.ItemOP.list(),
+  });
+
   const movimentarItem = async (item, novaEtapa, justif = '', retornado = false) => {
     setLoadingItem(item.id);
     try {
@@ -355,6 +360,7 @@ export default function Fundicao() {
           {opsComItens.map(({ op, itens: itensOP }) => {
             const isExpanded = expandedOPs[op.id];
             const arquivos = op.arquivos || [];
+            const todosItensOP = todosItens.filter(i => i.op_id === op.id);
             
             return (
               <div key={op.id} className="bg-white rounded-xl border-2 border-red-200 shadow-sm overflow-hidden">
@@ -511,6 +517,81 @@ export default function Fundicao() {
                           </div>
                         );
                       })}
+                    </div>
+
+                    {/* Distribuição por Etapa */}
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Distribuição por Etapa - Todos os Itens da OP
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                        {['comercial', 'engenharia', 'modelagem', 'suprimentos', 'fundicao', 'acabamento', 'usinagem', 'caldeiraria', 'liberacao', 'expedicao', 'coleta', 'suporte_industrial', 'finalizado'].map(etapa => {
+                          const count = todosItensOP.filter(i => i.etapa_atual === etapa).length;
+                          const etapaLabels = {
+                            comercial: 'Comercial',
+                            engenharia: 'Engenharia',
+                            modelagem: 'Modelagem',
+                            suprimentos: 'Suprimentos',
+                            fundicao: 'Fundição',
+                            acabamento: 'Acabamento',
+                            usinagem: 'Usinagem',
+                            caldeiraria: 'Caldeiraria',
+                            liberacao: 'Liberação',
+                            expedicao: 'Expedição',
+                            coleta: 'Coleta',
+                            suporte_industrial: 'Suporte',
+                            finalizado: 'Finalizado'
+                          };
+                          return count > 0 ? (
+                            <div key={etapa} className="bg-slate-100 rounded p-2 text-center">
+                              <p className="text-xs text-slate-600 mb-1">{etapaLabels[etapa]}</p>
+                              <p className="text-lg font-bold text-slate-800">{count}</p>
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+
+                      {todosItensOP.filter(i => i.etapa_atual !== 'fundicao').length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-slate-600 mb-2">Outros Itens ({todosItensOP.filter(i => i.etapa_atual !== 'fundicao').length})</h4>
+                          <div className="space-y-2">
+                            {todosItensOP.filter(i => i.etapa_atual !== 'fundicao').map((item) => {
+                              const etapaLabels = {
+                                comercial: 'Comercial',
+                                engenharia: 'Engenharia',
+                                modelagem: 'Modelagem',
+                                suprimentos: 'Suprimentos',
+                                fundicao: 'Fundição',
+                                acabamento: 'Acabamento',
+                                usinagem: 'Usinagem',
+                                caldeiraria: 'Caldeiraria',
+                                liberacao: 'Liberação',
+                                expedicao: 'Expedição',
+                                coleta: 'Coleta',
+                                suporte_industrial: 'Suporte',
+                                finalizado: 'Finalizado'
+                              };
+                              return (
+                                <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                                      <div className="flex items-center gap-3 mt-1">
+                                        <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
+                                        <p className="text-xs text-slate-500">Qtd: {item.quantidade}</p>
+                                      </div>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs">
+                                      {etapaLabels[item.etapa_atual] || item.etapa_atual}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
