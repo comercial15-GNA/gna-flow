@@ -27,6 +27,7 @@ import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import CriarVolumeDialog from '@/components/expedicao/CriarVolumeDialog';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 const ETAPAS_RETORNO = [
   { value: 'comercial', label: 'Comercial' },
@@ -104,6 +105,43 @@ export default function Liberacao() {
   });
 
   const getArquivos = (opId) => ops.find(o => o.id === opId)?.arquivos || [];
+
+  // Helper: obter tipo_ordem do item via OP vinculada
+  const getTipoOrdem = (item) => {
+    const op = ops.find(o => o.id === item.op_id);
+    return op?.tipo_ordem || inferTipoOrdem(item.numero_op);
+  };
+
+  // --- Enviar item OR/OF para Montagem (sem peso/volume) ---
+  const enviarParaMontagem = async (item) => {
+    setLoadingItem(item.id);
+    try {
+      await base44.entities.ItemOP.update(item.id, {
+        etapa_atual: 'montagem',
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: false,
+        justificativa_retorno: ''
+      });
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: item.id,
+        op_id: item.op_id,
+        numero_op: item.numero_op,
+        descricao_item: item.descricao,
+        setor_origem: 'liberacao',
+        setor_destino: 'montagem',
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
+      await updateOPStatus(item.op_id);
+      invalidarQueries();
+      toast.success('Item enviado para Montagem');
+    } catch (error) {
+      toast.error('Erro ao enviar item para Montagem');
+    } finally {
+      setLoadingItem(null);
+    }
+  };
 
   // --- Enviar item individual para expedição ---
   const abrirDialogExpedicao = (item) => {
@@ -428,11 +466,19 @@ export default function Liberacao() {
                                 <div className="text-slate-600"><span className="font-medium">Responsável:</span> {item.responsavel_op || '-'}</div>
                               </div>
                               <div className="flex flex-wrap gap-2">
-                                <Button size="sm" onClick={() => abrirDialogExpedicao(item)} disabled={loadingItem === item.id}
-                                  className="bg-emerald-600 hover:bg-emerald-700">
-                                  <ArrowRight className="w-3 h-3 mr-1" />
-                                  Enviar p/ Expedição
-                                </Button>
+                                {getTipoOrdem(item) === 'op' ? (
+                                  <Button size="sm" onClick={() => abrirDialogExpedicao(item)} disabled={loadingItem === item.id}
+                                    className="bg-emerald-600 hover:bg-emerald-700">
+                                    <ArrowRight className="w-3 h-3 mr-1" />
+                                    Enviar p/ Expedição
+                                  </Button>
+                                ) : (
+                                  <Button size="sm" onClick={() => enviarParaMontagem(item)} disabled={loadingItem === item.id}
+                                    className="bg-violet-600 hover:bg-violet-700">
+                                    <ArrowRight className="w-3 h-3 mr-1" />
+                                    Enviar p/ Montagem
+                                  </Button>
+                                )}
                                 <Button size="sm" variant="outline" onClick={() => abrirDialogRetorno(item)} disabled={loadingItem === item.id}
                                   className="text-amber-600 border-amber-300 hover:bg-amber-50">
                                   <RotateCcw className="w-3 h-3 mr-1" />

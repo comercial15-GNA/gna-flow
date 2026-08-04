@@ -33,7 +33,8 @@ import {
   ChevronUp,
   AlertTriangle,
   Filter,
-  X
+  X,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -45,11 +46,21 @@ import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 
 const ETAPAS_RETORNO = [
-  { value: 'suporte_industrial', label: 'Suporte Industrial' },
-  { value: 'caldeiraria', label: 'Caldeiraria' },
+  { value: 'engenharia', label: 'Engenharia' },
+  { value: 'fundicao', label: 'Fundição' },
   { value: 'usinagem', label: 'Usinagem' },
+  { value: 'caldeiraria', label: 'Caldeiraria' },
   { value: 'acabamento', label: 'Acabamento' },
 ];
+
+const ETAPA_LABELS = {
+  comercial: 'Comercial', engenharia: 'Engenharia', modelagem: 'Modelagem',
+  suprimentos: 'Suprimentos', fundicao: 'Fundição', acabamento: 'Acabamento',
+  usinagem: 'Usinagem', caldeiraria: 'Caldeiraria', montagem: 'Montagem',
+  liberacao: 'Liberação', expedicao: 'Expedição', coleta: 'Coleta',
+  suporte_industrial: 'Suporte Industrial', finalizado: 'Finalizado',
+  cancelado: 'Cancelado',
+};
 
 export default function Montagem() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,6 +100,11 @@ export default function Montagem() {
   const { data: ops = [] } = useQuery({
     queryKey: ['ops-all'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
+  });
+
+  const { data: todosItens = [] } = useQuery({
+    queryKey: ['todos-itens-montagem'],
+    queryFn: () => base44.entities.ItemOP.list(),
   });
 
   const movimentarItem = async (item, novaEtapa, justif = '', retornado = false) => {
@@ -154,6 +170,43 @@ export default function Montagem() {
       await movimentarItem(item, destino, justif, false);
     } else {
       await movimentarItem(item, destino, '', false);
+    }
+  };
+
+  const finalizarItem = async (item) => {
+    setLoadingItem(item.id);
+    try {
+      await base44.entities.ItemOP.update(item.id, {
+        etapa_atual: 'finalizado',
+        data_entrada_etapa: new Date().toISOString(),
+        retornado: false,
+        justificativa_retorno: '',
+        iniciado: false
+      });
+
+      await base44.entities.HistoricoMovimentacao.create({
+        item_id: item.id,
+        op_id: item.op_id,
+        numero_op: item.numero_op,
+        descricao_item: item.descricao,
+        setor_origem: 'montagem',
+        setor_destino: 'finalizado',
+        justificativa: '',
+        usuario_email: currentUser?.email,
+        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+        data_movimentacao: new Date().toISOString()
+      });
+
+      await updateOPStatus(item.op_id);
+
+      queryClient.invalidateQueries({ queryKey: ['itens-montagem'] });
+      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
+      queryClient.invalidateQueries({ queryKey: ['todos-itens-montagem'] });
+      toast.success('Item finalizado com sucesso');
+    } catch (error) {
+      toast.error('Erro ao finalizar item');
+    } finally {
+      setLoadingItem(null);
     }
   };
 
@@ -488,6 +541,15 @@ export default function Montagem() {
                             <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
+                                onClick={() => finalizarItem(item)}
+                                disabled={loadingItem === item.id}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Finalizar Item
+                              </Button>
+                              <Button
+                                size="sm"
                                 onClick={() => handleEnviar(item, 'liberacao')}
                                 disabled={loadingItem === item.id}
                                 className="bg-slate-800 hover:bg-slate-900"
@@ -513,6 +575,36 @@ export default function Montagem() {
                         );
                       })}
                     </div>
+
+                    {/* Outros Itens da OP */}
+                    {(() => {
+                      const outros = todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'montagem');
+                      if (outros.length === 0) return null;
+                      return (
+                        <div className="mt-4 pt-4 border-t border-slate-200">
+                          <h4 className="text-sm font-medium text-slate-600 mb-2">
+                            Outros Itens ({outros.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {outros.map(item => (
+                              <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
+                                    <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
+                                      <span>Código: {item.codigo_ga || '-'}</span>
+                                      <span>Qtd: {item.quantidade}</span>
+                                      <span>Peso: {item.peso ? `${item.peso} kg` : '-'}</span>
+                                    </div>
+                                  </div>
+                                  <Badge className="bg-slate-200 text-slate-700 text-xs">{ETAPA_LABELS[item.etapa_atual] || item.etapa_atual}</Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

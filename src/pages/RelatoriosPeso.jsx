@@ -148,6 +148,50 @@ export default function RelatoriosPeso() {
     [dadosMensais]
   );
 
+  // Peso por tipo de ordem (anual, mesmo critério do modoData)
+  const pesoPorTipo = useMemo(() => {
+    const tipos = { op: 0, or: 0, of: 0 };
+    const somar = (item) => {
+      const tipo = getTipoOrdem(item);
+      tipos[tipo] = (tipos[tipo] || 0) + (item.peso || 0) * (item.quantidade || 1);
+    };
+
+    if (modoData === 'entrega') {
+      itensFiltrados.forEach(item => {
+        if (!item.data_entrega || !item.peso || item.etapa_atual === 'cancelado') return;
+        const d = parseISO(item.data_entrega);
+        if (d.getFullYear() !== selectedYear) return;
+        somar(item);
+      });
+    } else if (modoData === 'lancamento') {
+      itensFiltrados.forEach(item => {
+        if (!item.peso || item.etapa_atual === 'cancelado') return;
+        const op = allOPs.find(o => o.id === item.op_id);
+        if (!op?.data_lancamento) return;
+        const d = new Date(op.data_lancamento);
+        if (d.getFullYear() !== selectedYear) return;
+        somar(item);
+      });
+    } else if (modoData === 'a_entregar') {
+      itensFiltrados.forEach(item => {
+        if (!item.data_entrega || !item.peso) return;
+        if (item.etapa_atual === 'finalizado' || item.etapa_atual === 'cancelado') return;
+        const d = parseISO(item.data_entrega);
+        if (d.getFullYear() !== selectedYear) return;
+        somar(item);
+      });
+    } else if (modoData === 'finalizados') {
+      itensFiltrados.forEach(item => {
+        if (!item.peso || item.etapa_atual !== 'finalizado' || !item.data_entrada_etapa) return;
+        const d = new Date(item.data_entrada_etapa);
+        if (d.getFullYear() !== selectedYear) return;
+        somar(item);
+      });
+    }
+
+    return tipos;
+  }, [itensFiltrados, allOPs, selectedYear, modoData]);
+
   // Peso por etapa (itens em andamento, qualquer ano)
   const pesoPorEtapa = useMemo(() => {
     const etapas = {};
@@ -317,6 +361,58 @@ export default function RelatoriosPeso() {
               </div>
               <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
                 <Scale className="w-5 h-5 text-orange-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cards por tipo de ordem */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">OP Produção</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-3xl font-bold text-slate-800">{formatPeso(pesoPorTipo.op)}</span>
+                  <span className="text-slate-400">kg</span>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-slate-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">OR Reforma</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-3xl font-bold text-orange-600">{formatPeso(pesoPorTipo.or)}</span>
+                  <span className="text-slate-400">kg</span>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-orange-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">OF Fabricação</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-3xl font-bold text-blue-600">{formatPeso(pesoPorTipo.of)}</span>
+                  <span className="text-slate-400">kg</span>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-blue-500" />
               </div>
             </div>
           </CardContent>

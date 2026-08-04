@@ -60,6 +60,7 @@ import Home from './pages/Home';
 import Liberacao from './pages/Liberacao';
 import Lideranca from './pages/Lideranca';
 import Modelagem from './pages/Modelagem';
+import Montagem from './pages/Montagem';
 import PainelAcabamento from './pages/PainelAcabamento';
 import PainelCaldeiraria from './pages/PainelCaldeiraria';
 import PainelColeta from './pages/PainelColeta';
@@ -91,6 +92,7 @@ export const PAGES = {
     "Liberacao": Liberacao,
     "Lideranca": Lideranca,
     "Modelagem": Modelagem,
+    "Montagem": Montagem,
     "PainelAcabamento": PainelAcabamento,
     "PainelCaldeiraria": PainelCaldeiraria,
     "PainelColeta": PainelColeta,
