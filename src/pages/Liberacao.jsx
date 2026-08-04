@@ -25,6 +25,8 @@ import ItemOPActions from '@/components/producao/ItemOPActions';
 import ItensRetornados from '@/components/producao/ItensRetornados';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import CriarVolumeDialog from '@/components/expedicao/CriarVolumeDialog';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
+import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 
 const ETAPAS_RETORNO = [
   { value: 'comercial', label: 'Comercial' },
@@ -35,7 +37,27 @@ const ETAPAS_RETORNO = [
   { value: 'acabamento', label: 'Acabamento' },
   { value: 'usinagem', label: 'Usinagem' },
   { value: 'caldeiraria', label: 'Caldeiraria' },
+  { value: 'montagem', label: 'Montagem' },
+  { value: 'suporte_industrial', label: 'Suporte Industrial' },
 ];
+
+const ETAPA_LABELS = {
+  comercial: 'Comercial',
+  engenharia: 'Engenharia',
+  modelagem: 'Modelagem',
+  suprimentos: 'Suprimentos',
+  fundicao: 'Fundição',
+  acabamento: 'Acabamento',
+  usinagem: 'Usinagem',
+  caldeiraria: 'Caldeiraria',
+  montagem: 'Montagem',
+  suporte_industrial: 'Suporte Industrial',
+  liberacao: 'Liberação',
+  expedicao: 'Expedição',
+  coleta: 'Coleta',
+  finalizado: 'Finalizado',
+  cancelado: 'Cancelado',
+};
 
 export default function Liberacao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -299,8 +321,9 @@ export default function Liberacao() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <div className="flex items-baseline gap-2">
-                          <h3 className="text-lg font-bold text-slate-800">{op.numero_op}</h3>
+                        <div className="flex items-center gap-2">
+                          <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} className="text-sm" />
+                          <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                           <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
                         </div>
                         {op.ordem_compra && (
@@ -449,7 +472,7 @@ export default function Liberacao() {
                                     <span>Peso: {item.peso ? `${item.peso} kg` : '-'}</span>
                                   </div>
                                 </div>
-                                <Badge className="bg-slate-200 text-slate-700 text-xs">{item.etapa_atual}</Badge>
+                                <Badge className="bg-slate-200 text-slate-700 text-xs">{ETAPA_LABELS[item.etapa_atual] || item.etapa_atual}</Badge>
                               </div>
                             </div>
                           ))}
