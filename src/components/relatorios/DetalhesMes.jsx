@@ -10,9 +10,9 @@ const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 const ETAPA_LABELS = {
   comercial: 'Comercial', engenharia: 'Engenharia', modelagem: 'Modelagem',
   suprimentos: 'Suprimentos', fundicao: 'Fundição', acabamento: 'Acabamento',
-  usinagem: 'Usinagem', caldeiraria: 'Caldeiraria', liberacao: 'Liberação',
-  expedicao: 'Expedição', coleta: 'Coleta', suporte_industrial: 'Suporte Industrial',
-  finalizado: 'Finalizado',
+  usinagem: 'Usinagem', caldeiraria: 'Caldeiraria', montagem: 'Montagem',
+  liberacao: 'Liberação', expedicao: 'Expedição', coleta: 'Coleta',
+  suporte_industrial: 'Suporte Industrial', finalizado: 'Finalizado',
 };
 
 const formatPeso = (peso) =>
@@ -25,15 +25,44 @@ const MODO_LABELS = {
   finalizados: 'Finalizados',
 };
 
-export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega', onVoltar }) {
+export default function DetalhesMes({ mes, ano, itens, ops, modoData = 'entrega', filtros, onVoltar }) {
   const [expandedOPs, setExpandedOPs] = useState({});
 
   const toggleOP = (opId) => setExpandedOPs(prev => ({ ...prev, [opId]: !prev[opId] }));
 
-  // Filtrar itens do mês de acordo com o modo
+  // Helper para inferir tipo da ordem pelo número (caso a OP não tenha tipo_ordem)
+  const inferTipo = (numero_op) => {
+    if (!numero_op) return 'op';
+    const prefix = numero_op.substring(0, 2).toUpperCase();
+    if (prefix === 'OR') return 'or';
+    if (prefix === 'OF') return 'of';
+    return 'op';
+  };
+
+  const getTipoOrdem = (item) => {
+    const op = ops.find(o => o.id === item.op_id);
+    return op?.tipo_ordem || inferTipo(item.numero_op);
+  };
+
+  // Filtrar itens do mês de acordo com o modo + filtros globais
   const itensMes = itens.filter(item => {
     if (!item.peso) return false;
     if (item.etapa_atual === 'cancelado') return false;
+
+    // Aplicar filtros globais se existirem
+    if (filtros) {
+      if (filtros.tipoOrdem && filtros.tipoOrdem !== 'todos' && getTipoOrdem(item) !== filtros.tipoOrdem) return false;
+      if (filtros.cliente && filtros.cliente !== 'todos' && item.cliente !== filtros.cliente) return false;
+      if (filtros.etapa && filtros.etapa !== 'todas' && item.etapa_atual !== filtros.etapa) return false;
+      if (filtros.search) {
+        const s = filtros.search.toLowerCase();
+        const match = item.descricao?.toLowerCase().includes(s) ||
+          item.numero_op?.toLowerCase().includes(s) ||
+          item.codigo_ga?.toLowerCase().includes(s) ||
+          item.equipamento_principal?.toLowerCase().includes(s);
+        if (!match) return false;
+      }
+    }
 
     if (modoData === 'entrega') {
       if (!item.data_entrega) return false;

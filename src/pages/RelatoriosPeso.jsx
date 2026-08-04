@@ -3,11 +3,15 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Scale, TrendingUp, Package, Calendar, BarChart2 } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Scale, TrendingUp, Package, Calendar, BarChart2, Filter, X } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { parseISO } from 'date-fns';
 import GraficoMensal from '../components/relatorios/GraficoMensal';
 import DetalhesMes from '../components/relatorios/DetalhesMes';
+import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 const ETAPAS_PRODUCAO = [
   { value: 'engenharia', label: 'Engenharia', color: 'bg-green-100 text-green-800', bar: '#22c55e' },
@@ -17,6 +21,7 @@ const ETAPAS_PRODUCAO = [
   { value: 'acabamento', label: 'Acabamento', color: 'bg-pink-100 text-pink-800', bar: '#ec4899' },
   { value: 'usinagem', label: 'Usinagem', color: 'bg-cyan-100 text-cyan-800', bar: '#06b6d4' },
   { value: 'caldeiraria', label: 'Caldeiraria', color: 'bg-amber-100 text-amber-800', bar: '#f59e0b' },
+  { value: 'montagem', label: 'Montagem', color: 'bg-violet-100 text-violet-800', bar: '#8b5cf6' },
   { value: 'liberacao', label: 'Liberação', color: 'bg-emerald-100 text-emerald-800', bar: '#10b981' },
   { value: 'expedicao', label: 'Expedição', color: 'bg-teal-100 text-teal-800', bar: '#14b8a6' },
   { value: 'suporte_industrial', label: 'Suporte Industrial', color: 'bg-purple-100 text-purple-800', bar: '#a855f7' },
@@ -31,6 +36,10 @@ export default function RelatoriosPeso() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [mesSelecionado, setMesSelecionado] = useState(null); // null = visão geral
   const [modoData, setModoData] = useState('entrega'); // 'entrega' | 'lancamento'
+  const [filtroTipoOrdem, setFiltroTipoOrdem] = useState('todos');
+  const [filtroCliente, setFiltroCliente] = useState('todos');
+  const [filtroEtapa, setFiltroEtapa] = useState('todas');
+  const [searchTerm, setSearchTerm] = useState('');
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   const { data: currentUser } = useQuery({
@@ -54,13 +63,47 @@ export default function RelatoriosPeso() {
     (currentUser.allowed_pages && Array.isArray(currentUser.allowed_pages) && currentUser.allowed_pages.includes('RelatoriosPeso'))
   );
 
+  // Helper: obter tipo_ordem de um item (via OP vinculada ou inferência pelo número)
+  const getTipoOrdem = (item) => {
+    const op = allOPs.find(o => o.id === item.op_id);
+    return op?.tipo_ordem || inferTipoOrdem(item.numero_op);
+  };
+
+  // Itens filtrados pelos filtros globais (tipo ordem, cliente, etapa, busca)
+  const itensFiltrados = useMemo(() => {
+    return allItems.filter(item => {
+      const matchTipo = filtroTipoOrdem === 'todos' || getTipoOrdem(item) === filtroTipoOrdem;
+      const matchCliente = filtroCliente === 'todos' || item.cliente === filtroCliente;
+      const matchEtapa = filtroEtapa === 'todas' || item.etapa_atual === filtroEtapa;
+      const matchSearch = !searchTerm ||
+        item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchTipo && matchCliente && matchEtapa && matchSearch;
+    });
+  }, [allItems, allOPs, filtroTipoOrdem, filtroCliente, filtroEtapa, searchTerm]);
+
+  const clientesUnicos = useMemo(() =>
+    [...new Set(allItems.map(i => i.cliente))].filter(Boolean).sort(),
+  [allItems]);
+
+  const temFiltrosAtivos = filtroTipoOrdem !== 'todos' || filtroCliente !== 'todos' || filtroEtapa !== 'todas' || searchTerm;
+
+  const limparFiltros = () => {
+    setFiltroTipoOrdem('todos');
+    setFiltroCliente('todos');
+    setFiltroEtapa('todas');
+    setSearchTerm('');
+  };
+
   // Calcular peso por mês para o ano selecionado
   const dadosMensais = useMemo(() => {
     const meses = {};
     for (let m = 1; m <= 12; m++) meses[m] = 0;
 
     if (modoData === 'entrega') {
-      allItems.forEach(item => {
+      itensFiltrados.forEach(item => {
         if (!item.data_entrega || !item.peso) return;
         if (item.etapa_atual === 'cancelado') return;
         const d = parseISO(item.data_entrega);
@@ -68,7 +111,7 @@ export default function RelatoriosPeso() {
         meses[d.getMonth() + 1] += (item.peso || 0) * (item.quantidade || 1);
       });
     } else if (modoData === 'lancamento') {
-      allItems.forEach(item => {
+      itensFiltrados.forEach(item => {
         if (!item.peso) return;
         if (item.etapa_atual === 'cancelado') return;
         const op = allOPs.find(o => o.id === item.op_id);
@@ -79,7 +122,7 @@ export default function RelatoriosPeso() {
       });
     } else if (modoData === 'a_entregar') {
       // A Entregar: itens com data de entrega no mês mas ainda em produção (não finalizados)
-      allItems.forEach(item => {
+      itensFiltrados.forEach(item => {
         if (!item.data_entrega || !item.peso) return;
         if (item.etapa_atual === 'finalizado' || item.etapa_atual === 'cancelado') return;
         const d = parseISO(item.data_entrega);
@@ -88,7 +131,7 @@ export default function RelatoriosPeso() {
       });
     } else if (modoData === 'finalizados') {
       // Finalizados: itens que entraram na etapa finalizado no mês (data_entrada_etapa)
-      allItems.forEach(item => {
+      itensFiltrados.forEach(item => {
         if (!item.peso || item.etapa_atual !== 'finalizado') return;
         if (!item.data_entrada_etapa) return;
         const d = new Date(item.data_entrada_etapa);
@@ -98,7 +141,7 @@ export default function RelatoriosPeso() {
     }
 
     return meses;
-  }, [allItems, allOPs, selectedYear, modoData]);
+  }, [itensFiltrados, allOPs, selectedYear, modoData]);
 
   const pesoTotalAnual = useMemo(() =>
     Object.values(dadosMensais).reduce((s, v) => s + v, 0),
@@ -109,14 +152,14 @@ export default function RelatoriosPeso() {
   const pesoPorEtapa = useMemo(() => {
     const etapas = {};
     ETAPAS_PRODUCAO.forEach(e => { etapas[e.value] = 0; });
-    allItems.forEach(item => {
+    itensFiltrados.forEach(item => {
       if (!item.peso || item.etapa_atual === 'finalizado' || item.etapa_atual === 'cancelado') return;
       if (etapas[item.etapa_atual] !== undefined) {
         etapas[item.etapa_atual] += (item.peso || 0) * (item.quantidade || 1);
       }
     });
     return etapas;
-  }, [allItems]);
+  }, [itensFiltrados]);
 
   const pesoTotalEmAndamento = useMemo(() =>
     Object.values(pesoPorEtapa).reduce((s, v) => s + v, 0),
@@ -141,9 +184,10 @@ export default function RelatoriosPeso() {
         <DetalhesMes
           mes={mesSelecionado}
           ano={selectedYear}
-          itens={allItems}
+          itens={itensFiltrados}
           ops={allOPs}
           modoData={modoData}
+          filtros={{ tipoOrdem: filtroTipoOrdem, cliente: filtroCliente, etapa: filtroEtapa, search: searchTerm }}
           onVoltar={() => setMesSelecionado(null)}
         />
       </div>
@@ -171,6 +215,72 @@ export default function RelatoriosPeso() {
             {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="w-4 h-4 text-slate-600" />
+          <span className="font-medium text-slate-700">Filtros</span>
+          {temFiltrosAtivos && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="ml-auto">
+              <X className="w-4 h-4 mr-1" />
+              Limpar
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-1">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative mt-1">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="OP, item, código GA..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Tipo de Ordem</Label>
+            <Select value={filtroTipoOrdem} onValueChange={setFiltroTipoOrdem}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="op">OP (Produção)</SelectItem>
+                <SelectItem value="or">OR (Reforma)</SelectItem>
+                <SelectItem value="of">OF (Fabricação)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Cliente</Label>
+            <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {clientesUnicos.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Etapa</Label>
+            <Select value={filtroEtapa} onValueChange={setFiltroEtapa}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                {ETAPAS_PRODUCAO.map(e => (
+                  <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>
+                ))}
+                <SelectItem value="finalizado">Finalizado</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* KPIs */}
