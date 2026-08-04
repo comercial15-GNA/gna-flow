@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   ClipboardList, 
   Plus, 
@@ -31,6 +32,9 @@ export default function CriarOP() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
+  const [tipoOrdem, setTipoOrdem] = useState('op');
+  const [descricaoGeral, setDescricaoGeral] = useState('');
+  const [dataEntregaGeral, setDataEntregaGeral] = useState('');
   const [formData, setFormData] = useState({
     equipamento_principal: '',
     ordem_compra: '',
@@ -65,14 +69,14 @@ export default function CriarOP() {
     queryFn: () => base44.entities.SequenciaOP.list()
   });
 
-  const gerarNumeroOP = async () => {
+  const gerarNumeroOP = async (prefixo = 'OP') => {
     const anoAtual = new Date().getFullYear();
     const maxTentativas = 5;
     
     for (let tentativa = 0; tentativa < maxTentativas; tentativa++) {
       try {
-        // Buscar sequência mais recente do banco
-        const sequenciasAtuais = await base44.entities.SequenciaOP.filter({ ano: anoAtual });
+        // Buscar sequência por prefixo + ano (contadores independentes)
+        const sequenciasAtuais = await base44.entities.SequenciaOP.filter({ ano: anoAtual, prefixo });
         let sequenciaAtual = sequenciasAtuais[0];
         let proximoNumero = 1;
 
@@ -84,11 +88,12 @@ export default function CriarOP() {
         } else {
           await base44.entities.SequenciaOP.create({
             ano: anoAtual,
+            prefixo,
             ultimo_numero: 1
           });
         }
 
-        const numeroOP = `OP-${anoAtual}-${String(proximoNumero).padStart(4, '0')}`;
+        const numeroOP = `${prefixo}-${anoAtual}-${String(proximoNumero).padStart(4, '0')}`;
         
         // Verificar se o número já existe
         const opExistente = await base44.entities.OrdemProducao.filter({ numero_op: numeroOP });
@@ -175,6 +180,15 @@ export default function CriarOP() {
     if (!formData.responsavel)
       novosErros.responsavel = 'Responsável é obrigatório';
 
+    if (tipoOrdem !== 'op') {
+      if (!descricaoGeral?.trim())
+        novosErros.descricaoGeral = 'Descrição geral é obrigatória';
+      if (!dataEntregaGeral)
+        novosErros.dataEntregaGeral = 'Data de entrega é obrigatória';
+      setErros(novosErros);
+      return novosErros;
+    }
+
     itens.forEach((item, i) => {
       if (!item.descricao?.trim())
         novosErros[`item_${i}_descricao`] = `Item ${i + 1}: Descrição é obrigatória`;
@@ -202,15 +216,18 @@ export default function CriarOP() {
       return;
     }
 
-    const itensValidos = itens.filter(item => item.descricao && item.quantidade > 0 && item.data_entrega);
-    if (itensValidos.length === 0) {
-      toast.error('Adicione pelo menos um item válido');
-      return;
+    if (tipoOrdem === 'op') {
+      const itensValidosPre = itens.filter(item => item.descricao && item.quantidade > 0 && item.data_entrega);
+      if (itensValidosPre.length === 0) {
+        toast.error('Adicione pelo menos um item válido');
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
-      const numeroOP = await gerarNumeroOP();
+      const prefixo = tipoOrdem.toUpperCase();
+      const numeroOP = await gerarNumeroOP(prefixo);
       const dataLancamento = new Date().toISOString();
 
       // Buscar ID do usuário selecionado
@@ -220,6 +237,7 @@ export default function CriarOP() {
 
       const op = await base44.entities.OrdemProducao.create({
         numero_op: numeroOP,
+        tipo_ordem: tipoOrdem,
         ordem_compra: formData.ordem_compra || null,
         equipamento_principal: formData.equipamento_principal,
         cliente: formData.cliente,
@@ -230,43 +248,76 @@ export default function CriarOP() {
         data_lancamento: dataLancamento
       });
 
-      const itensParaCriar = itensValidos.map(item => ({
-        op_id: op.id,
-        numero_op: numeroOP,
-        equipamento_principal: formData.equipamento_principal,
-        descricao: item.descricao,
-        observacao: item.observacao || '',
-        codigo_ga: item.codigo_ga,
-        peso: item.peso ? parseFloat(item.peso) : null,
-        quantidade: parseInt(item.quantidade),
-        data_entrega: item.data_entrega || null,
-        etapa_atual: 'engenharia',
-        cliente: formData.cliente,
-        responsavel_op: formData.responsavel,
-        data_entrada_etapa: dataLancamento,
-        pronta_entrega: item.pronta_entrega || false
-      }));
+      if (tipoOrdem === 'op') {
+        const itensValidos = itens.filter(item => item.descricao && item.quantidade > 0 && item.data_entrega);
+        const itensParaCriar = itensValidos.map(item => ({
+          op_id: op.id,
+          numero_op: numeroOP,
+          equipamento_principal: formData.equipamento_principal,
+          descricao: item.descricao,
+          observacao: item.observacao || '',
+          codigo_ga: item.codigo_ga,
+          peso: item.peso ? parseFloat(item.peso) : null,
+          quantidade: parseInt(item.quantidade),
+          data_entrega: item.data_entrega || null,
+          etapa_atual: 'engenharia',
+          cliente: formData.cliente,
+          responsavel_op: formData.responsavel,
+          data_entrada_etapa: dataLancamento,
+          pronta_entrega: item.pronta_entrega || false
+        }));
 
-      const itensCriados = await base44.entities.ItemOP.bulkCreate(itensParaCriar);
+        const itensCriados = await base44.entities.ItemOP.bulkCreate(itensParaCriar);
 
-      // Registrar histórico de criação para cada item
-      const historicosParaCriar = itensCriados.map(item => ({
-        item_id: item.id,
-        op_id: op.id,
-        numero_op: numeroOP,
-        descricao_item: item.descricao,
-        setor_origem: 'comercial',
-        setor_destino: 'engenharia',
-        usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
-        data_movimentacao: dataLancamento
-      }));
+        // Registrar histórico de criação para cada item
+        const historicosParaCriar = itensCriados.map(item => ({
+          item_id: item.id,
+          op_id: op.id,
+          numero_op: numeroOP,
+          descricao_item: item.descricao,
+          setor_origem: 'comercial',
+          setor_destino: 'engenharia',
+          usuario_email: currentUser?.email,
+          usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+          data_movimentacao: dataLancamento
+        }));
 
-      await base44.entities.HistoricoMovimentacao.bulkCreate(historicosParaCriar);
+        await base44.entities.HistoricoMovimentacao.bulkCreate(historicosParaCriar);
 
-      queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
-      toast.success(`${numeroOP} criada com sucesso!`);
-      navigate(createPageUrl('Comercial'));
+        queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
+        toast.success(`${numeroOP} criada com sucesso!`);
+        navigate(createPageUrl('Comercial'));
+      } else {
+        // OR/OF: criar item único direto no Suporte Industrial
+        const itemCriado = await base44.entities.ItemOP.create({
+          op_id: op.id,
+          numero_op: numeroOP,
+          equipamento_principal: formData.equipamento_principal,
+          descricao: descricaoGeral,
+          quantidade: 1,
+          data_entrega: dataEntregaGeral || null,
+          etapa_atual: 'suporte_industrial',
+          cliente: formData.cliente,
+          responsavel_op: formData.responsavel,
+          data_entrada_etapa: dataLancamento
+        });
+
+        await base44.entities.HistoricoMovimentacao.create({
+          item_id: itemCriado.id,
+          op_id: op.id,
+          numero_op: numeroOP,
+          descricao_item: descricaoGeral,
+          setor_origem: 'comercial',
+          setor_destino: 'suporte_industrial',
+          usuario_email: currentUser?.email,
+          usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+          data_movimentacao: dataLancamento
+        });
+
+        queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
+        toast.success(`${numeroOP} criada com sucesso!`);
+        navigate(createPageUrl('SuporteIndustrial'));
+      }
     } catch (error) {
       toast.error('Erro ao criar OP');
       console.error(error);
@@ -283,13 +334,44 @@ export default function CriarOP() {
             <ClipboardList className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Criar Nova OP</h1>
-            <p className="text-slate-500">Preencha os dados da Ordem de Produção</p>
+            <h1 className="text-2xl font-bold text-slate-800">Criar Nova {tipoOrdem.toUpperCase()}</h1>
+            <p className="text-slate-500">Preencha os dados da Ordem de {tipoOrdem === 'op' ? 'Produção' : tipoOrdem === 'or' ? 'Reforma' : 'Fabricação'}</p>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Tipo de Ordem */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Tipo de Ordem</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { value: 'op', label: 'OP', sub: 'Produção', active: 'bg-slate-700 text-white border-slate-700' },
+                { value: 'or', label: 'OR', sub: 'Reforma', active: 'bg-orange-500 text-white border-orange-500' },
+                { value: 'of', label: 'OF', sub: 'Fabricação', active: 'bg-blue-600 text-white border-blue-600' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTipoOrdem(opt.value)}
+                  className={`p-4 rounded-xl border-2 transition-all text-center ${tipoOrdem === opt.value ? opt.active + ' ring-2 ring-offset-1' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                >
+                  <p className="text-2xl font-bold">{opt.label}</p>
+                  <p className="text-xs mt-1">{opt.sub}</p>
+                </button>
+              ))}
+            </div>
+            {tipoOrdem !== 'op' && (
+              <p className="text-xs text-slate-500 mt-3">
+                Ordens {tipoOrdem.toUpperCase()} são direcionadas ao Suporte Industrial, onde os itens serão cadastrados posteriormente.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Dados da OP</CardTitle>
@@ -351,6 +433,38 @@ export default function CriarOP() {
           </CardContent>
         </Card>
 
+        {tipoOrdem !== 'op' ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Dados do Pedido</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Descrição Geral *</Label>
+              <Textarea
+                value={descricaoGeral}
+                onChange={(e) => { setDescricaoGeral(e.target.value); setErros(p => ({ ...p, descricaoGeral: undefined })); }}
+                placeholder="Descrição geral do pedido (reforma/fabricação)"
+                className={`mt-1 ${erros.descricaoGeral ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                data-erro={!!erros.descricaoGeral}
+                rows={3}
+              />
+              {erros.descricaoGeral && <p className="text-xs text-red-500 mt-1">{erros.descricaoGeral}</p>}
+            </div>
+            <div>
+              <Label>Data de Entrega *</Label>
+              <Input
+                type="date"
+                value={dataEntregaGeral}
+                onChange={(e) => { setDataEntregaGeral(e.target.value); setErros(p => ({ ...p, dataEntregaGeral: undefined })); }}
+                className={`mt-1 ${erros.dataEntregaGeral ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                data-erro={!!erros.dataEntregaGeral}
+              />
+              {erros.dataEntregaGeral && <p className="text-xs text-red-500 mt-1">{erros.dataEntregaGeral}</p>}
+            </div>
+          </CardContent>
+        </Card>
+        ) : (
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -466,6 +580,7 @@ export default function CriarOP() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         <Card className="mb-6">
           <CardHeader>
@@ -538,7 +653,7 @@ export default function CriarOP() {
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Criar OP
+                Criar {tipoOrdem.toUpperCase()}
               </>
             )}
           </Button>
