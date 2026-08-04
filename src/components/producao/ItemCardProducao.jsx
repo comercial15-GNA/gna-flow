@@ -18,6 +18,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
+import NumeroOpColorido from './NumeroOpColorido';
 
 const ETAPA_COLORS = {
   comercial: 'bg-blue-100 text-blue-800',
@@ -71,7 +72,10 @@ export default function ItemCardProducao({
           </div>
           <div>
             <p className="font-semibold text-slate-800">{item.descricao}</p>
-            <p className="text-xs text-slate-500">{item.numero_op} • {item.equipamento_principal || item.cliente}</p>
+            <div className="flex items-center gap-1 flex-wrap">
+              <NumeroOpColorido numero_op={item.numero_op} className="text-xs" />
+              <span className="text-xs text-slate-500">{item.equipamento_principal || item.cliente}</span>
+            </div>
             {item.equipamento_principal && <p className="text-xs text-slate-400">{item.cliente}</p>}
           </div>
         </div>

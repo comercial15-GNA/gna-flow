@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import NumeroOpColorido from './NumeroOpColorido';
 
 const ETAPA_COLORS = {
   comercial: 'bg-blue-100 text-blue-800',
@@ -59,7 +60,7 @@ export default function ItemCard({
             <div>
               <p className="font-semibold text-slate-800">{item.descricao}</p>
               {showOP && (
-                <p className="text-xs text-slate-500">{item.numero_op}</p>
+                <NumeroOpColorido numero_op={item.numero_op} className="text-xs" />
               )}
             </div>
           </div>

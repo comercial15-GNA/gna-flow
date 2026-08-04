@@ -26,6 +26,8 @@ const isAtrasado = (dataEntrega) => {
 import { createPageUrl } from '../../utils';
 import EditObservacaoDialog from './EditObservacaoDialog';
 import HistoricoMovimentacoes from './HistoricoMovimentacoes';
+import NumeroOpColorido from './NumeroOpColorido';
+import TipoOrdemBadge from './TipoOrdemBadge';
 
 const STATUS_CONFIG = {
   em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
@@ -98,8 +100,8 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-slate-800">{op.numero_op}</h3>
-                <span className="text-slate-400">•</span>
+                <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} className="text-sm" />
+                <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                 <span className="font-medium text-slate-700">{op.equipamento_principal}</span>
                 {op.ordem_compra && (
                   <Badge variant="outline" className="text-blue-700 border-blue-300">

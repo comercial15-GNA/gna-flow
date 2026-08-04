@@ -6,9 +6,8 @@ import {
   ChevronDown, ChevronUp, Plus, Pencil, Trash2, Send, Package, User, Calendar
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-
-const TIPO_LABEL = { or: 'Reforma', of: 'Fabricação' };
-const TIPO_COLOR = { or: 'bg-orange-100 text-orange-800', of: 'bg-blue-100 text-blue-800' };
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
+import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 
 const ETAPA_LABEL = {
   suporte_industrial: 'Suporte Industrial',
@@ -38,8 +37,8 @@ export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcl
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="font-mono text-xs">{op.numero_op}</Badge>
-                <Badge className={TIPO_COLOR[tipo]}>{TIPO_LABEL[tipo]}</Badge>
+                <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} />
+                <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                 <Badge variant="outline" className="text-xs">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</Badge>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">

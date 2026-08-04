@@ -18,6 +18,8 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import ItemOPActions from '@/components/producao/ItemOPActions';
+import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 
 const ETAPA_COLORS = {
   comercial: 'bg-blue-100 text-blue-800',
@@ -87,6 +89,7 @@ export default function OPDetailPanel({ op, itens, onClose }) {
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <FileText className="w-5 h-5" />
               <h2 className="text-lg font-bold">{op.numero_op}</h2>
+              <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} className="bg-white/20 text-white border-white/30" />
               {op.ordem_compra && (
                 <Badge variant="outline" className="bg-white/20 text-white border-white/30">
                   O.C: {op.ordem_compra}

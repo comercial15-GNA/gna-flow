@@ -31,6 +31,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrdemOROFCard from '@/components/suporte/OrdemOROFCard';
 import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import { 
   Hammer, 
   Search,
@@ -461,7 +462,7 @@ export default function SuporteIndustrial() {
                 
                 return (
                   <TableRow key={item.id} className="hover:bg-slate-50">
-                    <TableCell className="font-mono text-sm">{item.numero_op}</TableCell>
+                    <TableCell><NumeroOpColorido numero_op={item.numero_op} /></TableCell>
                     <TableCell className="text-sm">{item.equipamento_principal || '-'}</TableCell>
                     <TableCell className="max-w-xs">
                       <div className="font-medium text-slate-800">{item.descricao}</div>
