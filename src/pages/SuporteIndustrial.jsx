@@ -28,6 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import OrdemOROFCard from '@/components/suporte/OrdemOROFCard';
+import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
 import { 
   Hammer, 
   Search,
@@ -37,7 +40,11 @@ import {
   Filter,
   X,
   AlertTriangle,
-  Send
+  Send,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -54,6 +61,11 @@ export default function SuporteIndustrial() {
   const [justificativa, setJustificativa] = useState('');
   const [etapaDestino, setEtapaDestino] = useState('');
   const [novaCategoria, setNovaCategoria] = useState('');
+  const [editarItemOpen, setEditarItemOpen] = useState(false);
+  const [excluirItemOpen, setExcluirItemOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editingOp, setEditingOp] = useState(null);
+  const [itemExcluir, setItemExcluir] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -71,6 +83,32 @@ export default function SuporteIndustrial() {
         return new Date(a.data_entrega) - new Date(b.data_entrega);
       });
     }
+  });
+
+  const { data: opsOROF = [], isLoading: isLoadingOROF } = useQuery({
+    queryKey: ['ops-orof'],
+    queryFn: async () => {
+      const [opsOR, opsOF] = await Promise.all([
+        base44.entities.OrdemProducao.filter({ tipo_ordem: 'or' }),
+        base44.entities.OrdemProducao.filter({ tipo_ordem: 'of' }),
+      ]);
+      return [...opsOR, ...opsOF].sort((a, b) =>
+        new Date(b.data_lancamento) - new Date(a.data_lancamento)
+      );
+    }
+  });
+
+  const { data: itensOROF = [] } = useQuery({
+    queryKey: ['itens-orof'],
+    queryFn: async () => {
+      if (!opsOROF.length) return [];
+      const promises = opsOROF.map(op =>
+        base44.entities.ItemOP.filter({ op_id: op.id })
+      );
+      const results = await Promise.all(promises);
+      return results.flat();
+    },
+    enabled: opsOROF.length > 0,
   });
 
 
@@ -139,6 +177,7 @@ export default function SuporteIndustrial() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['itens-suporte-industrial'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-orof'] });
       toast.success('Item enviado com sucesso');
       setEnviarDialogOpen(false);
     } catch (error) {
@@ -177,6 +216,7 @@ export default function SuporteIndustrial() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['itens-suporte-industrial'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-orof'] });
       toast.success('Item retornado com sucesso');
       setEnviarDialogOpen(false);
     } catch (error) {
@@ -265,6 +305,41 @@ export default function SuporteIndustrial() {
 
   const temFiltrosAtivos = searchTerm || filtroCategoria !== 'todos' || filtroCliente !== 'todos';
 
+  // OR/OF handlers
+  const handleAdicionarItem = (op) => {
+    setEditingOp(op);
+    setEditingItem(null);
+    setEditarItemOpen(true);
+  };
+
+  const handleEditarItem = (item, op) => {
+    setEditingOp(op);
+    setEditingItem(item);
+    setEditarItemOpen(true);
+  };
+
+  const handleExcluirItem = (item) => {
+    setItemExcluir(item);
+    setExcluirItemOpen(true);
+  };
+
+  const confirmarExclusao = async () => {
+    if (!itemExcluir) return;
+    setLoadingItem(itemExcluir.id);
+    try {
+      await base44.entities.ItemOP.delete(itemExcluir.id);
+      queryClient.invalidateQueries({ queryKey: ['itens-suporte-industrial'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-orof'] });
+      toast.success('Item excluído');
+      setExcluirItemOpen(false);
+      setItemExcluir(null);
+    } catch (error) {
+      toast.error('Erro ao excluir item');
+    } finally {
+      setLoadingItem(null);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -290,9 +365,15 @@ export default function SuporteIndustrial() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-slate-600" />
+      <Tabs defaultValue="suporte" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="suporte">Itens em Suporte</TabsTrigger>
+          <TabsTrigger value="orof">Ordens OR/OF</TabsTrigger>
+        </TabsList>
+        <TabsContent value="suporte">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-4 h-4 text-slate-600" />
           <span className="font-medium text-slate-700">Filtros</span>
           {temFiltrosAtivos && (
             <Button variant="ghost" size="sm" onClick={limparFiltros} className="ml-auto">
@@ -446,6 +527,35 @@ export default function SuporteIndustrial() {
           </Table>
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="orof" className="space-y-4">
+          {isLoadingOROF ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+            </div>
+          ) : opsOROF.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
+              <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem OR/OF</h3>
+              <p className="text-slate-500">Crie uma ordem OR ou OF na página Criar OP</p>
+            </div>
+          ) : (
+            opsOROF.map(op => (
+              <OrdemOROFCard
+                key={op.id}
+                op={op}
+                itens={itensOROF.filter(i => i.op_id === op.id)}
+                onAdicionar={handleAdicionarItem}
+                onEditar={handleEditarItem}
+                onExcluir={handleExcluirItem}
+                onMover={abrirDialogEnviar}
+                loadingItem={loadingItem}
+              />
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={categoriaDialogOpen} onOpenChange={setCategoriaDialogOpen}>
         <DialogContent>
@@ -504,6 +614,7 @@ export default function SuporteIndustrial() {
                   <SelectItem value="acabamento">Acabamento</SelectItem>
                   <SelectItem value="usinagem">Usinagem</SelectItem>
                   <SelectItem value="caldeiraria">Caldeiraria</SelectItem>
+                  <SelectItem value="montagem">Montagem</SelectItem>
                   <SelectItem value="liberacao">Liberação</SelectItem>
                   <SelectItem value="expedicao">Expedição</SelectItem>
                 </SelectContent>
@@ -532,6 +643,36 @@ export default function SuporteIndustrial() {
                 Retornar
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <EditarItemOROFDialog
+        open={editarItemOpen}
+        onOpenChange={setEditarItemOpen}
+        op={editingOp}
+        item={editingItem}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ['itens-suporte-industrial'] });
+          queryClient.invalidateQueries({ queryKey: ['itens-orof'] });
+        }}
+      />
+
+      <Dialog open={excluirItemOpen} onOpenChange={setExcluirItemOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Item</DialogTitle>
+            <DialogDescription>Esta ação não pode ser desfeita.</DialogDescription>
+          </DialogHeader>
+          {itemExcluir && (
+            <p className="text-sm text-slate-600 py-2">"{itemExcluir.descricao}"</p>
+          )}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setExcluirItemOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExclusao} disabled={loadingItem}>
+              {loadingItem && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Excluir
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
