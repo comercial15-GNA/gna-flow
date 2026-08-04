@@ -42,6 +42,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import ItensRetornados from '@/components/producao/ItensRetornados';
+import DistribuicaoEtapa from '@/components/producao/DistribuicaoEtapa';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 
 export default function Engenharia() {
@@ -82,6 +83,11 @@ export default function Engenharia() {
   const { data: ops = [] } = useQuery({
     queryKey: ['ops-all'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
+  });
+
+  const { data: todosItens = [] } = useQuery({
+    queryKey: ['todos-itens-ops'],
+    queryFn: () => base44.entities.ItemOP.list(),
   });
 
   const movimentarItem = async (item, novaEtapa, justif = '', retornado = false) => {
@@ -361,6 +367,7 @@ export default function Engenharia() {
           {opsComItens.map(({ op, itens: itensOP }) => {
             const isExpanded = expandedOPs[op.id];
             const arquivos = op.arquivos || [];
+            const todosItensOP = todosItens.filter(i => i.op_id === op.id);
             
             return (
               <div key={op.id} className="bg-white rounded-xl border-2 border-green-200 shadow-sm overflow-hidden">
@@ -547,6 +554,8 @@ export default function Engenharia() {
                         );
                       })}
                     </div>
+
+                    <DistribuicaoEtapa todosItensOP={todosItensOP} etapaAtual="engenharia" />
                   </div>
                 )}
               </div>
