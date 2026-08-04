@@ -93,7 +93,7 @@ const SETOR_CONFIG = {
     label: 'Montagem',
     icon: Layers,
     color: 'bg-violet-500',
-    pages: ['Montagem']
+    pages: ['Montagem', 'PainelMontagem']
   },
   expedicao: {
     label: 'Expedição',

@@ -69,6 +69,7 @@ import PainelExpedicao from './pages/PainelExpedicao';
 import PainelFundicao from './pages/PainelFundicao';
 import PainelLiberacao from './pages/PainelLiberacao';
 import PainelModelagem from './pages/PainelModelagem';
+import PainelMontagem from './pages/PainelMontagem';
 import PainelSuprimentos from './pages/PainelSuprimentos';
 import PainelUsinagem from './pages/PainelUsinagem';
 import RelatoriosPeso from './pages/RelatoriosPeso';
@@ -101,6 +102,7 @@ export const PAGES = {
     "PainelFundicao": PainelFundicao,
     "PainelLiberacao": PainelLiberacao,
     "PainelModelagem": PainelModelagem,
+    "PainelMontagem": PainelMontagem,
     "PainelSuprimentos": PainelSuprimentos,
     "PainelUsinagem": PainelUsinagem,
     "RelatoriosPeso": RelatoriosPeso,
