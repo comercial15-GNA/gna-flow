@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Box, AlertTriangle, Calendar, Package, User } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 
 export default function PainelModelagem() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -127,9 +128,7 @@ export default function PainelModelagem() {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="font-mono text-yellow-400 font-bold text-lg">
-                          {item.numero_op}
-                        </div>
+                        <NumeroOpColorido numero_op={item.numero_op} className="text-base font-bold" />
                       </td>
                       <td className="px-4 py-4">
                         <div className={`text-white ${atrasado ? 'font-bold' : ''}`}>

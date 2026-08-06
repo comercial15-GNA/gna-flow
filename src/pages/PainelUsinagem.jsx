@@ -6,6 +6,7 @@ import { Wrench, AlertTriangle, Calendar, Package, User } from 'lucide-react';
 import ImprimirEtiquetaZebra from '../components/producao/ImprimirEtiquetaZebra';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 
 async function registrarHistoricoEtiqueta(item) {
   const user = await base44.auth.me();
@@ -145,9 +146,7 @@ export default function PainelUsinagem() {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="font-mono text-cyan-400 font-bold text-lg">
-                          {item.numero_op}
-                        </div>
+                        <NumeroOpColorido numero_op={item.numero_op} className="text-base font-bold" />
                       </td>
                       <td className="px-4 py-4">
                         <div className={`text-white ${atrasado ? 'font-bold' : ''}`}>
