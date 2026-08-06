@@ -100,20 +100,18 @@ export default function PainelMontagem() {
             <thead className="bg-slate-700">
               <tr className="text-left text-slate-300 text-sm font-semibold uppercase tracking-wider">
                 <th className="px-4 py-4">OP</th>
-                <th className="px-4 py-4">Item</th>
-                <th className="px-4 py-4">Cliente</th>
                 <th className="px-4 py-4">Equipamento</th>
+                <th className="px-4 py-4">Item</th>
                 <th className="px-4 py-4">Qtd</th>
-                <th className="px-4 py-4">Peso</th>
-                <th className="px-4 py-4">Responsável</th>
                 <th className="px-4 py-4">Entrega</th>
+                <th className="px-4 py-4">Cliente</th>
                 <th className="px-4 py-4">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
               {itens.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="text-center py-12 text-slate-400">
+                  <td colSpan="7" className="text-center py-12 text-slate-400">
                     Nenhum item na fila
                   </td>
                 </tr>
@@ -130,6 +128,7 @@ export default function PainelMontagem() {
                       <td className="px-4 py-4">
                         <NumeroOpColorido numero_op={item.numero_op} className="text-base font-bold" />
                       </td>
+                      <td className="px-4 py-4 text-slate-300">{item.equipamento_principal}</td>
                       <td className="px-4 py-4">
                         <div className={`text-white ${atrasado ? 'font-bold' : ''}`}>
                           {item.descricao}
@@ -140,18 +139,10 @@ export default function PainelMontagem() {
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-white">{item.cliente}</td>
-                      <td className="px-4 py-4 text-slate-300">{item.equipamento_principal}</td>
                       <td className="px-4 py-4">
                         <Badge variant="outline" className="text-white border-slate-600">
                           {item.quantidade}
                         </Badge>
-                      </td>
-                      <td className="px-4 py-4 text-slate-300">
-                        {item.peso ? `${item.peso} kg` : '-'}
-                      </td>
-                      <td className="px-4 py-4 text-slate-300">
-                        {item.responsavel_op || '-'}
                       </td>
                       <td className="px-4 py-4">
                         {item.data_entrega ? (
