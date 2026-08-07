@@ -47,6 +47,7 @@ import { toast } from 'sonner';
 import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
+import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
 
 export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -246,6 +247,7 @@ export default function Comercial() {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <AlertaNovaOP />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">

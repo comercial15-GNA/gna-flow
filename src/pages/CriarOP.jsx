@@ -291,7 +291,7 @@ export default function CriarOP() {
 
         queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
         toast.success(`${numeroOP} criada com sucesso!`);
-        navigate(createPageUrl('Comercial'));
+        navigate(createPageUrl('Comercial'), { state: { novaOp: numeroOP } });
       } else {
         // OR/OF: criar item único direto no Suporte Industrial
         const itemCriado = await base44.entities.ItemOP.create({
@@ -321,7 +321,7 @@ export default function CriarOP() {
 
         queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
         toast.success(`${numeroOP} criada com sucesso!`);
-        navigate(createPageUrl('SuporteIndustrial'));
+        navigate(createPageUrl('SuporteIndustrial'), { state: { novaOp: numeroOP } });
       }
     } catch (error) {
       toast.error('Erro ao criar OP');

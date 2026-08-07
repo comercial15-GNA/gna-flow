@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrdemOROFCard from '@/components/suporte/OrdemOROFCard';
 import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
+import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
 import { 
   Hammer, 
   Search,
@@ -343,6 +344,7 @@ export default function SuporteIndustrial() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      <AlertaNovaOP />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
