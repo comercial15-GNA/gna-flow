@@ -35,12 +35,14 @@ import {
   Calendar,
   Filter,
   X,
-  Zap
+  Zap,
+  Pencil
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
+import EditarItemDialog from '@/components/producao/EditarItemDialog';
 import ItensRetornados from '@/components/producao/ItensRetornados';
 import DistribuicaoEtapa from '@/components/producao/DistribuicaoEtapa';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
@@ -58,6 +60,8 @@ export default function Engenharia() {
   const [retornarItem, setRetornarItem] = useState(null);
   const [justificativa, setJustificativa] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
+  const [editarItemOpen, setEditarItemOpen] = useState(false);
+  const [itemEdicao, setItemEdicao] = useState(null);
   const queryClient = useQueryClient();
 
   const toggleOP = (opId) => {
@@ -457,14 +461,28 @@ export default function Engenharia() {
                                 </div>
                                 <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                               </div>
-                              <Button
-                                size="sm"
-                                variant={item.iniciado ? "default" : "outline"}
-                                onClick={toggleIniciado}
-                                className={item.iniciado ? "bg-blue-600 hover:bg-blue-700" : ""}
-                              >
-                                {item.iniciado ? '✓ Iniciado' : 'Iniciar'}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setItemEdicao(item);
+                                    setEditarItemOpen(true);
+                                  }}
+                                  className="text-slate-600 border-slate-300 hover:bg-slate-50"
+                                >
+                                  <Pencil className="w-3 h-3 mr-1" />
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={item.iniciado ? "default" : "outline"}
+                                  onClick={toggleIniciado}
+                                  className={item.iniciado ? "bg-blue-600 hover:bg-blue-700" : ""}
+                                >
+                                  {item.iniciado ? '✓ Iniciado' : 'Iniciar'}
+                                </Button>
+                              </div>
                             </div>
 
                             <ItemOPActions item={item} onUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] })} />
@@ -595,6 +613,13 @@ export default function Engenharia() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <EditarItemDialog
+        item={itemEdicao}
+        open={editarItemOpen}
+        onOpenChange={setEditarItemOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['itens-engenharia'] })}
+      />
     </div>
   );
 }
