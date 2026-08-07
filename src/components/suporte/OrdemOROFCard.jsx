@@ -26,7 +26,7 @@ const ETAPA_LABEL = {
 };
 
 export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcluir, onMover, loadingItem }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const tipo = op.tipo_ordem;
 
   return (
