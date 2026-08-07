@@ -53,6 +53,7 @@ export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('em_andamento');
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
+  const [filtroTipoOrdem, setFiltroTipoOrdem] = useState('todos');
   const [editingItem, setEditingItem] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
@@ -124,7 +125,8 @@ export default function Comercial() {
       op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'todos' || op.status === statusFilter;
     const matchResponsavel = filtroResponsavel === 'todos' || op.responsavel === filtroResponsavel;
-    return matchSearch && matchStatus && matchResponsavel;
+    const matchTipoOrdem = filtroTipoOrdem === 'todos' || op.tipo_ordem === filtroTipoOrdem;
+    return matchSearch && matchStatus && matchResponsavel && matchTipoOrdem;
   }).sort((a, b) => {
     // Ordenar por data de entrega mais próxima dos itens
     const itensA = itens.filter(i => i.op_id === a.id);
@@ -508,6 +510,19 @@ export default function Comercial() {
                 <SelectItem value="coleta">Coleta</SelectItem>
                 <SelectItem value="finalizado">Finalizadas</SelectItem>
                 <SelectItem value="cancelada">Canceladas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={filtroTipoOrdem} onValueChange={setFiltroTipoOrdem}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Tipos</SelectItem>
+                <SelectItem value="op">OP (Produção)</SelectItem>
+                <SelectItem value="or">OR (Reforma)</SelectItem>
+                <SelectItem value="of">OF (Fabricação)</SelectItem>
               </SelectContent>
             </Select>
           </div>
