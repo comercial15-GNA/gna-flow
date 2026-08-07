@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ import {
   Trash2,
   Ban
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import OPCard from '@/components/producao/OPCard';
 import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
@@ -67,7 +67,17 @@ export default function Comercial() {
   const [deleteOPDialogOpen, setDeleteOPDialogOpen] = useState(false);
   const [opParaExcluir, setOpParaExcluir] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
+  const [opDestacada, setOpDestacada] = useState(null);
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (location.state?.novaOp) {
+      setOpDestacada(location.state.novaOp);
+      // Limpa o state de navegação para não redestacar em futuras visitas
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const toggleHistorico = (itemId) => {
     setExpandedHistorico(prev => ({ ...prev, [itemId]: !prev[itemId] }));
@@ -571,6 +581,7 @@ export default function Comercial() {
               onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
               isAdmin={currentUser?.setor === 'administrador'}
               onAdminEdit={() => handleAdminEditOP(op)}
+              destacar={op.numero_op === opDestacada}
             />
           ))}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -70,10 +70,17 @@ const ETAPA_LABELS = {
   cancelado: 'Cancelado'
 };
 
-export default function OPCard({ op, itens = [], showItens = false, onItemUpdate, isAdmin = false, onAdminEdit }) {
+export default function OPCard({ op, itens = [], showItens = false, onItemUpdate, isAdmin = false, onAdminEdit, destacar = false }) {
   const [expanded, setExpanded] = useState(false);
   const [editingObservacao, setEditingObservacao] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (destacar && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [destacar]);
 
   const statusConfig = STATUS_CONFIG[op.status] || STATUS_CONFIG.em_andamento;
 
@@ -88,7 +95,7 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
   };
 
   return (
-    <div className={`rounded-xl border shadow-sm overflow-hidden ${opEmAtraso ? 'bg-red-50 border-red-300' : 'bg-white border-slate-100'}`}>
+    <div ref={cardRef} className={`rounded-xl border shadow-sm overflow-hidden transition-all ${destacar ? 'ring-4 ring-emerald-400 border-emerald-400 bg-emerald-50' : opEmAtraso ? 'bg-red-50 border-red-300' : 'bg-white border-slate-100'}`}>
       <div 
         className={`p-4 cursor-pointer transition-colors ${opEmAtraso ? 'hover:bg-red-100' : 'hover:bg-slate-50'}`}
         onClick={() => setExpanded(!expanded)}
