@@ -69,47 +69,49 @@ export default function CriarOP() {
     queryFn: () => base44.entities.SequenciaOP.list()
   });
 
+  // Gera o próximo número disponível sem incrementar o contador.
+  // O contador só é atualizado após a OP ser criada com sucesso (evita gaps).
   const gerarNumeroOP = async (prefixo = 'OP') => {
     const anoAtual = new Date().getFullYear();
-    const maxTentativas = 5;
-    
-    for (let tentativa = 0; tentativa < maxTentativas; tentativa++) {
-      try {
-        // Buscar sequência por prefixo + ano (contadores independentes)
-        const sequenciasAtuais = await base44.entities.SequenciaOP.filter({ ano: anoAtual, prefixo });
-        let sequenciaAtual = sequenciasAtuais[0];
-        let proximoNumero = 1;
 
-        if (sequenciaAtual) {
-          proximoNumero = (sequenciaAtual.ultimo_numero || 0) + 1;
-          await base44.entities.SequenciaOP.update(sequenciaAtual.id, {
-            ultimo_numero: proximoNumero
-          });
-        } else {
-          await base44.entities.SequenciaOP.create({
-            ano: anoAtual,
-            prefixo,
-            ultimo_numero: 1
-          });
-        }
+    // Buscar sequência por prefixo + ano (contadores independentes)
+    const sequenciasAtuais = await base44.entities.SequenciaOP.filter({ ano: anoAtual, prefixo });
+    const sequenciaAtual = sequenciasAtuais[0];
+    let proximoNumero = sequenciaAtual ? (sequenciaAtual.ultimo_numero || 0) + 1 : 1;
 
-        const numeroOP = `${prefixo}-${anoAtual}-${String(proximoNumero).padStart(4, '0')}`;
-        
-        // Verificar se o número já existe
-        const opExistente = await base44.entities.OrdemProducao.filter({ numero_op: numeroOP });
-        if (opExistente.length === 0) {
-          return numeroOP;
-        }
-        
-        // Se existir, tentar novamente após pequeno delay
-        await new Promise(resolve => setTimeout(resolve, 100 * (tentativa + 1)));
-      } catch (error) {
-        if (tentativa === maxTentativas - 1) throw error;
-        await new Promise(resolve => setTimeout(resolve, 100 * (tentativa + 1)));
+    // Verificar se o número já existe; se sim, incrementar até achar um livre
+    for (let tentativa = 0; tentativa < 20; tentativa++) {
+      const numeroOP = `${prefixo}-${anoAtual}-${String(proximoNumero).padStart(4, '0')}`;
+      const opExistente = await base44.entities.OrdemProducao.filter({ numero_op: numeroOP });
+      if (opExistente.length === 0) {
+        return { numeroOP, numeroSequencia: proximoNumero };
       }
+      proximoNumero++;
     }
-    
+
     throw new Error('Não foi possível gerar número único para OP');
+  };
+
+  // Atualiza o contador da sequência APÓS a OP ser criada com sucesso
+  const atualizarSequencia = async (prefixo, numeroSequencia) => {
+    const anoAtual = new Date().getFullYear();
+    const sequenciasAtuais = await base44.entities.SequenciaOP.filter({ ano: anoAtual, prefixo });
+    const sequenciaAtual = sequenciasAtuais[0];
+
+    if (sequenciaAtual) {
+      // Só atualiza se o novo número for maior (evita retroceder o contador)
+      if ((sequenciaAtual.ultimo_numero || 0) < numeroSequencia) {
+        await base44.entities.SequenciaOP.update(sequenciaAtual.id, {
+          ultimo_numero: numeroSequencia
+        });
+      }
+    } else {
+      await base44.entities.SequenciaOP.create({
+        ano: anoAtual,
+        prefixo,
+        ultimo_numero: numeroSequencia
+      });
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -227,7 +229,7 @@ export default function CriarOP() {
     setSubmitting(true);
     try {
       const prefixo = tipoOrdem.toUpperCase();
-      const numeroOP = await gerarNumeroOP(prefixo);
+      const { numeroOP, numeroSequencia } = await gerarNumeroOP(prefixo);
       const dataLancamento = new Date().toISOString();
 
       // Buscar ID do usuário selecionado
@@ -247,6 +249,9 @@ export default function CriarOP() {
         status: 'em_andamento',
         data_lancamento: dataLancamento
       });
+
+      // Atualizar contador da sequência APÓS a OP ser criada com sucesso
+      await atualizarSequencia(prefixo, numeroSequencia);
 
       if (tipoOrdem === 'op') {
         const itensValidos = itens.filter(item => item.descricao && item.quantidade > 0 && item.data_entrega);

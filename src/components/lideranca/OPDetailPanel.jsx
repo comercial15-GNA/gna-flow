@@ -30,6 +30,7 @@ const ETAPA_COLORS = {
   acabamento: 'bg-pink-100 text-pink-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   caldeiraria: 'bg-amber-100 text-amber-800',
+  montagem: 'bg-violet-100 text-violet-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
   expedicao: 'bg-teal-100 text-teal-800',
   coleta: 'bg-amber-100 text-amber-800',
@@ -47,6 +48,7 @@ const ETAPA_LABELS = {
   acabamento: 'Acabamento',
   usinagem: 'Usinagem',
   caldeiraria: 'Caldeiraria',
+  montagem: 'Montagem',
   liberacao: 'Liberação',
   expedicao: 'Expedição',
   coleta: 'Coleta',
@@ -88,7 +90,9 @@ export default function OPDetailPanel({ op, itens, onClose }) {
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <FileText className="w-5 h-5" />
-              <h2 className="text-lg font-bold">{op.numero_op}</h2>
+              <h2 className="text-lg font-bold">
+                <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} className="text-white" />
+              </h2>
               <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} className="bg-white/20 text-white border-white/30" />
               {op.ordem_compra && (
                 <Badge variant="outline" className="bg-white/20 text-white border-white/30">

@@ -32,6 +32,8 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import EtapaChart from '@/components/lideranca/EtapaChart';
 import OPDetailPanel from '@/components/lideranca/OPDetailPanel';
+import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
+import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 
 const STATUS_OPTIONS = [
@@ -53,6 +55,7 @@ const ETAPA_OPTIONS = [
   { value: 'acabamento', label: 'Acabamento' },
   { value: 'usinagem', label: 'Usinagem' },
   { value: 'caldeiraria', label: 'Caldeiraria' },
+  { value: 'montagem', label: 'Montagem' },
   { value: 'liberacao', label: 'Liberação' },
   { value: 'expedicao', label: 'Expedição' },
   { value: 'suporte_industrial', label: 'Suporte Industrial' },
@@ -69,6 +72,7 @@ const ETAPA_COLORS = {
   acabamento: 'bg-pink-100 text-pink-800',
   usinagem: 'bg-cyan-100 text-cyan-800',
   caldeiraria: 'bg-amber-100 text-amber-800',
+  montagem: 'bg-violet-100 text-violet-800',
   liberacao: 'bg-emerald-100 text-emerald-800',
   expedicao: 'bg-teal-100 text-teal-800',
   suporte_industrial: 'bg-indigo-100 text-indigo-800',
@@ -86,6 +90,7 @@ const ETAPA_LABELS = {
   acabamento: 'Acabamento',
   usinagem: 'Usinagem',
   caldeiraria: 'Caldeiraria',
+  montagem: 'Montagem',
   liberacao: 'Liberação',
   expedicao: 'Expedição',
   suporte_industrial: 'Suporte Industrial',
@@ -445,7 +450,8 @@ export default function Lideranca() {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold text-slate-800">{op.numero_op}</h3>
+                              <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} className="font-semibold" />
+                              <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                               {op.ordem_compra && (
                                 <Badge variant="outline" className="text-blue-700 border-blue-300">
                                   O.C: {op.ordem_compra}
