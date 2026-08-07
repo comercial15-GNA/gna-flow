@@ -321,7 +321,7 @@ export default function CriarOP() {
 
         queryClient.invalidateQueries({ queryKey: ['sequencia-op'] });
         toast.success(`${numeroOP} criada com sucesso!`);
-        navigate(createPageUrl('SuporteIndustrial'), { state: { novaOp: numeroOP } });
+        navigate(createPageUrl('Comercial'), { state: { novaOp: numeroOP } });
       }
     } catch (error) {
       toast.error('Erro ao criar OP');
