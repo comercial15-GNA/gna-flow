@@ -267,7 +267,8 @@ export default function SuporteIndustrial() {
       montagem: 'Montagem',
       materia_prima: 'Matéria Prima',
       reforma: 'Reforma',
-      equipamento: 'Equipamento'
+      equipamento: 'Equipamento',
+      aco_ferro_fundido: 'Aço e Ferro Fundido'
     };
     return labels[categoria] || categoria;
   };
@@ -279,7 +280,8 @@ export default function SuporteIndustrial() {
       montagem: 'bg-blue-100 text-blue-800',
       materia_prima: 'bg-green-100 text-green-800',
       reforma: 'bg-purple-100 text-purple-800',
-      equipamento: 'bg-indigo-100 text-indigo-800'
+      equipamento: 'bg-indigo-100 text-indigo-800',
+      aco_ferro_fundido: 'bg-zinc-200 text-zinc-800'
     };
     return colors[categoria] || 'bg-slate-100 text-slate-800';
   };
@@ -412,6 +414,7 @@ export default function SuporteIndustrial() {
                 <SelectItem value="materia_prima">Matéria Prima</SelectItem>
                 <SelectItem value="reforma">Reforma</SelectItem>
                 <SelectItem value="equipamento">Equipamento</SelectItem>
+                <SelectItem value="aco_ferro_fundido">Aço e Ferro Fundido</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -580,6 +583,7 @@ export default function SuporteIndustrial() {
                   <SelectItem value="materia_prima">Matéria Prima</SelectItem>
                   <SelectItem value="reforma">Reforma</SelectItem>
                   <SelectItem value="equipamento">Equipamento</SelectItem>
+                  <SelectItem value="aco_ferro_fundido">Aço e Ferro Fundido</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -618,6 +622,7 @@ export default function SuporteIndustrial() {
                   <SelectItem value="usinagem">Usinagem</SelectItem>
                   <SelectItem value="caldeiraria">Caldeiraria</SelectItem>
                   <SelectItem value="montagem">Montagem</SelectItem>
+                  <SelectItem value="suporte_industrial">Suporte Industrial</SelectItem>
                   <SelectItem value="liberacao">Liberação</SelectItem>
                   <SelectItem value="expedicao">Expedição</SelectItem>
                 </SelectContent>

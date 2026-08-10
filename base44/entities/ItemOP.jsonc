@@ -94,7 +94,8 @@
         "montagem",
         "materia_prima",
         "reforma",
-        "equipamento"
+        "equipamento",
+        "aco_ferro_fundido"
       ],
       "description": "Categoria do item no suporte industrial"
     },
