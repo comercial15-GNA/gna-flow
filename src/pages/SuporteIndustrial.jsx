@@ -268,7 +268,8 @@ export default function SuporteIndustrial() {
       materia_prima: 'Matéria Prima',
       reforma: 'Reforma',
       equipamento: 'Equipamento',
-      aco_ferro_fundido: 'Aço e Ferro Fundido'
+      aco: 'Aço',
+      ferro_fundido: 'Ferro Fundido'
     };
     return labels[categoria] || categoria;
   };
@@ -281,7 +282,8 @@ export default function SuporteIndustrial() {
       materia_prima: 'bg-green-100 text-green-800',
       reforma: 'bg-purple-100 text-purple-800',
       equipamento: 'bg-indigo-100 text-indigo-800',
-      aco_ferro_fundido: 'bg-zinc-200 text-zinc-800'
+      aco: 'bg-zinc-200 text-zinc-800',
+      ferro_fundido: 'bg-stone-200 text-stone-800'
     };
     return colors[categoria] || 'bg-slate-100 text-slate-800';
   };
@@ -414,7 +416,8 @@ export default function SuporteIndustrial() {
                 <SelectItem value="materia_prima">Matéria Prima</SelectItem>
                 <SelectItem value="reforma">Reforma</SelectItem>
                 <SelectItem value="equipamento">Equipamento</SelectItem>
-                <SelectItem value="aco_ferro_fundido">Aço e Ferro Fundido</SelectItem>
+                <SelectItem value="aco">Aço</SelectItem>
+                <SelectItem value="ferro_fundido">Ferro Fundido</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -583,7 +586,8 @@ export default function SuporteIndustrial() {
                   <SelectItem value="materia_prima">Matéria Prima</SelectItem>
                   <SelectItem value="reforma">Reforma</SelectItem>
                   <SelectItem value="equipamento">Equipamento</SelectItem>
-                  <SelectItem value="aco_ferro_fundido">Aço e Ferro Fundido</SelectItem>
+                  <SelectItem value="aco">Aço</SelectItem>
+                  <SelectItem value="ferro_fundido">Ferro Fundido</SelectItem>
                 </SelectContent>
               </Select>
             </div>
