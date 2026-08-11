@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Package, ChevronDown, ChevronUp, Weight, Box, Calendar, AlertTriangle, Truck, CheckCircle, MapPin } from 'lucide-react';
+import { Search, Package, ChevronDown, ChevronUp, Weight, Box, Calendar, AlertTriangle, Truck, MapPin } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
@@ -12,47 +10,29 @@ import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 const STATUS_CONFIG = {
   expedicao: { label: 'Em Expedição', className: 'bg-teal-100 text-teal-800', icon: Truck },
   coleta: { label: 'Em Coleta', className: 'bg-purple-100 text-purple-800', icon: Package },
-  finalizado: { label: 'Finalizado', className: 'bg-green-600 text-white', icon: CheckCircle },
-  cancelado: { label: 'Cancelado', className: 'bg-red-900 text-white', icon: AlertTriangle },
 };
 
 /**
- * Aba de acompanhamento de itens enviados da Liberação para Expedição.
- * Usa HistoricoMovimentacao (setor_origem=liberacao, setor_destino=expedicao)
- * para identificar os itens, e mostra o status atual de cada um.
+ * Acompanhamento de itens enviados da Liberação que estão atualmente
+ * em Expedição ou Coleta. Usa apenas o etapa_atual do item (sem histórico).
  */
 export default function ItensEnviadosExpedicao({ ops, todosItens }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
 
-  // Busca movimentações de liberação → expedição
-  const { data: movimentacoes = [], isLoading } = useQuery({
-    queryKey: ['historico-liberacao-expedicao'],
-    queryFn: () => base44.entities.HistoricoMovimentacao.filter({
-      setor_origem: 'liberacao',
-      setor_destino: 'expedicao'
-    }),
-  });
-
-  // IDs de itens enviados da liberação para expedição
-  const itensEnviadosIds = useMemo(() => {
-    const ids = new Set(movimentacoes.map(m => m.item_id).filter(Boolean));
-    return ids;
-  }, [movimentacoes]);
-
-  // Filtra os itens atuais pelo histórico
+  // Filtra itens atualmente em expedicao ou coleta
   const itensEnviados = useMemo(() => {
-    return todosItens.filter(i => itensEnviadosIds.has(i.id));
-  }, [todosItens, itensEnviadosIds]);
+    return todosItens.filter(i => i.etapa_atual === 'expedicao' || i.etapa_atual === 'coleta');
+  }, [todosItens]);
 
   // Agrupa por OP
   const opsComItens = useMemo(() => {
     const grupos = ops
       .filter(op => itensEnviados.some(i => i.op_id === op.id))
-      .map(op => {
-        const itens = itensEnviados.filter(i => i.op_id === op.id);
-        return { op, itens };
-      });
+      .map(op => ({
+        op,
+        itens: itensEnviados.filter(i => i.op_id === op.id),
+      }));
 
     if (!searchTerm) return grupos;
 
@@ -72,28 +52,15 @@ export default function ItensEnviadosExpedicao({ ops, todosItens }) {
 
   const toggleOP = (opId) => setExpandedOPs(prev => ({ ...prev, [opId]: !prev[opId] }));
 
-  // Contagem por status
-  const contagem = useMemo(() => {
-    const c = { expedicao: 0, coleta: 0, finalizado: 0, cancelado: 0, outros: 0 };
-    itensEnviados.forEach(i => {
-      if (c[i.etapa_atual] !== undefined) c[i.etapa_atual]++;
-      else c.outros++;
-    });
-    return c;
-  }, [itensEnviados]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
-      </div>
-    );
-  }
+  const contagem = useMemo(() => ({
+    expedicao: itensEnviados.filter(i => i.etapa_atual === 'expedicao').length,
+    coleta: itensEnviados.filter(i => i.etapa_atual === 'coleta').length,
+  }), [itensEnviados]);
 
   return (
     <div>
       {/* Resumo por status */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
           <div className="flex items-center gap-2 text-teal-700 mb-1">
             <Truck className="w-4 h-4" />
@@ -107,20 +74,6 @@ export default function ItensEnviadosExpedicao({ ops, todosItens }) {
             <span className="text-xs font-medium">Em Coleta</span>
           </div>
           <p className="text-2xl font-bold text-purple-800">{contagem.coleta}</p>
-        </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-green-700 mb-1">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-xs font-medium">Finalizado</span>
-          </div>
-          <p className="text-2xl font-bold text-green-800">{contagem.finalizado}</p>
-        </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-slate-700 mb-1">
-            <Package className="w-4 h-4" />
-            <span className="text-xs font-medium">Total Enviado</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{itensEnviados.length}</p>
         </div>
       </div>
 
@@ -140,8 +93,8 @@ export default function ItensEnviadosExpedicao({ ops, todosItens }) {
       {opsComItens.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
           <Truck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhum item enviado ainda</h3>
-          <p className="text-slate-500">Itens enviados para Expedição aparecerão aqui para acompanhamento</p>
+          <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhum item em acompanhamento</h3>
+          <p className="text-slate-500">Itens enviados para Expedição ou Coleta aparecerão aqui</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -162,7 +115,7 @@ export default function ItensEnviadosExpedicao({ ops, todosItens }) {
                         {op.ordem_compra && (
                           <Badge variant="outline" className="text-blue-700 border-blue-300">O.C: {op.ordem_compra}</Badge>
                         )}
-                        <Badge className="bg-teal-600 text-white">{itens.length} enviados</Badge>
+                        <Badge className="bg-teal-600 text-white">{itens.length} itens</Badge>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-slate-600">
                         <div><strong>Cliente:</strong> {op.cliente}</div>
@@ -178,10 +131,9 @@ export default function ItensEnviadosExpedicao({ ops, todosItens }) {
                 {isExpanded && (
                   <div className="p-4 space-y-2">
                     {itens.map(item => {
-                      const status = STATUS_CONFIG[item.etapa_atual] || { label: item.etapa_atual, className: 'bg-slate-200 text-slate-700', icon: Package };
+                      const status = STATUS_CONFIG[item.etapa_atual];
                       const StatusIcon = status.icon;
-                      const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date()
-                        && !['finalizado', 'cancelado'].includes(item.etapa_atual);
+                      const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
 
                       return (
                         <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
