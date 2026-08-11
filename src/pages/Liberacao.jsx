@@ -15,7 +15,7 @@ import {
 import {
   CheckCircle, Search, Package, RotateCcw, ArrowRight, FileText,
   ExternalLink, Weight, Box, FileSpreadsheet, Calendar, AlertTriangle,
-  ChevronDown, ChevronUp, Plus,
+  ChevronDown, ChevronUp, Plus, Truck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -28,6 +28,8 @@ import CriarVolumeDialog from '@/components/expedicao/CriarVolumeDialog';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import OutrosItensOP from '@/components/producao/OutrosItensOP';
+import ItensEnviadosExpedicao from '@/components/producao/ItensEnviadosExpedicao';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 const ETAPAS_RETORNO = [
@@ -331,6 +333,19 @@ export default function Liberacao() {
         etapaAtual="liberacao"
       />
 
+      <Tabs defaultValue="aguardando" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="aguardando">
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Aguardando Liberação ({itens.length})
+          </TabsTrigger>
+          <TabsTrigger value="enviados">
+            <Truck className="w-4 h-4 mr-2" />
+            Enviados para Expedição
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="aguardando">
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
@@ -512,6 +527,12 @@ export default function Liberacao() {
           })}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="enviados">
+          <ItensEnviadosExpedicao ops={ops} todosItens={todosItens} />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog Expedição Individual */}
       <Dialog open={expedicaoDialogOpen} onOpenChange={setExpedicaoDialogOpen}>
