@@ -27,6 +27,7 @@ import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import CriarVolumeDialog from '@/components/expedicao/CriarVolumeDialog';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import OutrosItensOP from '@/components/producao/OutrosItensOP';
 import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 const ETAPAS_RETORNO = [
@@ -466,13 +467,12 @@ export default function Liberacao() {
                                 <div className="text-slate-600"><span className="font-medium">Responsável:</span> {item.responsavel_op || '-'}</div>
                               </div>
                               <div className="flex flex-wrap gap-2">
-                                {getTipoOrdem(item) === 'op' ? (
-                                  <Button size="sm" onClick={() => abrirDialogExpedicao(item)} disabled={loadingItem === item.id}
-                                    className="bg-emerald-600 hover:bg-emerald-700">
-                                    <ArrowRight className="w-3 h-3 mr-1" />
-                                    Enviar p/ Expedição
-                                  </Button>
-                                ) : (
+                                <Button size="sm" onClick={() => abrirDialogExpedicao(item)} disabled={loadingItem === item.id}
+                                  className="bg-emerald-600 hover:bg-emerald-700">
+                                  <ArrowRight className="w-3 h-3 mr-1" />
+                                  Enviar p/ Expedição
+                                </Button>
+                                {getTipoOrdem(item) !== 'op' && (
                                   <Button size="sm" onClick={() => enviarParaMontagem(item)} disabled={loadingItem === item.id}
                                     className="bg-violet-600 hover:bg-violet-700">
                                     <ArrowRight className="w-3 h-3 mr-1" />
@@ -501,30 +501,10 @@ export default function Liberacao() {
                     )}
 
                     {/* Outros Itens da OP */}
-                    {todosItensOP.filter(i => i.etapa_atual !== 'liberacao').length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-600 mb-2">
-                          Outros Itens ({todosItensOP.filter(i => i.etapa_atual !== 'liberacao').length})
-                        </h4>
-                        <div className="space-y-2">
-                          {todosItensOP.filter(i => i.etapa_atual !== 'liberacao').map((item) => (
-                            <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
-                                  <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                                    <span>Código: {item.codigo_ga || '-'}</span>
-                                    <span>Qtd: {item.quantidade}</span>
-                                    <span>Peso: {item.peso ? `${item.peso} kg` : '-'}</span>
-                                  </div>
-                                </div>
-                                <Badge className="bg-slate-200 text-slate-700 text-xs">{ETAPA_LABELS[item.etapa_atual] || item.etapa_atual}</Badge>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <OutrosItensOP
+                      itens={todosItensOP.filter(i => i.etapa_atual !== 'liberacao')}
+                      etapaAtual="liberacao"
+                    />
                   </div>
                 )}
               </div>

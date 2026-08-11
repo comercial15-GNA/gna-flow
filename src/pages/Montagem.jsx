@@ -44,6 +44,7 @@ import ItensRetornados from '@/components/producao/ItensRetornados';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import OutrosItensOP from '@/components/producao/OutrosItensOP';
 
 const ETAPAS_RETORNO = [
   { value: 'engenharia', label: 'Engenharia' },
@@ -577,34 +578,10 @@ export default function Montagem() {
                     </div>
 
                     {/* Outros Itens da OP */}
-                    {(() => {
-                      const outros = todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'montagem');
-                      if (outros.length === 0) return null;
-                      return (
-                        <div className="mt-4 pt-4 border-t border-slate-200">
-                          <h4 className="text-sm font-medium text-slate-600 mb-2">
-                            Outros Itens ({outros.length})
-                          </h4>
-                          <div className="space-y-2">
-                            {outros.map(item => (
-                              <div key={item.id} className="bg-slate-50 rounded-lg border border-slate-200 p-3">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>
-                                    <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                                      <span>Código: {item.codigo_ga || '-'}</span>
-                                      <span>Qtd: {item.quantidade}</span>
-                                      <span>Peso: {item.peso ? `${item.peso} kg` : '-'}</span>
-                                    </div>
-                                  </div>
-                                  <Badge className="bg-slate-200 text-slate-700 text-xs">{ETAPA_LABELS[item.etapa_atual] || item.etapa_atual}</Badge>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <OutrosItensOP
+                      itens={todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'montagem')}
+                      etapaAtual="montagem"
+                    />
                   </div>
                 )}
               </div>
