@@ -33,8 +33,7 @@ import {
   ChevronUp,
   AlertTriangle,
   Filter,
-  X,
-  CheckCircle
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -171,43 +170,6 @@ export default function Montagem() {
       await movimentarItem(item, destino, justif, false);
     } else {
       await movimentarItem(item, destino, '', false);
-    }
-  };
-
-  const finalizarItem = async (item) => {
-    setLoadingItem(item.id);
-    try {
-      await base44.entities.ItemOP.update(item.id, {
-        etapa_atual: 'finalizado',
-        data_entrada_etapa: new Date().toISOString(),
-        retornado: false,
-        justificativa_retorno: '',
-        iniciado: false
-      });
-
-      await base44.entities.HistoricoMovimentacao.create({
-        item_id: item.id,
-        op_id: item.op_id,
-        numero_op: item.numero_op,
-        descricao_item: item.descricao,
-        setor_origem: 'montagem',
-        setor_destino: 'finalizado',
-        justificativa: '',
-        usuario_email: currentUser?.email,
-        usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
-        data_movimentacao: new Date().toISOString()
-      });
-
-      await updateOPStatus(item.op_id);
-
-      queryClient.invalidateQueries({ queryKey: ['itens-montagem'] });
-      queryClient.invalidateQueries({ queryKey: ['ops-all'] });
-      queryClient.invalidateQueries({ queryKey: ['todos-itens-montagem'] });
-      toast.success('Item finalizado com sucesso');
-    } catch (error) {
-      toast.error('Erro ao finalizar item');
-    } finally {
-      setLoadingItem(null);
     }
   };
 
@@ -542,18 +504,9 @@ export default function Montagem() {
                             <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => finalizarItem(item)}
-                                disabled={loadingItem === item.id}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Finalizar Item
-                              </Button>
-                              <Button
-                                size="sm"
                                 onClick={() => handleEnviar(item, 'liberacao')}
                                 disabled={loadingItem === item.id}
-                                className="bg-slate-800 hover:bg-slate-900"
+                                className="bg-emerald-600 hover:bg-emerald-700"
                               >
                                 <ArrowRight className="w-3 h-3 mr-1" />
                                 Enviar p/ Liberação
