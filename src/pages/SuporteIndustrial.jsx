@@ -60,6 +60,7 @@ export default function SuporteIndustrial() {
   const [filtroCliente, setFiltroCliente] = useState('todos');
   const [searchOROF, setSearchOROF] = useState('');
   const [filtroTipoOROF, setFiltroTipoOROF] = useState('todos');
+  const [searchFinalizadas, setSearchFinalizadas] = useState('');
   const [loadingItem, setLoadingItem] = useState(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [categoriaDialogOpen, setCategoriaDialogOpen] = useState(false);
@@ -320,6 +321,15 @@ export default function SuporteIndustrial() {
   const opsFinalizadas = opsOROF.filter(op => {
     const itensOP = itensOROF.filter(i => i.op_id === op.id);
     return itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado');
+  });
+
+  // OR/OF finalizadas filtradas por busca
+  const opsFinalizadasFiltradas = opsFinalizadas.filter(op => {
+    if (!searchFinalizadas) return true;
+    const q = searchFinalizadas.toLowerCase();
+    return op.numero_op?.toLowerCase().includes(q) ||
+      op.equipamento_principal?.toLowerCase().includes(q) ||
+      op.cliente?.toLowerCase().includes(q);
   });
 
   // OR/OF ativas: pelo menos um item não finalizado
@@ -646,18 +656,47 @@ export default function SuporteIndustrial() {
             </div>
           ) : (
             <>
+              <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Filter className="w-4 h-4 text-slate-600" />
+                  <span className="font-medium text-slate-700">Busca</span>
+                  {searchFinalizadas && (
+                    <Button variant="ghost" size="sm" onClick={() => setSearchFinalizadas('')} className="ml-auto">
+                      <X className="w-4 h-4 mr-1" />
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="OR/OF, equipamento, empresa..."
+                    value={searchFinalizadas}
+                    onChange={(e) => setSearchFinalizadas(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
                 <p className="text-sm text-emerald-800 font-medium">
-                  {opsFinalizadas.length} {opsFinalizadas.length === 1 ? 'ordem finalizada' : 'ordens finalizadas'}
+                  {opsFinalizadasFiltradas.length} {opsFinalizadasFiltradas.length === 1 ? 'ordem finalizada' : 'ordens finalizadas'}
                 </p>
               </div>
-              {opsFinalizadas.map(op => (
-                <OrdemFinalizadaCard
-                  key={op.id}
-                  op={op}
-                  itens={itensOROF.filter(i => i.op_id === op.id)}
-                />
-              ))}
+              {opsFinalizadasFiltradas.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
+                  <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem encontrada</h3>
+                  <p className="text-slate-500">Ajuste a busca</p>
+                </div>
+              ) : (
+                opsFinalizadasFiltradas.map(op => (
+                  <OrdemFinalizadaCard
+                    key={op.id}
+                    op={op}
+                    itens={itensOROF.filter(i => i.op_id === op.id)}
+                  />
+                ))
+              )}
             </>
           )}
         </TabsContent>
