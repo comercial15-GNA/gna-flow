@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrdemOROFCard from '@/components/suporte/OrdemOROFCard';
+import OrdemFinalizadaCard from '@/components/suporte/OrdemFinalizadaCard';
 import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
@@ -46,7 +47,8 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -295,7 +297,8 @@ export default function SuporteIndustrial() {
       item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchCategoria = filtroCategoria === 'todos' || item.categoria_suporte === filtroCategoria;
     const matchCliente = filtroCliente === 'todos' || item.cliente === filtroCliente;
@@ -310,6 +313,18 @@ export default function SuporteIndustrial() {
   };
 
   const temFiltrosAtivos = searchTerm || filtroCategoria !== 'todos' || filtroCliente !== 'todos';
+
+  // OR/OF finalizadas: todas as itens na etapa 'finalizado'
+  const opsFinalizadas = opsOROF.filter(op => {
+    const itensOP = itensOROF.filter(i => i.op_id === op.id);
+    return itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado');
+  });
+
+  // OR/OF ativas: pelo menos um item não finalizado
+  const opsAtivasOROF = opsOROF.filter(op => {
+    const itensOP = itensOROF.filter(i => i.op_id === op.id);
+    return !(itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado'));
+  });
 
   // OR/OF handlers
   const handleAdicionarItem = (op) => {
@@ -376,6 +391,7 @@ export default function SuporteIndustrial() {
         <TabsList className="mb-4">
           <TabsTrigger value="suporte">Itens em Suporte</TabsTrigger>
           <TabsTrigger value="orof">Ordens OR/OF</TabsTrigger>
+          <TabsTrigger value="finalizadas">Finalizadas</TabsTrigger>
         </TabsList>
         <TabsContent value="suporte">
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
@@ -395,7 +411,7 @@ export default function SuporteIndustrial() {
             <div className="relative mt-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="OP, descrição, código..."
+                placeholder="OP, equipamento, descrição, código GA, cliente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -543,14 +559,14 @@ export default function SuporteIndustrial() {
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
             </div>
-          ) : opsOROF.length === 0 ? (
+          ) : opsAtivasOROF.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
               <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem OR/OF</h3>
+              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem OR/OF ativa</h3>
               <p className="text-slate-500">Crie uma ordem OR ou OF na página Criar OP</p>
             </div>
           ) : (
-            opsOROF.map(op => (
+            opsAtivasOROF.map(op => (
               <OrdemOROFCard
                 key={op.id}
                 op={op}
@@ -562,6 +578,35 @@ export default function SuporteIndustrial() {
                 loadingItem={loadingItem}
               />
             ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="finalizadas" className="space-y-4">
+          {isLoadingOROF ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+            </div>
+          ) : opsFinalizadas.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
+              <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem finalizada</h3>
+              <p className="text-slate-500">Ordens OR/OF com todos os itens finalizados aparecerão aqui</p>
+            </div>
+          ) : (
+            <>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
+                <p className="text-sm text-emerald-800 font-medium">
+                  {opsFinalizadas.length} {opsFinalizadas.length === 1 ? 'ordem finalizada' : 'ordens finalizadas'}
+                </p>
+              </div>
+              {opsFinalizadas.map(op => (
+                <OrdemFinalizadaCard
+                  key={op.id}
+                  op={op}
+                  itens={itensOROF.filter(i => i.op_id === op.id)}
+                />
+              ))}
+            </>
           )}
         </TabsContent>
       </Tabs>
