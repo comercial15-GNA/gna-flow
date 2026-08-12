@@ -45,7 +45,7 @@ export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcl
                 <span className="flex items-center gap-1"><Package className="w-4 h-4" />{op.equipamento_principal}</span>
                 <span className="flex items-center gap-1"><User className="w-4 h-4" />{op.cliente}</span>
                 {op.responsavel && (
-                  <span className="flex items-center gap-1"><User className="w-4 h-4" />Vendedor: {op.responsavel}</span>
+                  <span className="flex items-center gap-1"><User className="w-4 h-4" />{op.responsavel}</span>
                 )}
                 {op.data_lancamento && (
                   <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</span>

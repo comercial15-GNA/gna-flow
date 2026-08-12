@@ -58,6 +58,8 @@ export default function SuporteIndustrial() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('todos');
   const [filtroCliente, setFiltroCliente] = useState('todos');
+  const [searchOROF, setSearchOROF] = useState('');
+  const [filtroTipoOROF, setFiltroTipoOROF] = useState('todos');
   const [loadingItem, setLoadingItem] = useState(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [categoriaDialogOpen, setCategoriaDialogOpen] = useState(false);
@@ -326,6 +328,16 @@ export default function SuporteIndustrial() {
     return !(itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado'));
   });
 
+  // OR/OF ativas filtradas por busca e tipo
+  const opsAtivasOROFFiltradas = opsAtivasOROF.filter(op => {
+    const matchTipo = filtroTipoOROF === 'todos' || op.tipo_ordem === filtroTipoOROF;
+    const matchSearch = !searchOROF ||
+      op.numero_op?.toLowerCase().includes(searchOROF.toLowerCase()) ||
+      op.equipamento_principal?.toLowerCase().includes(searchOROF.toLowerCase()) ||
+      op.cliente?.toLowerCase().includes(searchOROF.toLowerCase());
+    return matchTipo && matchSearch;
+  });
+
   // OR/OF handlers
   const handleAdicionarItem = (op) => {
     setEditingOp(op);
@@ -555,18 +567,58 @@ export default function SuporteIndustrial() {
         </TabsContent>
 
         <TabsContent value="orof" className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-4 h-4 text-slate-600" />
+              <span className="font-medium text-slate-700">Filtros</span>
+              {(searchOROF || filtroTipoOROF !== 'todos') && (
+                <Button variant="ghost" size="sm" onClick={() => { setSearchOROF(''); setFiltroTipoOROF('todos'); }} className="ml-auto">
+                  <X className="w-4 h-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs">Buscar</Label>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="OR/OF, equipamento, empresa..."
+                    value={searchOROF}
+                    onChange={(e) => setSearchOROF(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Tipo</Label>
+                <Select value={filtroTipoOROF} onValueChange={setFiltroTipoOROF}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="or">OR (Reforma)</SelectItem>
+                    <SelectItem value="of">OF (Fabricação)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           {isLoadingOROF ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
             </div>
-          ) : opsAtivasOROF.length === 0 ? (
+          ) : opsAtivasOROFFiltradas.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
               <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem OR/OF ativa</h3>
-              <p className="text-slate-500">Crie uma ordem OR ou OF na página Criar OP</p>
+              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem OR/OF encontrada</h3>
+              <p className="text-slate-500">Ajuste os filtros ou crie uma nova ordem</p>
             </div>
           ) : (
-            opsAtivasOROF.map(op => (
+            opsAtivasOROFFiltradas.map(op => (
               <OrdemOROFCard
                 key={op.id}
                 op={op}

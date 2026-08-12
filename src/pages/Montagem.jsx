@@ -68,6 +68,7 @@ export default function Montagem() {
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
   const [filtroData, setFiltroData] = useState('');
   const [filtroAtrasados, setFiltroAtrasados] = useState(false);
+  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [retornarItem, setRetornarItem] = useState(null);
@@ -230,6 +231,7 @@ export default function Montagem() {
   });
 
   const opsComItens = ops.filter(op => {
+    if (filtroTipo !== 'todos' && op.tipo_ordem !== filtroTipo) return false;
     const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
     return itensOP.length > 0;
   }).map(op => {
@@ -247,9 +249,10 @@ export default function Montagem() {
     setFiltroResponsavel('todos');
     setFiltroData('');
     setFiltroAtrasados(false);
+    setFiltroTipo('todos');
   };
 
-  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados;
+  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados || filtroTipo !== 'todos';
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -297,7 +300,7 @@ export default function Montagem() {
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="md:col-span-2">
             <Label className="text-xs">Buscar</Label>
             <div className="relative mt-1">
@@ -309,6 +312,20 @@ export default function Montagem() {
                 className="pl-10"
               />
             </div>
+          </div>
+          <div>
+            <Label className="text-xs">Tipo</Label>
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="op">OP (Produção)</SelectItem>
+                <SelectItem value="or">OR (Reforma)</SelectItem>
+                <SelectItem value="of">OF (Fabricação)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-xs">Cliente</Label>
