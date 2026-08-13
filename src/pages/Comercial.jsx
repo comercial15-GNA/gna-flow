@@ -48,6 +48,7 @@ import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
 import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
+import RetornarItemDialog from '@/components/producao/RetornarItemDialog';
 
 export default function Comercial() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +59,6 @@ export default function Comercial() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
   const [itemReenviar, setItemReenviar] = useState(null);
-  const [justificativaReenvio, setJustificativaReenvio] = useState('');
   const [editForm, setEditForm] = useState({});
   const [loadingItem, setLoadingItem] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
@@ -180,16 +180,10 @@ export default function Comercial() {
 
   const abrirDialogReenviar = (item) => {
     setItemReenviar(item);
-    setJustificativaReenvio('');
     setReenviarDialogOpen(true);
   };
 
-  const enviarParaEngenharia = async () => {
-    if (!justificativaReenvio.trim()) {
-      toast.error('Justificativa é obrigatória para reenvio');
-      return;
-    }
-
+  const enviarParaEngenharia = async (justificativaReenvio) => {
     setLoadingItem(itemReenviar.id);
     try {
       await base44.entities.ItemOP.update(itemReenviar.id, {
@@ -639,35 +633,17 @@ export default function Comercial() {
       </Dialog>
 
       {/* Dialog Reenviar Item */}
-      <Dialog open={reenviarDialogOpen} onOpenChange={setReenviarDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reenviar Item para Engenharia</DialogTitle>
-            <DialogDescription>Informe a justificativa do reenvio após revisão</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div>
-              <Label>Justificativa *</Label>
-              <Textarea
-                value={justificativaReenvio}
-                onChange={(e) => setJustificativaReenvio(e.target.value)}
-                placeholder="Descreva as correções realizadas..."
-                className="mt-1"
-                rows={4}
-              />
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setReenviarDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={enviarParaEngenharia} disabled={loadingItem} className="bg-slate-800 hover:bg-slate-900">
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Enviar para Engenharia
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RetornarItemDialog
+        open={reenviarDialogOpen}
+        onOpenChange={setReenviarDialogOpen}
+        titulo="Reenviar Item para Engenharia"
+        descricao="Informe a justificativa do reenvio após revisão"
+        placeholder="Descreva as correções realizadas..."
+        confirmLabel="Enviar para Engenharia"
+        confirmClassName="bg-slate-800 hover:bg-slate-900"
+        onConfirm={enviarParaEngenharia}
+        loading={!!loadingItem}
+      />
 
       {/* Dialog Editar Item */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

@@ -43,6 +43,7 @@ import ItensRetornados from '@/components/producao/ItensRetornados';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import RetornarItemDialog from '@/components/producao/RetornarItemDialog';
 
 export default function Fundicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +54,6 @@ export default function Fundicao() {
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [retornarItem, setRetornarItem] = useState(null);
-  const [justificativa, setJustificativa] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
 
@@ -123,21 +123,15 @@ export default function Fundicao() {
     } finally {
       setLoadingItem(null);
       setRetornarDialogOpen(false);
-      setJustificativa('');
     }
   };
 
   const handleRetornar = (item) => {
     setRetornarItem(item);
-    setJustificativa('');
     setRetornarDialogOpen(true);
   };
 
-  const confirmarRetorno = () => {
-    if (!justificativa.trim()) {
-      toast.error('Justificativa é obrigatória para retorno');
-      return;
-    }
+  const confirmarRetorno = (justificativa) => {
     movimentarItem(retornarItem, 'modelagem', justificativa, true);
   };
 
@@ -601,34 +595,12 @@ export default function Fundicao() {
         </div>
       )}
 
-      <Dialog open={retornarDialogOpen} onOpenChange={setRetornarDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Retornar Item</DialogTitle>
-            <DialogDescription>Informe a justificativa do retorno</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div>
-              <Label>Justificativa *</Label>
-              <Textarea
-                value={justificativa}
-                onChange={(e) => setJustificativa(e.target.value)}
-                placeholder="Descreva o motivo do retorno..."
-                className="mt-1"
-                rows={4}
-              />
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setRetornarDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={confirmarRetorno} className="bg-amber-600 hover:bg-amber-700">
-                Confirmar Retorno
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RetornarItemDialog
+        open={retornarDialogOpen}
+        onOpenChange={setRetornarDialogOpen}
+        onConfirm={confirmarRetorno}
+        loading={!!loadingItem}
+      />
     </div>
   );
 }
