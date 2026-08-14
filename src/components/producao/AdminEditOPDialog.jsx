@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle, Ban } from 'lucide-react';
+import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle, Ban, Zap } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
 import CancelarOPDialog from './CancelarOPDialog';
 import { toast } from 'sonner';
 
@@ -71,6 +72,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
       quantidade: 1,
       data_entrega: '',
       etapa_atual: 'engenharia',
+      pronta_entrega: false,
       _isNew: true
     }]);
   };
@@ -117,6 +119,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
           quantidade: parseInt(item.quantidade) || 1,
           data_entrega: item.data_entrega,
           etapa_atual: item.etapa_atual,
+          pronta_entrega: !!item.pronta_entrega,
           equipamento_principal: dadosOP.equipamento_principal,
           cliente: dadosOP.cliente,
           responsavel_op: dadosOP.responsavel
@@ -140,6 +143,7 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
           quantidade: parseInt(item.quantidade) || 1,
           data_entrega: item.data_entrega || null,
           etapa_atual: item.etapa_atual || 'engenharia',
+          pronta_entrega: !!item.pronta_entrega,
           data_entrada_etapa: new Date().toISOString()
         });
       }
@@ -362,6 +366,17 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                         onChange={(e) => atualizarItem(idx, 'observacao', e.target.value)}
                         rows={2}
                       />
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2 pt-1">
+                      <Checkbox
+                        id={`pronta-${idx}`}
+                        checked={!!item.pronta_entrega}
+                        onCheckedChange={(v) => atualizarItem(idx, 'pronta_entrega', !!v)}
+                      />
+                      <Label htmlFor={`pronta-${idx}`} className="cursor-pointer flex items-center gap-1">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        Pronta Entrega
+                      </Label>
                     </div>
                   </div>
                 </div>
