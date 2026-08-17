@@ -1,0 +1,35 @@
+{
+  "name": "EstoqueItem",
+  "type": "object",
+  "properties": {
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do item de estoque"
+    },
+    "quantidade": {
+      "type": "integer",
+      "default": 1,
+      "description": "Quantidade dispon\u00edvel em estoque"
+    },
+    "codigo_ga": {
+      "type": "string",
+      "description": "C\u00f3digo GA do item"
+    },
+    "peso": {
+      "type": "number",
+      "description": "Peso do item em kg"
+    },
+    "categoria_suporte": {
+      "type": "string",
+      "description": "Categoria do item (valor da CategoriaSuporte)"
+    },
+    "observacao": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais sobre o item"
+    }
+  },
+  "required": [
+    "descricao",
+    "quantidade"
+  ]
+}

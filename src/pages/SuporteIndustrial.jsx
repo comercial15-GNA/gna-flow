@@ -34,6 +34,7 @@ import OrdemFinalizadaCard from '@/components/suporte/OrdemFinalizadaCard';
 import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
 import GerenciarCategoriasDialog from '@/components/suporte/GerenciarCategoriasDialog';
 import OrdensOROFDraggableList from '@/components/suporte/OrdensOROFDraggableList';
+import EstoqueTab from '@/components/suporte/EstoqueTab';
 import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
@@ -407,6 +408,7 @@ export default function SuporteIndustrial() {
           <TabsTrigger value="suporte">Itens em Suporte</TabsTrigger>
           <TabsTrigger value="orof">Ordens OR/OF</TabsTrigger>
           <TabsTrigger value="finalizadas">Finalizadas</TabsTrigger>
+          <TabsTrigger value="estoque">Estoque</TabsTrigger>
         </TabsList>
         <TabsContent value="suporte">
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
@@ -705,6 +707,9 @@ export default function SuporteIndustrial() {
               )}
             </>
           )}
+        </TabsContent>
+        <TabsContent value="estoque">
+          <EstoqueTab />
         </TabsContent>
       </Tabs>
 
