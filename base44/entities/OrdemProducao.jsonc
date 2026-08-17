@@ -18,7 +18,11 @@
     },
     "ordem_visualizacao": {
       "type": "integer",
-      "description": "Posi\u00e7\u00e3o na sequ\u00eancia de visualiza\u00e7\u00e3o dos cards (apenas para ordens OR/OF)"
+      "description": "Posi\u00e7\u00e3o na sequ\u00eancia de visualiza\u00e7\u00e3o dos cards no Suporte Industrial (apenas para ordens OR/OF)"
+    },
+    "ordem_montagem": {
+      "type": "integer",
+      "description": "Posi\u00e7\u00e3o na sequ\u00eancia de visualiza\u00e7\u00e3o dos cards na tela de Montagem"
     },
     "ordem_compra": {
       "type": "string",
