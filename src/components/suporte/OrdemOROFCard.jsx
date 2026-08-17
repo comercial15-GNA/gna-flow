@@ -8,6 +8,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 
 const ETAPA_LABEL = {
   suporte_industrial: 'Suporte Industrial',
@@ -28,6 +29,7 @@ const ETAPA_LABEL = {
 export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcluir, onMover, loadingItem }) {
   const [expanded, setExpanded] = useState(false);
   const tipo = op.tipo_ordem;
+  const { getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
 
   return (
     <Card className="overflow-hidden">
@@ -91,8 +93,8 @@ export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcl
                               </Badge>
                             )}
                             {item.categoria_suporte && (
-                              <Badge variant="outline" className="text-xs">
-                                {item.categoria_suporte}
+                              <Badge className={`text-xs ${getCategoriaColor(item.categoria_suporte)}`}>
+                                {getCategoriaLabel(item.categoria_suporte)}
                               </Badge>
                             )}
                           </div>

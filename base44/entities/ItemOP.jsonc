@@ -88,17 +88,7 @@
     },
     "categoria_suporte": {
       "type": "string",
-      "enum": [
-        "bronze",
-        "caldeiraria",
-        "montagem",
-        "materia_prima",
-        "reforma",
-        "equipamento",
-        "aco",
-        "ferro_fundido"
-      ],
-      "description": "Categoria do item no suporte industrial"
+      "description": "Categoria do item no suporte industrial (valor da CategoriaSuporte)"
     },
     "retornado": {
       "type": "boolean",

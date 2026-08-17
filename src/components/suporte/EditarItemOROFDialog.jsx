@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 
 export default function EditarItemOROFDialog({ open, onOpenChange, op, item, onSaved }) {
   const isEdit = !!item;
@@ -19,6 +20,7 @@ export default function EditarItemOROFDialog({ open, onOpenChange, op, item, onS
     descricao: '', observacao: '', codigo_ga: '', peso: '', quantidade: 1, data_entrega: '', categoria_suporte: ''
   });
   const [saving, setSaving] = useState(false);
+  const { categorias } = useCategoriasSuporte();
 
   useEffect(() => {
     if (item) {
@@ -128,12 +130,9 @@ export default function EditarItemOROFDialog({ open, onOpenChange, op, item, onS
                   <SelectValue placeholder="Sem categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bronze">Bronze</SelectItem>
-                  <SelectItem value="caldeiraria">Caldeiraria</SelectItem>
-                  <SelectItem value="montagem">Montagem</SelectItem>
-                  <SelectItem value="materia_prima">Matéria Prima</SelectItem>
-                  <SelectItem value="reforma">Reforma</SelectItem>
-                  <SelectItem value="equipamento">Equipamento</SelectItem>
+                  {categorias.map(cat => (
+                    <SelectItem key={cat.id} value={cat.valor}>{cat.nome}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

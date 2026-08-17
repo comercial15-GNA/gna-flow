@@ -32,6 +32,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrdemOROFCard from '@/components/suporte/OrdemOROFCard';
 import OrdemFinalizadaCard from '@/components/suporte/OrdemFinalizadaCard';
 import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
+import GerenciarCategoriasDialog from '@/components/suporte/GerenciarCategoriasDialog';
+import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
 import { 
@@ -48,7 +50,8 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -73,7 +76,9 @@ export default function SuporteIndustrial() {
   const [editingItem, setEditingItem] = useState(null);
   const [editingOp, setEditingOp] = useState(null);
   const [itemExcluir, setItemExcluir] = useState(null);
+  const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { categorias, getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -265,34 +270,6 @@ export default function SuporteIndustrial() {
     toast.success('Relatório gerado');
   };
 
-  const getCategoriaLabel = (categoria) => {
-    const labels = {
-      bronze: 'Bronze',
-      caldeiraria: 'Caldeiraria',
-      montagem: 'Montagem',
-      materia_prima: 'Matéria Prima',
-      reforma: 'Reforma',
-      equipamento: 'Equipamento',
-      aco: 'Aço',
-      ferro_fundido: 'Ferro Fundido'
-    };
-    return labels[categoria] || categoria;
-  };
-
-  const getCategoriaColor = (categoria) => {
-    const colors = {
-      bronze: 'bg-amber-100 text-amber-800',
-      caldeiraria: 'bg-orange-100 text-orange-800',
-      montagem: 'bg-blue-100 text-blue-800',
-      materia_prima: 'bg-green-100 text-green-800',
-      reforma: 'bg-purple-100 text-purple-800',
-      equipamento: 'bg-indigo-100 text-indigo-800',
-      aco: 'bg-zinc-200 text-zinc-800',
-      ferro_fundido: 'bg-stone-200 text-stone-800'
-    };
-    return colors[categoria] || 'bg-slate-100 text-slate-800';
-  };
-
   const clientesUnicos = [...new Set(itens.map(i => i.cliente))].filter(Boolean).sort();
 
   const itensFiltrados = itens.filter(item => {
@@ -400,6 +377,10 @@ export default function SuporteIndustrial() {
           <div className="bg-slate-100 text-slate-800 px-4 py-2 rounded-full text-sm font-medium">
             {itens.length} itens
           </div>
+          <Button onClick={() => setGerenciarCategoriasOpen(true)} variant="outline">
+            <Settings className="w-4 h-4 mr-2" />
+            Categorias
+          </Button>
           {itensFiltrados.length > 0 && (
             <Button onClick={gerarRelatorio} variant="outline">
               <FileSpreadsheet className="w-4 h-4 mr-2" />
@@ -448,14 +429,9 @@ export default function SuporteIndustrial() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todas</SelectItem>
-                <SelectItem value="bronze">Bronze</SelectItem>
-                <SelectItem value="caldeiraria">Caldeiraria</SelectItem>
-                <SelectItem value="montagem">Montagem</SelectItem>
-                <SelectItem value="materia_prima">Matéria Prima</SelectItem>
-                <SelectItem value="reforma">Reforma</SelectItem>
-                <SelectItem value="equipamento">Equipamento</SelectItem>
-                <SelectItem value="aco">Aço</SelectItem>
-                <SelectItem value="ferro_fundido">Ferro Fundido</SelectItem>
+                {categorias.map(cat => (
+                  <SelectItem key={cat.id} value={cat.valor}>{cat.nome}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -716,14 +692,9 @@ export default function SuporteIndustrial() {
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bronze">Bronze</SelectItem>
-                  <SelectItem value="caldeiraria">Caldeiraria</SelectItem>
-                  <SelectItem value="montagem">Montagem</SelectItem>
-                  <SelectItem value="materia_prima">Matéria Prima</SelectItem>
-                  <SelectItem value="reforma">Reforma</SelectItem>
-                  <SelectItem value="equipamento">Equipamento</SelectItem>
-                  <SelectItem value="aco">Aço</SelectItem>
-                  <SelectItem value="ferro_fundido">Ferro Fundido</SelectItem>
+                  {categorias.map(cat => (
+                    <SelectItem key={cat.id} value={cat.valor}>{cat.nome}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -824,6 +795,11 @@ export default function SuporteIndustrial() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <GerenciarCategoriasDialog
+        open={gerenciarCategoriasOpen}
+        onOpenChange={setGerenciarCategoriasOpen}
+      />
     </div>
   );
 }

@@ -19,6 +19,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import HistoricoMovimentacoes from '@/components/producao/HistoricoMovimentacoes';
+import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 
 export default function ItemCardSuporte({ 
   item, 
@@ -28,30 +29,9 @@ export default function ItemCardSuporte({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const { getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
 
   const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
-
-  const getCategoriaLabel = (categoria) => {
-    const labels = {
-      bronze: 'Bronze',
-      caldeiraria: 'Caldeiraria',
-      montagem: 'Montagem',
-      materia_prima: 'Matéria Prima',
-      reforma: 'Reforma'
-    };
-    return labels[categoria] || categoria;
-  };
-
-  const getCategoriaColor = (categoria) => {
-    const colors = {
-      bronze: 'bg-amber-100 text-amber-800',
-      caldeiraria: 'bg-orange-100 text-orange-800',
-      montagem: 'bg-blue-100 text-blue-800',
-      materia_prima: 'bg-green-100 text-green-800',
-      reforma: 'bg-purple-100 text-purple-800'
-    };
-    return colors[categoria] || 'bg-slate-100 text-slate-800';
-  };
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">

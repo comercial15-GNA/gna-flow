@@ -8,6 +8,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
+import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 
 /**
  * Card read-only para OR/OF cujos todos os itens estão finalizados.
@@ -15,6 +16,7 @@ import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 export default function OrdemFinalizadaCard({ op, itens }) {
   const [expanded, setExpanded] = useState(false);
   const tipo = op.tipo_ordem;
+  const { getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
 
   return (
     <Card className="overflow-hidden border-emerald-200">
@@ -60,7 +62,7 @@ export default function OrdemFinalizadaCard({ op, itens }) {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-slate-500">#{idx + 1}</span>
                         {item.categoria_suporte && (
-                          <Badge variant="outline" className="text-xs">{item.categoria_suporte}</Badge>
+                          <Badge className={`text-xs ${getCategoriaColor(item.categoria_suporte)}`}>{getCategoriaLabel(item.categoria_suporte)}</Badge>
                         )}
                       </div>
                       <p className="font-medium text-slate-800 text-sm">{item.descricao}</p>

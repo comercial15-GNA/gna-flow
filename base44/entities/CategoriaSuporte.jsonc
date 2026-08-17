@@ -1,0 +1,33 @@
+{
+  "name": "CategoriaSuporte",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome de exibi\u00e7\u00e3o da categoria"
+    },
+    "valor": {
+      "type": "string",
+      "description": "Identificador \u00fanico (slug) usado como valor armazenado nos itens"
+    },
+    "cor": {
+      "type": "string",
+      "default": "slate",
+      "description": "Chave de cor para o badge (green, amber, orange, blue, purple, indigo, zinc, stone, red, teal, pink, cyan, slate)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a categoria aparece nas listas de sele\u00e7\u00e3o"
+    },
+    "ordem": {
+      "type": "integer",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "nome",
+    "valor"
+  ]
+}
