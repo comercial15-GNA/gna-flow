@@ -25,6 +25,7 @@ import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 export default function EditarEstoqueItemDialog({ open, onOpenChange, item, onSaved }) {
   const { categorias } = useCategoriasSuporte();
   const [descricao, setDescricao] = useState('');
+  const [equipamento, setEquipamento] = useState('');
   const [quantidade, setQuantidade] = useState(1);
   const [codigoGa, setCodigoGa] = useState('');
   const [peso, setPeso] = useState('');
@@ -36,6 +37,7 @@ export default function EditarEstoqueItemDialog({ open, onOpenChange, item, onSa
     if (open) {
       if (item) {
         setDescricao(item.descricao || '');
+        setEquipamento(item.equipamento || '');
         setQuantidade(item.quantidade ?? 1);
         setCodigoGa(item.codigo_ga || '');
         setPeso(item.peso || '');
@@ -43,6 +45,7 @@ export default function EditarEstoqueItemDialog({ open, onOpenChange, item, onSa
         setObservacao(item.observacao || '');
       } else {
         setDescricao('');
+        setEquipamento('');
         setQuantidade(1);
         setCodigoGa('');
         setPeso('');
@@ -66,6 +69,7 @@ export default function EditarEstoqueItemDialog({ open, onOpenChange, item, onSa
     try {
       const dados = {
         descricao: descricao.trim(),
+        equipamento: equipamento.trim() || undefined,
         quantidade: parseInt(quantidade, 10),
         codigo_ga: codigoGa.trim() || undefined,
         peso: peso ? parseFloat(peso) : undefined,
@@ -106,6 +110,15 @@ export default function EditarEstoqueItemDialog({ open, onOpenChange, item, onSa
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Descrição do item"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label>Equipamento</Label>
+            <Input
+              value={equipamento}
+              onChange={(e) => setEquipamento(e.target.value)}
+              placeholder="Equipamento relacionado"
               className="mt-1"
             />
           </div>

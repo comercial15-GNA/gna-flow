@@ -124,6 +124,7 @@ export default function EstoqueTab() {
 
     const dados = itensFiltrados.map(item => ({
       'Descrição': item.descricao,
+      'Equipamento': item.equipamento || '-',
       'Código GA': item.codigo_ga || '-',
       'Categoria': item.categoria_suporte ? getCategoriaLabel(item.categoria_suporte) : 'Não categorizado',
       'Peso (kg)': item.peso || '-',
@@ -233,6 +234,7 @@ export default function EstoqueTab() {
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead className="font-semibold">Descrição</TableHead>
+                <TableHead className="font-semibold">Equipamento</TableHead>
                 <TableHead className="font-semibold">Código GA</TableHead>
                 <TableHead className="font-semibold">Categoria</TableHead>
                 <TableHead className="font-semibold text-center">Peso</TableHead>
@@ -245,6 +247,7 @@ export default function EstoqueTab() {
               {itensFiltrados.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50">
                   <TableCell className="font-medium text-slate-800">{item.descricao}</TableCell>
+                  <TableCell className="text-sm">{item.equipamento || '-'}</TableCell>
                   <TableCell className="text-sm">{item.codigo_ga || '-'}</TableCell>
                   <TableCell>
                     {item.categoria_suporte ? (
