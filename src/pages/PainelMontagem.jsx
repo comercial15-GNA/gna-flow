@@ -20,9 +20,23 @@ export default function PainelMontagem() {
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ['itens-painel-montagem'],
     queryFn: async () => {
-      const items = await base44.entities.ItemOP.filter({ etapa_atual: 'montagem' });
-      // Ordenar por data de entrega (mais próxima primeiro)
+      const [items, ops] = await Promise.all([
+        base44.entities.ItemOP.filter({ etapa_atual: 'montagem' }),
+        base44.entities.OrdemProducao.list(),
+      ]);
+      const opMap = new Map(ops.map(o => [o.id, o]));
       return items.sort((a, b) => {
+        const opA = opMap.get(a.op_id);
+        const opB = opMap.get(b.op_id);
+        const aIsOROF = opA?.tipo_ordem !== 'op';
+        const bIsOROF = opB?.tipo_ordem !== 'op';
+        if (aIsOROF !== bIsOROF) return aIsOROF ? -1 : 1;
+        if (aIsOROF) {
+          const ordA = opA?.ordem_visualizacao ?? Infinity;
+          const ordB = opB?.ordem_visualizacao ?? Infinity;
+          if (ordA !== ordB) return ordA - ordB;
+          return new Date(a.data_entrega || '9999-12-31') - new Date(b.data_entrega || '9999-12-31');
+        }
         if (!a.data_entrega) return 1;
         if (!b.data_entrega) return -1;
         return new Date(a.data_entrega) - new Date(b.data_entrega);

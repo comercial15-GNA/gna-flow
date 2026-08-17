@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronDown, ChevronUp, Plus, Pencil, Trash2, Send, Package, User, Calendar
+  ChevronDown, ChevronUp, Plus, Pencil, Trash2, Send, Package, User, Calendar, GripVertical
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
@@ -26,19 +26,24 @@ const ETAPA_LABEL = {
   finalizado: 'Finalizado'
 };
 
-export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcluir, onMover, loadingItem }) {
+export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcluir, onMover, loadingItem, dragHandleProps, isDragging }) {
   const [expanded, setExpanded] = useState(false);
   const tipo = op.tipo_ordem;
   const { getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${isDragging ? 'shadow-xl ring-2 ring-blue-400' : ''}`}>
       <CardContent className="p-0">
         {/* Header */}
         <div className={`bg-gradient-to-r ${tipo === 'or' ? 'from-orange-50 to-orange-100' : 'from-blue-50 to-blue-100'} p-4 border-b`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
+                {dragHandleProps && (
+                  <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 flex items-center">
+                    <GripVertical className="w-5 h-5" />
+                  </div>
+                )}
                 <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} />
                 <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                 <Badge variant="outline" className="text-xs">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</Badge>

@@ -33,6 +33,7 @@ import OrdemOROFCard from '@/components/suporte/OrdemOROFCard';
 import OrdemFinalizadaCard from '@/components/suporte/OrdemFinalizadaCard';
 import EditarItemOROFDialog from '@/components/suporte/EditarItemOROFDialog';
 import GerenciarCategoriasDialog from '@/components/suporte/GerenciarCategoriasDialog';
+import OrdensOROFDraggableList from '@/components/suporte/OrdensOROFDraggableList';
 import { useCategoriasSuporte } from '@/hooks/useCategoriasSuporte';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import AlertaNovaOP from '@/components/producao/AlertaNovaOP';
@@ -51,7 +52,8 @@ import {
   Trash2,
   Loader2,
   CheckCircle,
-  Settings
+  Settings,
+  GripVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -104,9 +106,12 @@ export default function SuporteIndustrial() {
         base44.entities.OrdemProducao.filter({ tipo_ordem: 'or' }),
         base44.entities.OrdemProducao.filter({ tipo_ordem: 'of' }),
       ]);
-      return [...opsOR, ...opsOF].sort((a, b) =>
-        new Date(b.data_lancamento) - new Date(a.data_lancamento)
-      );
+      return [...opsOR, ...opsOF].sort((a, b) => {
+        const ordA = a.ordem_visualizacao ?? Infinity;
+        const ordB = b.ordem_visualizacao ?? Infinity;
+        if (ordA !== ordB) return ordA - ordB;
+        return new Date(a.data_lancamento) - new Date(b.data_lancamento);
+      });
     }
   });
 
@@ -313,7 +318,14 @@ export default function SuporteIndustrial() {
   const opsAtivasOROF = opsOROF.filter(op => {
     const itensOP = itensOROF.filter(i => i.op_id === op.id);
     return !(itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado'));
+  }).sort((a, b) => {
+    const ordA = a.ordem_visualizacao ?? Infinity;
+    const ordB = b.ordem_visualizacao ?? Infinity;
+    if (ordA !== ordB) return ordA - ordB;
+    return new Date(a.data_lancamento) - new Date(b.data_lancamento);
   });
+
+  const temFiltroOROF = searchOROF || filtroTipoOROF !== 'todos';
 
   // OR/OF ativas filtradas por busca e tipo
   const opsAtivasOROFFiltradas = opsAtivasOROF.filter(op => {
@@ -603,7 +615,7 @@ export default function SuporteIndustrial() {
               <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem OR/OF encontrada</h3>
               <p className="text-slate-500">Ajuste os filtros ou crie uma nova ordem</p>
             </div>
-          ) : (
+          ) : temFiltroOROF ? (
             opsAtivasOROFFiltradas.map(op => (
               <OrdemOROFCard
                 key={op.id}
@@ -616,6 +628,24 @@ export default function SuporteIndustrial() {
                 loadingItem={loadingItem}
               />
             ))
+          ) : (
+            <>
+              {opsAtivasOROFFiltradas.length > 1 && (
+                <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
+                  <GripVertical className="w-3 h-3" />
+                  Arraste os cards para reordenar. A ordem definida aqui será aplicada na Montagem.
+                </p>
+              )}
+              <OrdensOROFDraggableList
+                ops={opsAtivasOROFFiltradas}
+                itensOROF={itensOROF}
+                onAdicionar={handleAdicionarItem}
+                onEditar={handleEditarItem}
+                onExcluir={handleExcluirItem}
+                onMover={abrirDialogEnviar}
+                loadingItem={loadingItem}
+              />
+            </>
           )}
         </TabsContent>
 

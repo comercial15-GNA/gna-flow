@@ -16,6 +16,10 @@
       "default": "op",
       "description": "Tipo da ordem: op (Produ\u00e7\u00e3o), or (Reforma), of (Fabrica\u00e7\u00e3o)"
     },
+    "ordem_visualizacao": {
+      "type": "integer",
+      "description": "Posi\u00e7\u00e3o na sequ\u00eancia de visualiza\u00e7\u00e3o dos cards (apenas para ordens OR/OF)"
+    },
     "ordem_compra": {
       "type": "string",
       "description": "N\u00famero da Ordem de Compra (O.C)"

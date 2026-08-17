@@ -232,6 +232,15 @@ export default function Montagem() {
     const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
     return { op, itens: itensOP };
   }).sort((a, b) => {
+    const aIsOROF = a.op.tipo_ordem !== 'op';
+    const bIsOROF = b.op.tipo_ordem !== 'op';
+    if (aIsOROF !== bIsOROF) return aIsOROF ? -1 : 1;
+    if (aIsOROF) {
+      const ordA = a.op.ordem_visualizacao ?? Infinity;
+      const ordB = b.op.ordem_visualizacao ?? Infinity;
+      if (ordA !== ordB) return ordA - ordB;
+      return new Date(a.op.data_lancamento) - new Date(b.op.data_lancamento);
+    }
     const dataA = a.itens.length > 0 ? Math.min(...a.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
     const dataB = b.itens.length > 0 ? Math.min(...b.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
     return dataA - dataB;

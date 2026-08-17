@@ -232,6 +232,21 @@ export default function CriarOP() {
       const { numeroOP, numeroSequencia } = await gerarNumeroOP(prefixo);
       const dataLancamento = new Date().toISOString();
 
+      // Calcular próxima posição de visualização para OR/OF
+      let ordemVisualizacao = null;
+      if (tipoOrdem !== 'op') {
+        const [existingOR, existingOF] = await Promise.all([
+          base44.entities.OrdemProducao.filter({ tipo_ordem: 'or' }),
+          base44.entities.OrdemProducao.filter({ tipo_ordem: 'of' }),
+        ]);
+        const allOROF = [...existingOR, ...existingOF];
+        const maxOrdem = allOROF.reduce((max, o) => {
+          const val = o.ordem_visualizacao;
+          return val == null ? max : Math.max(max, val);
+        }, -1);
+        ordemVisualizacao = maxOrdem + 1;
+      }
+
       // Buscar ID do usuário selecionado
       const usuarioSelecionado = usuarios.find(u => 
         (u.apelido || u.nome_completo || u.email) === formData.responsavel
@@ -247,7 +262,8 @@ export default function CriarOP() {
         responsavel_user_id: usuarioSelecionado?.user_id || null,
         arquivos: formData.arquivos,
         status: 'em_andamento',
-        data_lancamento: dataLancamento
+        data_lancamento: dataLancamento,
+        ...(tipoOrdem !== 'op' ? { ordem_visualizacao: ordemVisualizacao } : {})
       });
 
       // Atualizar contador da sequência APÓS a OP ser criada com sucesso
