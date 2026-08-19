@@ -243,9 +243,10 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                    <SelectItem value="expedicao">Expedição</SelectItem>
                     <SelectItem value="coleta">Coleta</SelectItem>
-                    <SelectItem value="finalizado">Finalizado</SelectItem>
-                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                    <SelectItem value="finalizado">Finalizadas</SelectItem>
+                    <SelectItem value="cancelada">Canceladas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
