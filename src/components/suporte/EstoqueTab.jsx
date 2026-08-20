@@ -68,6 +68,7 @@ export default function EstoqueTab() {
   const itensFiltrados = itens.filter(item => {
     const matchSearch = !searchTerm ||
       item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.equipamento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategoria = filtroCategoria === 'todos' || item.categoria_suporte === filtroCategoria;
     return matchSearch && matchCategoria;
@@ -190,7 +191,7 @@ export default function EstoqueTab() {
             <div className="relative mt-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Descrição, código GA..."
+                placeholder="Descrição, equipamento, código GA..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
