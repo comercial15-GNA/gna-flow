@@ -30,13 +30,16 @@ import RetornarItemDialog from '@/components/producao/RetornarItemDialog';
 import MontagemOPCard from '@/components/montagem/MontagemOPCard';
 import MontagemDraggableList from '@/components/montagem/MontagemDraggableList';
 
+const TYPE_ORDER = { of: 0, or: 1, op: 2 };
+const ABA_LABEL = { of: 'OF', or: 'OR', todos: 'Todos' };
+
 export default function Montagem() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCliente, setFiltroCliente] = useState('todos');
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
   const [filtroData, setFiltroData] = useState('');
   const [filtroAtrasados, setFiltroAtrasados] = useState(false);
-  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [abaAtiva, setAbaAtiva] = useState('of');
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [retornarItem, setRetornarItem] = useState(null);
@@ -192,13 +195,18 @@ export default function Montagem() {
   });
 
   const opsComItens = ops.filter(op => {
-    if (filtroTipo !== 'todos' && op.tipo_ordem !== filtroTipo) return false;
+    if (abaAtiva !== 'todos' && op.tipo_ordem !== abaAtiva) return false;
     const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
     return itensOP.length > 0;
   }).map(op => {
     const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
     return { op, itens: itensOP };
   }).sort((a, b) => {
+    if (abaAtiva === 'todos') {
+      const typeA = TYPE_ORDER[a.op.tipo_ordem] ?? 3;
+      const typeB = TYPE_ORDER[b.op.tipo_ordem] ?? 3;
+      if (typeA !== typeB) return typeA - typeB;
+    }
     const ordA = a.op.ordem_montagem ?? Infinity;
     const ordB = b.op.ordem_montagem ?? Infinity;
     if (ordA !== ordB) return ordA - ordB;
@@ -213,12 +221,12 @@ export default function Montagem() {
     setFiltroResponsavel('todos');
     setFiltroData('');
     setFiltroAtrasados(false);
-    setFiltroTipo('todos');
   };
 
-  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados || filtroTipo !== 'todos';
+  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados;
 
   const isAdmin = currentUser?.setor === 'administrador';
+  const podeArrastar = isAdmin && !temFiltrosAtivos && abaAtiva !== 'todos';
 
   const renderCard = ({ op, itens: itensOP }, dragHandleProps, isDragging) => (
     <MontagemOPCard
@@ -238,162 +246,188 @@ export default function Montagem() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-            <Layers className="w-6 h-6 text-violet-600" />
+      <div className="bg-gradient-to-br from-[#f3f7ff] via-[#eef2fa] to-[#f8faff] rounded-3xl p-6 lg:p-8 min-h-[80vh]">
+        {/* Topbar */}
+        <div
+          className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+          style={{ animation: 'montagem-rise 0.65s cubic-bezier(0.2,0.8,0.2,1) both' }}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#e4e5ff] text-[#5d58bd] grid place-items-center shadow-sm">
+              <Layers className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-800">Montagem</h1>
+              <p className="text-slate-500 text-sm mt-1">Itens em processo de montagem</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Montagem</h1>
-            <p className="text-slate-500">Itens em processo de montagem</p>
+          <div className="flex items-center gap-3">
+            <span className="px-4 py-2 rounded-full bg-[#dedfff] text-[#504aab] text-sm font-bold shadow-inner">
+              {itensFiltrados.length} itens • {opsComItens.length} OPs
+            </span>
+            {itensFiltrados.length > 0 && (
+              <Button
+                onClick={gerarRelatorio}
+                variant="outline"
+                className="bg-white/70 backdrop-blur-sm border-slate-200/90 hover:bg-white hover:text-[#4e48ae]"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Relatório
+              </Button>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-violet-100 text-violet-800 px-4 py-2 rounded-full text-sm font-medium">
-            {itens.length} itens • {opsComItens.length} OPs
-          </div>
-          {itensFiltrados.length > 0 && (
-            <Button onClick={gerarRelatorio} variant="outline">
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Relatório
-            </Button>
-          )}
-        </div>
-      </div>
 
-      <ItensRetornados
-        itens={itensFiltrados}
-        onReenviar={async (item, justif) => {
-          setLoadingItem(item.id);
-          await movimentarItem(item, item.etapa_atual, justif, false);
-        }}
-        loadingItem={loadingItem}
-        etapaAtual="montagem"
-      />
+        <ItensRetornados
+          itens={itensFiltrados}
+          onReenviar={async (item, justif) => {
+            setLoadingItem(item.id);
+            await movimentarItem(item, item.etapa_atual, justif, false);
+          }}
+          loadingItem={loadingItem}
+          etapaAtual="montagem"
+        />
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-slate-600" />
-          <span className="font-medium text-slate-700">Filtros</span>
-          {temFiltrosAtivos && (
-            <Button variant="ghost" size="sm" onClick={limparFiltros} className="ml-auto">
-              <X className="w-4 h-4 mr-1" />
-              Limpar
-            </Button>
-          )}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-          <div className="md:col-span-2">
-            <Label className="text-xs">Buscar</Label>
-            <div className="relative mt-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        {/* Filters */}
+        <div
+          className="bg-white/70 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 mb-6 shadow-sm"
+          style={{ animation: 'montagem-rise 0.65s 0.15s cubic-bezier(0.2,0.8,0.2,1) both' }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-4 h-4 text-[#6b65c7]" />
+            <span className="font-bold text-slate-700">Filtros</span>
+            {temFiltrosAtivos && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={limparFiltros}
+                className="ml-auto text-[#6964bd] hover:bg-[#ececff] hover:text-[#46409f]"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="md:col-span-2">
+              <Label className="text-xs font-bold text-slate-500">Buscar</Label>
+              <div className="relative mt-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="OP, O.C, cliente, equipamento, item, código GA..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs font-bold text-slate-500">Cliente</Label>
+              <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {clientesUnicos.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-bold text-slate-500">Responsável</Label>
+              <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {responsaveisUnicos.map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-bold text-slate-500">Data Entrega</Label>
               <Input
-                placeholder="OP, O.C, cliente, equipamento, item, código GA..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                type="date"
+                value={filtroData}
+                onChange={(e) => setFiltroData(e.target.value)}
+                className="mt-1"
               />
             </div>
           </div>
-          <div>
-            <Label className="text-xs">Tipo</Label>
-            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="op">OP (Produção)</SelectItem>
-                <SelectItem value="or">OR (Reforma)</SelectItem>
-                <SelectItem value="of">OF (Fabricação)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Cliente</Label>
-            <Select value={filtroCliente} onValueChange={setFiltroCliente}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                {clientesUnicos.map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Responsável</Label>
-            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                {responsaveisUnicos.map(r => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Data Entrega</Label>
-            <Input
-              type="date"
-              value={filtroData}
-              onChange={(e) => setFiltroData(e.target.value)}
-              className="mt-1"
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="checkbox"
+              id="atrasados"
+              checked={filtroAtrasados}
+              onChange={(e) => setFiltroAtrasados(e.target.checked)}
+              className="rounded accent-[#6c68c7]"
             />
+            <label htmlFor="atrasados" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+              Mostrar apenas atrasados
+            </label>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-3">
-          <input
-            type="checkbox"
-            id="atrasados"
-            checked={filtroAtrasados}
-            onChange={(e) => setFiltroAtrasados(e.target.checked)}
-            className="rounded"
-          />
-          <label htmlFor="atrasados" className="text-sm text-slate-700 cursor-pointer flex items-center gap-1">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            Mostrar apenas atrasados
-          </label>
+
+        {/* Tabs: OF | OR | Todos */}
+        <div
+          className="inline-flex gap-2 bg-slate-200/65 p-1.5 rounded-xl mb-5"
+          style={{ animation: 'montagem-rise 0.65s 0.22s cubic-bezier(0.2,0.8,0.2,1) both' }}
+        >
+          {['of', 'or', 'todos'].map(tipo => (
+            <button
+              key={tipo}
+              onClick={() => setAbaAtiva(tipo)}
+              className={`px-7 py-2.5 rounded-lg font-bold cursor-pointer transition-all border-0 ${
+                abaAtiva === tipo
+                  ? 'bg-white text-[#5752b7] shadow-md'
+                  : 'bg-transparent text-slate-500 hover:text-[#514dae] hover:bg-white/60'
+              }`}
+            >
+              {ABA_LABEL[tipo]}
+            </button>
+          ))}
         </div>
+
+        {/* Queue */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+          </div>
+        ) : opsComItens.length === 0 ? (
+          <div className="text-center py-12 bg-white/60 backdrop-blur-md rounded-2xl border border-slate-200/85">
+            <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma OP encontrada</h3>
+            <p className="text-slate-500">Ajuste os filtros ou aguarde novos itens</p>
+          </div>
+        ) : podeArrastar ? (
+          <>
+            {opsComItens.length > 1 && (
+              <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
+                <GripVertical className="w-3 h-3" />
+                Arraste os cards para reordenar a fila {ABA_LABEL[abaAtiva]}.
+              </p>
+            )}
+            <MontagemDraggableList ops={opsComItens} renderCard={renderCard} />
+          </>
+        ) : (
+          <div className="space-y-4">
+            {opsComItens.map(opData => renderCard(opData))}
+          </div>
+        )}
+
+        <RetornarItemDialog
+          open={retornarDialogOpen}
+          onOpenChange={setRetornarDialogOpen}
+          onConfirm={confirmarRetorno}
+          loading={!!loadingItem}
+        />
       </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
-        </div>
-      ) : opsComItens.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
-          <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma OP encontrada</h3>
-          <p className="text-slate-500">Ajuste os filtros ou aguarde novos itens</p>
-        </div>
-      ) : isAdmin && !temFiltrosAtivos ? (
-        <>
-          {opsComItens.length > 1 && (
-            <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
-              <GripVertical className="w-3 h-3" />
-              Arraste os cards para reordenar as OPs.
-            </p>
-          )}
-          <MontagemDraggableList ops={opsComItens} renderCard={renderCard} />
-        </>
-      ) : (
-        <div className="space-y-4">
-          {opsComItens.map(opData => renderCard(opData))}
-        </div>
-      )}
-
-      <RetornarItemDialog
-        open={retornarDialogOpen}
-        onOpenChange={setRetornarDialogOpen}
-        onConfirm={confirmarRetorno}
-        loading={!!loadingItem}
-      />
     </div>
   );
 }

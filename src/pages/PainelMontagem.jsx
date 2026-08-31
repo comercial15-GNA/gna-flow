@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
-import { Layers, AlertTriangle, Calendar, Package, User } from 'lucide-react';
+import { Layers, AlertTriangle } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
@@ -21,20 +21,126 @@ export default function PainelMontagem() {
     queryKey: ['itens-painel-montagem'],
     queryFn: async () => {
       const items = await base44.entities.ItemOP.filter({ etapa_atual: 'montagem' });
-      // Ordenar por data de entrega (mais próxima primeiro)
       return items.sort((a, b) => {
         if (!a.data_entrega) return 1;
         if (!b.data_entrega) return -1;
         return new Date(a.data_entrega) - new Date(b.data_entrega);
       });
     },
-    refetchInterval: 120000 // Atualiza a cada 2 minutos
+    refetchInterval: 120000
   });
+
+  const { data: ops = [] } = useQuery({
+    queryKey: ['ops-painel-montagem'],
+    queryFn: () => base44.entities.OrdemProducao.list(),
+    refetchInterval: 120000
+  });
+
+  const getTipoOrdem = (item) => {
+    const op = ops.find(o => o.id === item.op_id);
+    return op?.tipo_ordem || 'op';
+  };
+
+  const itensOF = itens.filter(i => getTipoOrdem(i) === 'of');
+  const itensOR = itens.filter(i => getTipoOrdem(i) === 'or');
+  const itensOP = itens.filter(i => getTipoOrdem(i) === 'op');
 
   const isAtrasado = (dataEntrega) => {
     if (!dataEntrega) return false;
     return isBefore(startOfDay(new Date(dataEntrega)), startOfDay(new Date()));
   };
+
+  const renderTable = (titulo, corBg, items) => (
+    <div className="bg-slate-800 rounded-xl overflow-hidden flex flex-col min-w-0">
+      <div className={`px-5 py-4 ${corBg}`}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-white text-xl font-bold tracking-wide">{titulo}</h2>
+          <span className="bg-black/20 text-white px-3 py-1 rounded-full text-sm font-bold">
+            {items.length} {items.length === 1 ? 'item' : 'itens'}
+          </span>
+        </div>
+      </div>
+      <div className="overflow-auto flex-1">
+        <table className="w-full">
+          <thead className="bg-slate-700 sticky top-0">
+            <tr className="text-left text-slate-300 text-xs font-semibold uppercase tracking-wider">
+              <th className="px-3 py-3">OP</th>
+              <th className="px-3 py-3">Equipamento</th>
+              <th className="px-3 py-3">Item</th>
+              <th className="px-3 py-3">Qtd</th>
+              <th className="px-3 py-3">Entrega</th>
+              <th className="px-3 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-700">
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="text-center py-10 text-slate-400">
+                  Nenhum item na fila
+                </td>
+              </tr>
+            ) : (
+              items.map((item) => {
+                const atrasado = isAtrasado(item.data_entrega);
+                return (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-slate-700 transition-colors ${atrasado ? 'bg-red-900/20' : ''}`}
+                  >
+                    <td className="px-3 py-3">
+                      <NumeroOpColorido numero_op={item.numero_op} className="text-sm font-bold" />
+                    </td>
+                    <td className="px-3 py-3 text-slate-300 text-sm">{item.equipamento_principal}</td>
+                    <td className="px-3 py-3">
+                      <div className={`text-white text-sm ${atrasado ? 'font-bold' : ''}`}>
+                        {item.descricao}
+                      </div>
+                      {item.codigo_ga && (
+                        <div className="text-slate-400 text-xs">
+                          Cód: {item.codigo_ga}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      <Badge variant="outline" className="text-white border-slate-600">
+                        {item.quantidade}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-3">
+                      {item.data_entrega ? (
+                        <div className={atrasado ? 'text-red-400 font-bold' : 'text-white'}>
+                          <div className="flex items-center gap-1 text-sm">
+                            {atrasado && <AlertTriangle className="w-3 h-3" />}
+                            {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            {format(new Date(item.data_entrega), 'EEEE', { locale: ptBR })}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 text-sm">-</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      {atrasado ? (
+                        <Badge className="bg-red-600 text-white font-bold animate-pulse">
+                          ATRASADO
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-violet-600 text-white">
+                          NO PRAZO
+                        </Badge>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -70,10 +176,14 @@ export default function PainelMontagem() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-violet-500">
-          <div className="text-slate-400 text-sm">Total de Itens</div>
-          <div className="text-white text-3xl font-bold">{itens.length}</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-blue-500">
+          <div className="text-slate-400 text-sm">OF (Fabricação)</div>
+          <div className="text-white text-3xl font-bold">{itensOF.length}</div>
+        </div>
+        <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-orange-500">
+          <div className="text-slate-400 text-sm">OR (Reforma)</div>
+          <div className="text-white text-3xl font-bold">{itensOR.length}</div>
         </div>
         <div className="bg-slate-800 rounded-xl p-4 border-l-4 border-yellow-500">
           <div className="text-slate-400 text-sm">Entregas Próximas (7 dias)</div>
@@ -93,91 +203,18 @@ export default function PainelMontagem() {
         </div>
       </div>
 
-      {/* Tabela estilo aeroporto */}
-      <div className="bg-slate-800 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-700">
-              <tr className="text-left text-slate-300 text-sm font-semibold uppercase tracking-wider">
-                <th className="px-4 py-4">OP</th>
-                <th className="px-4 py-4">Equipamento</th>
-                <th className="px-4 py-4">Item</th>
-                <th className="px-4 py-4">Qtd</th>
-                <th className="px-4 py-4">Entrega</th>
-                <th className="px-4 py-4">Cliente</th>
-                <th className="px-4 py-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700">
-              {itens.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-12 text-slate-400">
-                    Nenhum item na fila
-                  </td>
-                </tr>
-              ) : (
-                itens.map((item, index) => {
-                  const atrasado = isAtrasado(item.data_entrega);
-                  return (
-                    <tr 
-                      key={item.id}
-                      className={`hover:bg-slate-700 transition-colors ${
-                        atrasado ? 'bg-red-900/20' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-4">
-                        <NumeroOpColorido numero_op={item.numero_op} className="text-base font-bold" />
-                      </td>
-                      <td className="px-4 py-4 text-slate-300">{item.equipamento_principal}</td>
-                      <td className="px-4 py-4">
-                        <div className={`text-white ${atrasado ? 'font-bold' : ''}`}>
-                          {item.descricao}
-                        </div>
-                        {item.codigo_ga && (
-                          <div className="text-slate-400 text-sm">
-                            Cód: {item.codigo_ga}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <Badge variant="outline" className="text-white border-slate-600">
-                          {item.quantidade}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4">
-                        {item.data_entrega ? (
-                          <div className={atrasado ? 'text-red-400 font-bold' : 'text-white'}>
-                            <div className="flex items-center gap-2">
-                              {atrasado && <AlertTriangle className="w-4 h-4" />}
-                              {format(new Date(item.data_entrega), 'dd/MM/yyyy')}
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              {format(new Date(item.data_entrega), 'EEEE', { locale: ptBR })}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        {atrasado ? (
-                          <Badge className="bg-red-600 text-white font-bold animate-pulse">
-                            ATRASADO
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-violet-600 text-white">
-                            NO PRAZO
-                          </Badge>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Duas tabelas lado a lado: OF primeiro, depois OR */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {renderTable('OF', 'bg-blue-600', itensOF)}
+        {renderTable('OR', 'bg-orange-600', itensOR)}
       </div>
+
+      {/* OP items (caso existam) */}
+      {itensOP.length > 0 && (
+        <div className="mt-6">
+          {renderTable('OP', 'bg-violet-600', itensOP)}
+        </div>
+      )}
     </div>
   );
 }
