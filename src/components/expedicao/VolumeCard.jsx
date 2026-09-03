@@ -9,12 +9,13 @@ const ETAPA_COLORS = {
   coleta: 'bg-purple-100 text-purple-800',
 };
 
-export default function VolumeCard({ volume, itensDoVolume, etapaAtual, onAcao, onRetornar, loadingVolume }) {
+export default function VolumeCard({ volume, itensDoVolume, etapaAtual, onAcao, onRetornar, onRetornarItem, loadingVolume, loadingItem }) {
   const [expanded, setExpanded] = useState(false);
 
   const acaoLabel = etapaAtual === 'expedicao' ? 'Enviar p/ Coleta' : 'Finalizar Volume';
   const acaoColor = etapaAtual === 'expedicao' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-purple-600 hover:bg-purple-700';
   const retornarLabel = etapaAtual === 'expedicao' ? 'Retornar p/ Liberação' : 'Retornar p/ Expedição';
+  const retornarItemLabel = etapaAtual === 'expedicao' ? 'Liberação' : 'Expedição';
 
   return (
     <div className="rounded-xl border-2 border-blue-300 bg-blue-50 overflow-hidden shadow-sm">
@@ -111,8 +112,22 @@ export default function VolumeCard({ volume, itensDoVolume, etapaAtual, onAcao, 
                         {item.observacao && <span className="text-blue-600">Obs: {item.observacao}</span>}
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-slate-700 ml-3">
-                      {item.peso ? `${((item.peso || 0) * (item.quantidade || 1)).toFixed(2)} kg` : '-'}
+                    <div className="flex items-center gap-2 ml-3">
+                      <div className="text-sm font-bold text-slate-700">
+                        {item.peso ? `${((item.peso || 0) * (item.quantidade || 1)).toFixed(2)} kg` : '-'}
+                      </div>
+                      {onRetornarItem && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title={`Retornar somente este item p/ ${retornarItemLabel}`}
+                          onClick={() => onRetornarItem(item, volume)}
+                          disabled={loadingItem === item.id}
+                          className="text-amber-600 hover:bg-amber-50 h-7 px-2"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

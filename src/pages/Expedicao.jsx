@@ -22,6 +22,7 @@ import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import VolumeCard from '@/components/expedicao/VolumeCard';
 import ItensRetornados from '@/components/producao/ItensRetornados';
+import RetornarItemVolumeDialog from '@/components/producao/RetornarItemVolumeDialog';
 
 export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +32,7 @@ export default function Expedicao() {
   const [finalizarDialogOpen, setFinalizarDialogOpen] = useState(false);
   const [retornarVolumeDialogOpen, setRetornarVolumeDialogOpen] = useState(false);
   const [coletaVolumeDialogOpen, setColetaVolumeDialogOpen] = useState(false);
+  const [retornarItemVolumeTarget, setRetornarItemVolumeTarget] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedVolume, setSelectedVolume] = useState(null);
   const [selectedVolumeItens, setSelectedVolumeItens] = useState([]);
@@ -223,6 +225,11 @@ export default function Expedicao() {
     setSelectedVolumeItens(itensDoVolume);
     setJustificativa('');
     setRetornarVolumeDialogOpen(true);
+  };
+
+  // --- Item individual de dentro do volume: retornar para liberação ---
+  const abrirRetornarItemVolume = (item, volume) => {
+    setRetornarItemVolumeTarget({ item, volume });
   };
 
   const confirmarRetornarVolume = async () => {
@@ -449,7 +456,9 @@ export default function Expedicao() {
                                 etapaAtual="expedicao"
                                 onAcao={abrirColetaVolume}
                                 onRetornar={abrirRetornarVolume}
+                                onRetornarItem={abrirRetornarItemVolume}
                                 loadingVolume={loadingVolume}
+                                loadingItem={loadingItem}
                               />
                             );
                           })}
@@ -619,6 +628,19 @@ export default function Expedicao() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: retornar item individual do volume */}
+      <RetornarItemVolumeDialog
+        open={!!retornarItemVolumeTarget}
+        onOpenChange={(v) => { if (!v) setRetornarItemVolumeTarget(null); }}
+        item={retornarItemVolumeTarget?.item}
+        volume={retornarItemVolumeTarget?.volume}
+        etapaOrigem="expedicao"
+        etapaDestino="liberacao"
+        destinoLabel="Liberação"
+        currentUser={currentUser}
+        onSuccess={invalidarQueries}
+      />
 
       {/* Dialog: retornar volume (desfaz) */}
       <Dialog open={retornarVolumeDialogOpen} onOpenChange={setRetornarVolumeDialogOpen}>

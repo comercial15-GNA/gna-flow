@@ -22,6 +22,7 @@ import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import VolumeCard from '@/components/expedicao/VolumeCard';
 import FinalizarOROFDialog from '@/components/producao/FinalizarOROFDialog';
+import RetornarItemVolumeDialog from '@/components/producao/RetornarItemVolumeDialog';
 import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 export default function Coleta() {
@@ -38,6 +39,7 @@ export default function Coleta() {
   const [selectedVolume, setSelectedVolume] = useState(null);
   const [selectedVolumeItens, setSelectedVolumeItens] = useState([]);
   const [orofContext, setOrofContext] = useState(null); // { op, itemPrincipal, itensParaFinalizar }
+  const [retornarItemVolumeTarget, setRetornarItemVolumeTarget] = useState(null); // { item, volume }
   const [justificativa, setJustificativa] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
@@ -268,6 +270,11 @@ export default function Coleta() {
     } finally {
       setLoadingVolume(null);
     }
+  };
+
+  // --- Retornar item individual de dentro de um volume ---
+  const abrirRetornarItemVolume = (item, volume) => {
+    setRetornarItemVolumeTarget({ item, volume });
   };
 
   // --- Identificar Item Principal (primeiro criado) de uma OP ---
@@ -524,7 +531,9 @@ export default function Coleta() {
                                 etapaAtual="coleta"
                                 onAcao={abrirFinalizarVolume}
                                 onRetornar={abrirRetornarVolume}
+                                onRetornarItem={abrirRetornarItemVolume}
                                 loadingVolume={loadingVolume}
+                                loadingItem={loadingItem}
                               />
                             );
                           })}
@@ -749,6 +758,19 @@ export default function Coleta() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: retornar item individual do volume */}
+      <RetornarItemVolumeDialog
+        open={!!retornarItemVolumeTarget}
+        onOpenChange={(v) => { if (!v) setRetornarItemVolumeTarget(null); }}
+        item={retornarItemVolumeTarget?.item}
+        volume={retornarItemVolumeTarget?.volume}
+        etapaOrigem="coleta"
+        etapaDestino="expedicao"
+        destinoLabel="Expedição"
+        currentUser={currentUser}
+        onSuccess={invalidarQueries}
+      />
 
       {/* Dialog: encerramento em massa (OR/OF) */}
       {orofContext && (
