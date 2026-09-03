@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   PackageCheck, Search, Package, RotateCcw, Check, FileText,
-  ExternalLink, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Zap,
+  ExternalLink, FileSpreadsheet, ChevronDown, ChevronUp, AlertTriangle, Zap, KeyRound, Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -21,6 +21,8 @@ import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import VolumeCard from '@/components/expedicao/VolumeCard';
+import FinalizarOROFDialog from '@/components/producao/FinalizarOROFDialog';
+import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 export default function Coleta() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,9 +32,12 @@ export default function Coleta() {
   const [finalizarDialogOpen, setFinalizarDialogOpen] = useState(false);
   const [retornarVolumeDialogOpen, setRetornarVolumeDialogOpen] = useState(false);
   const [finalizarVolumeDialogOpen, setFinalizarVolumeDialogOpen] = useState(false);
+  const [finalizarOROFDialogOpen, setFinalizarOROFDialogOpen] = useState(false);
+  const [loadingOROF, setLoadingOROF] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedVolume, setSelectedVolume] = useState(null);
   const [selectedVolumeItens, setSelectedVolumeItens] = useState([]);
+  const [orofContext, setOrofContext] = useState(null); // { op, itemPrincipal, itensParaFinalizar }
   const [justificativa, setJustificativa] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
   const queryClient = useQueryClient();
@@ -265,6 +270,71 @@ export default function Coleta() {
     }
   };
 
+  // --- Identificar Item Principal (primeiro criado) de uma OP ---
+  const getItemPrincipal = (opId) => {
+    const itensOP = todosItens.filter(i => i.op_id === opId);
+    if (itensOP.length === 0) return null;
+    return itensOP.reduce((primeiro, atual) =>
+      (!primeiro || new Date(atual.created_date) < new Date(primeiro.created_date)) ? atual : primeiro
+    , null);
+  };
+
+  // --- Abrir dialog de encerramento em massa via Item Principal ---
+  const abrirFinalizarOROF = (item, op) => {
+    const itensAtivosOP = todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'cancelado');
+    setOrofContext({ op, itemPrincipal: item, itensParaFinalizar: itensAtivosOP });
+    setFinalizarOROFDialogOpen(true);
+  };
+
+  // --- Confirmar encerramento em massa (cascata) ---
+  const confirmarFinalizarOROF = async (justificativa) => {
+    if (!orofContext) return;
+    const { op, itensParaFinalizar } = orofContext;
+    setLoadingOROF(true);
+    try {
+      const agora = new Date().toISOString();
+      // 1) Finalizar todos os itens ativos da OP em uma operação bulk
+      await base44.entities.ItemOP.bulkUpdate(
+        itensParaFinalizar.map(i => ({ id: i.id, etapa_atual: 'finalizado', data_entrada_etapa: agora }))
+      );
+      // 2) Registrar histórico de movimentação para cada item
+      await Promise.all(
+        itensParaFinalizar.map(item =>
+          base44.entities.HistoricoMovimentacao.create({
+            item_id: item.id,
+            op_id: item.op_id,
+            numero_op: item.numero_op,
+            descricao_item: item.descricao,
+            setor_origem: 'coleta',
+            setor_destino: 'finalizado',
+            justificativa: `Encerramento em massa via Item Principal: ${justificativa}`,
+            usuario_email: currentUser?.email,
+            usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
+            data_movimentacao: agora,
+          })
+        )
+      );
+      // 3) Finalizar volumes da OP que estavam em coleta (consistência)
+      const volumesColetaOP = volumes.filter(v => v.op_id === op.id && v.etapa_atual === 'coleta');
+      if (volumesColetaOP.length > 0) {
+        await Promise.all(
+          volumesColetaOP.map(v => base44.entities.VolumeExpedicao.update(v.id, { etapa_atual: 'finalizado' }))
+        );
+      }
+      // 4) Recalcular status da OP (marcará como finalizado automaticamente)
+      await updateOPStatus(op.id);
+      invalidarQueries();
+      toast.success(`OR/OF ${op.numero_op} finalizada com ${itensParaFinalizar.length} itens`);
+      setFinalizarOROFDialogOpen(false);
+      setOrofContext(null);
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao finalizar OR/OF');
+    } finally {
+      setLoadingOROF(false);
+    }
+  };
+
   const gerarRelatorio = () => {
     const dados = itens.map(item => ({
       'OP': item.numero_op, 'Descrição': item.descricao,
@@ -445,11 +515,23 @@ export default function Coleta() {
                         <div className="space-y-3">
                           {itensSemVolume.map(item => {
                             const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+                            const tipoOrdem = op.tipo_ordem || inferTipoOrdem(op.numero_op);
+                            const isOROF = tipoOrdem === 'or' || tipoOrdem === 'of';
+                            const itemPrincipal = isOROF ? getItemPrincipal(op.id) : null;
+                            const isPrincipal = isOROF && itemPrincipal && item.id === itemPrincipal.id;
+                            const itensAtivosOP = isPrincipal ? todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'cancelado') : [];
+                            const demaisAtivos = isPrincipal ? itensAtivosOP.length - 1 : 0;
                             return (
-                              <div key={item.id} className={`rounded-lg border-2 p-4 ${item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-purple-50 border-purple-300'}`}>
+                              <div key={item.id} className={`rounded-lg border-2 p-4 ${isPrincipal ? 'bg-white border-[#DDD6FE] shadow-sm' : item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-purple-50 border-purple-300'}`}>
                                 <div className="flex items-start justify-between mb-3">
                                   <div>
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                      {isPrincipal && (
+                                        <Badge className="bg-[#F3E8FF] border border-[#DDD6FE] text-[#6D28D9]">
+                                          <KeyRound className="w-3 h-3 mr-1" />
+                                          Item Principal
+                                        </Badge>
+                                      )}
                                       <p className="font-semibold text-slate-800">{item.descricao}</p>
                                       {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
                                     </div>
@@ -483,6 +565,17 @@ export default function Coleta() {
                                     className="bg-purple-600 hover:bg-purple-700">
                                     <Check className="w-3 h-3 mr-1" />Finalizar Item
                                   </Button>
+                                  {isPrincipal && demaisAtivos > 0 && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => abrirFinalizarOROF(item, op)}
+                                      disabled={loadingOROF}
+                                      className="bg-amber-600 hover:bg-amber-700 text-white ring-2 ring-amber-300/60"
+                                    >
+                                      <Layers className="w-3 h-3 mr-1" />
+                                      Finalizar OR/OF (Item Principal)
+                                    </Button>
+                                  )}
                                   <Button size="sm" variant="outline" onClick={() => abrirDialogRetorno(item)} disabled={loadingItem === item.id}
                                     className="text-amber-600 border-amber-300 hover:bg-amber-50">
                                     <RotateCcw className="w-3 h-3 mr-1" />Retornar p/ Expedição
@@ -631,6 +724,19 @@ export default function Coleta() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: encerramento em massa via Item Principal (OR/OF) */}
+      {orofContext && (
+        <FinalizarOROFDialog
+          open={finalizarOROFDialogOpen}
+          onOpenChange={setFinalizarOROFDialogOpen}
+          op={orofContext.op}
+          itemPrincipal={orofContext.itemPrincipal}
+          itensParaFinalizar={orofContext.itensParaFinalizar}
+          loading={loadingOROF}
+          onConfirm={confirmarFinalizarOROF}
+        />
+      )}
     </div>
   );
 }
