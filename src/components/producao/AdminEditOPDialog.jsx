@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle, Ban, Zap } from 'lucide-react';
+import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle, Ban, Zap, RotateCcw } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import CancelarOPDialog from './CancelarOPDialog';
+import ReabrirOPDialog from './ReabrirOPDialog';
 import { toast } from 'sonner';
 
 export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, onDelete, currentUser }) {
@@ -22,6 +23,8 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [cancelarOPOpen, setCancelarOPOpen] = useState(false);
   const [cancelarItemTarget, setCancelarItemTarget] = useState(null);
+  const [reabrirOPOpen, setReabrirOPOpen] = useState(false);
+  const [reabrirItemTarget, setReabrirItemTarget] = useState(null);
 
   const { data: responsaveis = [] } = useQuery({
     queryKey: ['responsaveis-ativos'],
@@ -283,6 +286,16 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                           <Ban className="w-4 h-4 text-orange-500" />
                         </Button>
                       )}
+                      {item.id && item.etapa_atual === 'finalizado' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Reabrir este item (finalizado por engano)"
+                          onClick={() => setReabrirItemTarget(item)}
+                        >
+                          <RotateCcw className="w-4 h-4 text-amber-500" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -450,6 +463,12 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                 <Ban className="w-4 h-4 mr-2" />
                 {op?.status === 'cancelada' ? 'OP Cancelada' : 'Cancelar OP'}
               </Button>
+              {op?.status === 'finalizado' && (
+                <Button variant="ghost" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={() => setReabrirOPOpen(true)} disabled={salvarMutation.isPending}>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reabrir OP
+                </Button>
+              )}
               <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setConfirmDelete(true)} disabled={salvarMutation.isPending}>
                 <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
@@ -497,6 +516,33 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
       currentUser={currentUser}
       onSuccess={() => {
         setCancelarItemTarget(null);
+        base44.entities.ItemOP.filter({ op_id: op?.id }).then(setItens);
+        onSuccess?.();
+      }}
+    />
+
+    {/* Dialog Reabrir OP inteira */}
+    <ReabrirOPDialog
+      open={reabrirOPOpen}
+      onOpenChange={setReabrirOPOpen}
+      op={op}
+      itensOP={itens}
+      currentUser={currentUser}
+      onSuccess={() => {
+        base44.entities.ItemOP.filter({ op_id: op?.id }).then(setItens);
+        onSuccess?.();
+      }}
+    />
+
+    {/* Dialog Reabrir Item individual */}
+    <ReabrirOPDialog
+      open={!!reabrirItemTarget}
+      onOpenChange={(v) => { if (!v) setReabrirItemTarget(null); }}
+      op={op}
+      item={reabrirItemTarget}
+      currentUser={currentUser}
+      onSuccess={() => {
+        setReabrirItemTarget(null);
         base44.entities.ItemOP.filter({ op_id: op?.id }).then(setItens);
         onSuccess?.();
       }}
