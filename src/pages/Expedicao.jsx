@@ -21,6 +21,7 @@ import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
 import VolumeCard from '@/components/expedicao/VolumeCard';
+import ItensRetornados from '@/components/producao/ItensRetornados';
 
 export default function Expedicao() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -355,6 +356,13 @@ export default function Expedicao() {
         </div>
       </div>
 
+      <ItensRetornados
+        itens={itens}
+        onReenviar={(item) => abrirDialogFinalizar(item)}
+        loadingItem={loadingItem}
+        etapaAtual="expedicao"
+      />
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
@@ -464,6 +472,7 @@ export default function Expedicao() {
                                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <p className="font-semibold text-slate-800">{item.descricao}</p>
                                     {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
+                                    {item.retornado && <Badge variant="destructive">Retornado</Badge>}
                                   </div>
                                   <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
                                 </div>

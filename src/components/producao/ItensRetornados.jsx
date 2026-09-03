@@ -31,6 +31,9 @@ export default function ItensRetornados({ itens, onReenviar, loadingItem, etapaA
       queryClient.invalidateQueries({ queryKey: ['itens-fundicao'] });
       queryClient.invalidateQueries({ queryKey: ['itens-usinagem'] });
       queryClient.invalidateQueries({ queryKey: ['itens-caldeiraria'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-liberacao'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-expedicao'] });
+      queryClient.invalidateQueries({ queryKey: ['itens-coleta'] });
       queryClient.invalidateQueries({ queryKey: ['todos-itens-ops'] });
       
       if (onAcknowledge) {
