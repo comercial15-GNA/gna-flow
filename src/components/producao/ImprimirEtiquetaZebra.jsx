@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { inferTipoOrdem } from '@/components/producao/NumeroOpColorido';
 
 // Converte caracteres especiais do português para equivalentes ASCII
 // para compatibilidade com impressoras Zebra que não suportam UTF-8
@@ -51,8 +52,11 @@ function gerarZPL(item) {
 ^FO10,10^GB374,100,4^FS
 ${logoGNA}
 
-^FO384,10^GB400,100,4^FS
-^FO394,22^A0N,48,52^FD${numeroOP}^FS
+${(inferTipoOrdem(numeroOP) === 'or' || inferTipoOrdem(numeroOP) === 'of')
+  ? `^FO384,10^GB400,100,100^FS
+^FO384,28^A0N,48,52^FB400,1,0,C,0^FR^FD${numeroOP}^FS`
+  : `^FO384,10^GB400,100,4^FS
+^FO394,22^A0N,48,52^FD${numeroOP}^FS`}
 
 ^FO10,110^GB774,4,4^FS
 ^FO10,110^GB774,160,4^FS
