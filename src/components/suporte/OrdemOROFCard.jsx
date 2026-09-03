@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronDown, ChevronUp, Plus, Pencil, Trash2, Send, Package, User, Calendar, GripVertical
+  ChevronDown, ChevronUp, Plus, Pencil, Trash2, Send, Package, User, Calendar, GripVertical, KeyRound
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
@@ -30,6 +30,11 @@ export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcl
   const [expanded, setExpanded] = useState(false);
   const tipo = op.tipo_ordem;
   const { getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
+
+  // Item Principal = item mais antigo (menor created_date) da OR/OF
+  const itemPrincipalId = itens.length > 0
+    ? itens.reduce((p, a) => (!p || new Date(a.created_date) < new Date(p.created_date)) ? a : p, null)?.id
+    : null;
 
   return (
     <Card className={`overflow-hidden ${isDragging ? 'shadow-xl ring-2 ring-blue-400' : ''}`}>
@@ -86,12 +91,18 @@ export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcl
               <div className="space-y-2">
                 {itens.map((item, idx) => {
                   const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
+                  const isPrincipal = item.id === itemPrincipalId;
                   return (
-                    <div key={item.id} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                    <div key={item.id} className={`rounded-lg p-3 border ${isPrincipal ? 'bg-white border-[#DDD6FE] shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-medium text-slate-500">#{idx + 1}</span>
+                            {isPrincipal && (
+                              <Badge className="text-xs bg-[#F3E8FF] border border-[#DDD6FE] text-[#6D28D9]">
+                                <KeyRound className="w-3 h-3 mr-1" />Item Principal
+                              </Badge>
+                            )}
                             {item.etapa_atual !== 'suporte_industrial' && (
                               <Badge variant="outline" className="text-xs">
                                 {ETAPA_LABEL[item.etapa_atual] || item.etapa_atual}
