@@ -95,6 +95,8 @@ export default function ReabrirOPDialog({ open, onOpenChange, op, item, itensOP 
       const idsReabertos = itensReabrir.map(i => i.id);
 
       // 1) Reabrir itens (bulkUpdate) com retornado + justificativa (dispara alerta na etapa destino)
+      //    No modo item único, desvincula o item do volume (volume_id = null) para não romper
+      //    a consistência do volume, que pode conter outros itens ainda finalizados.
       await base44.entities.ItemOP.bulkUpdate(
         itensReabrir.map(i => ({
           id: i.id,
@@ -102,6 +104,7 @@ export default function ReabrirOPDialog({ open, onOpenChange, op, item, itensOP 
           data_entrada_etapa: agora,
           retornado: true,
           justificativa_retorno: `Reabertura: ${justificativa.trim()}`,
+          ...(modoItem ? { volume_id: null } : {}),
         }))
       );
 
@@ -123,14 +126,40 @@ export default function ReabrirOPDialog({ open, onOpenChange, op, item, itensOP 
         )
       );
 
-      // 3) Reabrir volumes finalizados que continham itens reabertos
+      // 3) Ajustar volumes
       if (op) {
         const volumes = await base44.entities.VolumeExpedicao.filter({ op_id: op.id });
-        await Promise.all(
-          volumes
-            .filter(v => v.etapa_atual === 'finalizado' && (v.itens_ids || []).some(id => idsReabertos.includes(id)))
-            .map(v => base44.entities.VolumeExpedicao.update(v.id, { etapa_atual: 'coleta' }))
-        );
+
+        if (modoItem) {
+          // Item único: desvincular do volume finalizado, recalcular peso e excluir volume vazio
+          // (mesma lógica do cancelamento) — o volume permanece finalizado com os demais itens.
+          const itemId = item.id;
+          await Promise.all(
+            volumes
+              .filter(v => (v.itens_ids || []).includes(itemId))
+              .map(async (v) => {
+                const novosIds = (v.itens_ids || []).filter(id => id !== itemId);
+                if (novosIds.length === 0) {
+                  await base44.entities.VolumeExpedicao.delete(v.id);
+                } else {
+                  const itensDoVolume = await base44.entities.ItemOP.filter({ volume_id: v.id });
+                  const itensRestantes = itensDoVolume.filter(i => i.etapa_atual !== 'cancelado' && i.id !== itemId);
+                  const pesoTotal = itensRestantes.reduce((s, i) => s + (i.peso || 0), 0);
+                  await base44.entities.VolumeExpedicao.update(v.id, {
+                    itens_ids: novosIds,
+                    peso_total_itens: pesoTotal,
+                  });
+                }
+              })
+          );
+        } else {
+          // OP inteira: reabrir volumes finalizados que continham itens reabertos
+          await Promise.all(
+            volumes
+              .filter(v => v.etapa_atual === 'finalizado' && (v.itens_ids || []).some(id => idsReabertos.includes(id)))
+              .map(v => base44.entities.VolumeExpedicao.update(v.id, { etapa_atual: 'coleta' }))
+          );
+        }
 
         // 4) Recalcular status da OP
         await updateOPStatus(op.id);
