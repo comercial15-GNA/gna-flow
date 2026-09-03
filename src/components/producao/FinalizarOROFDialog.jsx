@@ -26,6 +26,7 @@ export default function FinalizarOROFDialog({
   op,
   itemPrincipal,
   itensParaFinalizar,
+  isPrincipalTrigger = true,
   loading,
   onConfirm,
 }) {
@@ -53,11 +54,19 @@ export default function FinalizarOROFDialog({
             <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4 text-amber-600" />
             </div>
-            <DialogTitle className="text-base">Encerramento em Massa — Item Principal</DialogTitle>
+            <DialogTitle className="text-base">
+              {isPrincipalTrigger ? 'Encerramento em Massa — Item Principal' : 'Encerramento em Massa — Item de Referência'}
+            </DialogTitle>
           </div>
           <DialogDescription className="text-slate-600">
-            Esta ação irá finalizar o <strong>Item Principal</strong> e marcar todos os outros{' '}
-            <strong>{demais}</strong> {demais === 1 ? 'item ativo' : 'itens ativos'} desta OR/OF como Finalizados.
+            {isPrincipalTrigger ? (
+              <>Esta ação irá finalizar o <strong>Item Principal</strong> e marcar todos os outros{' '}
+                <strong>{demais}</strong> {demais === 1 ? 'item ativo' : 'itens ativos'} desta OR/OF como Finalizados.</>
+            ) : (
+              <>O Item Principal desta OR/OF já foi finalizado. Esta ação irá finalizar o{' '}
+                <strong>item de referência</strong> (mais antigo em Coleta) e marcar todos os outros{' '}
+                <strong>{demais}</strong> {demais === 1 ? 'item ativo' : 'itens ativos'} restantes como Finalizados.</>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -66,20 +75,24 @@ export default function FinalizarOROFDialog({
           <div className="flex items-center gap-2 flex-wrap">
             <NumeroOpColorido numero_op={op.numero_op} tipo_ordem={op.tipo_ordem} />
             <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
-            <Badge className="bg-[#F3E8FF] border border-[#DDD6FE] text-[#6D28D9]">
-              <KeyRound className="w-3 h-3 mr-1" />
-              Item Principal
-            </Badge>
+            {isPrincipalTrigger && (
+              <Badge className="bg-[#F3E8FF] border border-[#DDD6FE] text-[#6D28D9]">
+                <KeyRound className="w-3 h-3 mr-1" />
+                Item Principal
+              </Badge>
+            )}
             <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
               {total} {total === 1 ? 'item' : 'itens'} serão finalizados
             </Badge>
           </div>
 
-          {/* Item Principal */}
+          {/* Item de referência (Item Principal quando ativo em Coleta) */}
           <div className="rounded-lg border border-[#DDD6FE] bg-[#F3E8FF]/40 p-3">
             <div className="flex items-center gap-2 mb-1">
               <KeyRound className="w-3.5 h-3.5 text-[#6D28D9]" />
-              <span className="text-xs font-semibold text-[#6D28D9] uppercase tracking-wide">Item Principal</span>
+              <span className="text-xs font-semibold text-[#6D28D9] uppercase tracking-wide">
+                {isPrincipalTrigger ? 'Item Principal' : 'Item de Referência'}
+              </span>
             </div>
             <p className="text-sm font-medium text-slate-800">{itemPrincipal.descricao}</p>
             <div className="flex flex-wrap gap-3 mt-1 text-xs text-slate-500 font-mono">
@@ -93,7 +106,7 @@ export default function FinalizarOROFDialog({
           {demais > 0 && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 max-h-32 overflow-y-auto">
               <p className="text-xs font-medium text-slate-600 mb-2">
-                Demais itens ativos que serão finalizados:
+                {isPrincipalTrigger ? 'Demais itens ativos que serão finalizados:' : 'Itens ativos restantes que serão finalizados:'}
               </p>
               <ul className="space-y-1">
                 {itensParaFinalizar

@@ -279,19 +279,29 @@ export default function Coleta() {
     , null);
   };
 
-  // --- Abrir dialog de encerramento em massa via Item Principal ---
-  const abrirFinalizarOROF = (item, op) => {
-    const itensAtivosOP = todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'cancelado');
-    setOrofContext({ op, itemPrincipal: item, itensParaFinalizar: itensAtivosOP });
+  // --- Abrir dialog de encerramento em massa ---
+  // item = item gatilho (Item Principal se ativo em Coleta, senão o ativo mais antigo em Coleta)
+  const abrirFinalizarOROF = (item, op, isPrincipalTrigger) => {
+    const itensAtivosOP = todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'finalizado' && i.etapa_atual !== 'cancelado');
+    setOrofContext({ op, itemPrincipal: item, itensParaFinalizar: itensAtivosOP, isPrincipalTrigger });
     setFinalizarOROFDialogOpen(true);
   };
 
   // --- Confirmar encerramento em massa (cascata) ---
   const confirmarFinalizarOROF = async (justificativa) => {
     if (!orofContext) return;
-    const { op, itensParaFinalizar } = orofContext;
+    const { op } = orofContext;
     setLoadingOROF(true);
     try {
+      // RE-VALIDAÇÃO: buscar itens ativos frescos do banco (evita snapshot desatualizado)
+      const itensFresh = await base44.entities.ItemOP.filter({ op_id: op.id });
+      const itensParaFinalizar = itensFresh.filter(i => i.etapa_atual !== 'finalizado' && i.etapa_atual !== 'cancelado');
+      if (itensParaFinalizar.length === 0) {
+        toast.info('Não há itens ativos para finalizar');
+        setFinalizarOROFDialogOpen(false);
+        setOrofContext(null);
+        return;
+      }
       const agora = new Date().toISOString();
       // 1) Finalizar todos os itens ativos da OP em uma operação bulk
       await base44.entities.ItemOP.bulkUpdate(
@@ -307,15 +317,15 @@ export default function Coleta() {
             descricao_item: item.descricao,
             setor_origem: 'coleta',
             setor_destino: 'finalizado',
-            justificativa: `Encerramento em massa via Item Principal: ${justificativa}`,
+            justificativa: `Encerramento em massa: ${justificativa}`,
             usuario_email: currentUser?.email,
             usuario_nome: currentUser?.apelido || currentUser?.full_name || currentUser?.email,
             data_movimentacao: agora,
           })
         )
       );
-      // 3) Finalizar volumes da OP que estavam em coleta (consistência)
-      const volumesColetaOP = volumes.filter(v => v.op_id === op.id && v.etapa_atual === 'coleta');
+      // 3) Finalizar volumes da OP que estavam em coleta (consistência) — buscar fresco
+      const volumesColetaOP = await base44.entities.VolumeExpedicao.filter({ op_id: op.id, etapa_atual: 'coleta' });
       if (volumesColetaOP.length > 0) {
         await Promise.all(
           volumesColetaOP.map(v => base44.entities.VolumeExpedicao.update(v.id, { etapa_atual: 'finalizado' }))
@@ -324,7 +334,7 @@ export default function Coleta() {
       // 4) Recalcular status da OP (marcará como finalizado automaticamente)
       await updateOPStatus(op.id);
       invalidarQueries();
-      toast.success(`OR/OF ${op.numero_op} finalizada com ${itensParaFinalizar.length} itens`);
+      toast.success(`OR/OF ${op.numero_op} finalizada com ${itensParaFinalizar.length} ${itensParaFinalizar.length === 1 ? 'item' : 'itens'}`);
       setFinalizarOROFDialogOpen(false);
       setOrofContext(null);
     } catch (error) {
@@ -431,6 +441,23 @@ export default function Coleta() {
             const isExpanded = expandedOPs[op.id];
             const itensSemVolume = itensColeta.filter(i => !i.volume_id);
 
+            // Trigger de encerramento em massa para OR/OF:
+            // Item Principal se ativo em Coleta, senão o item ativo mais antigo em Coleta.
+            const tipoOrdemOP = op.tipo_ordem || inferTipoOrdem(op.numero_op);
+            const isOROFOP = tipoOrdemOP === 'or' || tipoOrdemOP === 'of';
+            const itemPrincipalOP = isOROFOP ? getItemPrincipal(op.id) : null;
+            let triggerCascadeId = null;
+            let triggerIsPrincipal = false;
+            if (isOROFOP) {
+              const ativosColeta = itensSemVolume.filter(i => i.etapa_atual !== 'finalizado' && i.etapa_atual !== 'cancelado');
+              if (ativosColeta.length > 0) {
+                const maisAntigo = ativosColeta.reduce((p, a) =>
+                  (!p || new Date(a.created_date) < new Date(p.created_date)) ? a : p, null);
+                triggerCascadeId = maisAntigo?.id || null;
+                triggerIsPrincipal = itemPrincipalOP != null && maisAntigo?.id === itemPrincipalOP.id;
+              }
+            }
+
             return (
               <div key={op.id} className="bg-white rounded-xl border-2 border-purple-200 shadow-sm overflow-hidden">
                 <button onClick={() => toggleOP(op.id)}
@@ -515,14 +542,12 @@ export default function Coleta() {
                         <div className="space-y-3">
                           {itensSemVolume.map(item => {
                             const isAtrasado = item.data_entrega && new Date(item.data_entrega) < new Date();
-                            const tipoOrdem = op.tipo_ordem || inferTipoOrdem(op.numero_op);
-                            const isOROF = tipoOrdem === 'or' || tipoOrdem === 'of';
-                            const itemPrincipal = isOROF ? getItemPrincipal(op.id) : null;
-                            const isPrincipal = isOROF && itemPrincipal && item.id === itemPrincipal.id;
-                            const itensAtivosOP = isPrincipal ? todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'cancelado') : [];
-                            const demaisAtivos = isPrincipal ? itensAtivosOP.length - 1 : 0;
+                            const isPrincipal = isOROFOP && itemPrincipalOP && item.id === itemPrincipalOP.id;
+                            const isTrigger = item.id === triggerCascadeId;
+                            const itensAtivosOP = isTrigger ? todosItens.filter(i => i.op_id === op.id && i.etapa_atual !== 'finalizado' && i.etapa_atual !== 'cancelado') : [];
+                            const demaisAtivos = isTrigger ? itensAtivosOP.length - 1 : 0;
                             return (
-                              <div key={item.id} className={`rounded-lg border-2 p-4 ${isPrincipal ? 'bg-white border-[#DDD6FE] shadow-sm' : item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-purple-50 border-purple-300'}`}>
+                              <div key={item.id} className={`rounded-lg border-2 p-4 ${isTrigger ? 'bg-white border-[#DDD6FE] shadow-sm' : item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-purple-50 border-purple-300'}`}>
                                 <div className="flex items-start justify-between mb-3">
                                   <div>
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -565,15 +590,15 @@ export default function Coleta() {
                                     className="bg-purple-600 hover:bg-purple-700">
                                     <Check className="w-3 h-3 mr-1" />Finalizar Item
                                   </Button>
-                                  {isPrincipal && demaisAtivos > 0 && (
+                                  {isTrigger && demaisAtivos > 0 && (
                                     <Button
                                       size="sm"
-                                      onClick={() => abrirFinalizarOROF(item, op)}
+                                      onClick={() => abrirFinalizarOROF(item, op, triggerIsPrincipal)}
                                       disabled={loadingOROF}
                                       className="bg-amber-600 hover:bg-amber-700 text-white ring-2 ring-amber-300/60"
                                     >
                                       <Layers className="w-3 h-3 mr-1" />
-                                      Finalizar OR/OF (Item Principal)
+                                      {triggerIsPrincipal ? 'Finalizar OR/OF (Item Principal)' : 'Finalizar OR/OF (Encerrar em Massa)'}
                                     </Button>
                                   )}
                                   <Button size="sm" variant="outline" onClick={() => abrirDialogRetorno(item)} disabled={loadingItem === item.id}
@@ -725,7 +750,7 @@ export default function Coleta() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: encerramento em massa via Item Principal (OR/OF) */}
+      {/* Dialog: encerramento em massa (OR/OF) */}
       {orofContext && (
         <FinalizarOROFDialog
           open={finalizarOROFDialogOpen}
@@ -733,6 +758,7 @@ export default function Coleta() {
           op={orofContext.op}
           itemPrincipal={orofContext.itemPrincipal}
           itensParaFinalizar={orofContext.itensParaFinalizar}
+          isPrincipalTrigger={orofContext.isPrincipalTrigger}
           loading={loadingOROF}
           onConfirm={confirmarFinalizarOROF}
         />

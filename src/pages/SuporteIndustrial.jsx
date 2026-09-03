@@ -300,10 +300,13 @@ export default function SuporteIndustrial() {
 
   const temFiltrosAtivos = searchTerm || filtroCategoria !== 'todos' || filtroCliente !== 'todos';
 
-  // OR/OF finalizadas: todas as itens na etapa 'finalizado'
+  // OR/OF finalizadas: todos os itens encerrados (finalizado/cancelado) com ≥1 finalizado
   const opsFinalizadas = opsOROF.filter(op => {
     const itensOP = itensOROF.filter(i => i.op_id === op.id);
-    return itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado');
+    if (itensOP.length === 0) return false;
+    const algumFinalizado = itensOP.some(i => i.etapa_atual === 'finalizado');
+    const todosEncerrados = itensOP.every(i => ['finalizado', 'cancelado'].includes(i.etapa_atual));
+    return algumFinalizado && todosEncerrados;
   });
 
   // OR/OF finalizadas filtradas por busca
@@ -315,10 +318,13 @@ export default function SuporteIndustrial() {
       op.cliente?.toLowerCase().includes(q);
   });
 
-  // OR/OF ativas: pelo menos um item não finalizado
+  // OR/OF ativas: existe ao menos um item não encerrado (não finalizado/cancelado)
   const opsAtivasOROF = opsOROF.filter(op => {
     const itensOP = itensOROF.filter(i => i.op_id === op.id);
-    return !(itensOP.length > 0 && itensOP.every(i => i.etapa_atual === 'finalizado'));
+    if (itensOP.length === 0) return true;
+    const algumFinalizado = itensOP.some(i => i.etapa_atual === 'finalizado');
+    const todosEncerrados = itensOP.every(i => ['finalizado', 'cancelado'].includes(i.etapa_atual));
+    return !(algumFinalizado && todosEncerrados);
   }).sort((a, b) => {
     const ordA = a.ordem_visualizacao ?? Infinity;
     const ordB = b.ordem_visualizacao ?? Infinity;
