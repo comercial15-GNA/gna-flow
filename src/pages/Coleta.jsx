@@ -595,19 +595,18 @@ export default function Coleta() {
                                   </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                  <Button size="sm" onClick={() => abrirDialogFinalizar(item)} disabled={loadingItem === item.id}
-                                    className="bg-purple-600 hover:bg-purple-700">
-                                    <Check className="w-3 h-3 mr-1" />Finalizar Item
-                                  </Button>
-                                  {isTrigger && demaisAtivos > 0 && (
-                                    <Button
-                                      size="sm"
+                                  {isTrigger && demaisAtivos > 0 ? (
+                                    <Button size="sm"
                                       onClick={() => abrirFinalizarOROF(item, op, triggerIsPrincipal)}
                                       disabled={loadingOROF}
-                                      className="bg-amber-600 hover:bg-amber-700 text-white ring-2 ring-amber-300/60"
-                                    >
+                                      className="bg-amber-600 hover:bg-amber-700 text-white ring-2 ring-amber-300/60">
                                       <Layers className="w-3 h-3 mr-1" />
                                       {triggerIsPrincipal ? 'Finalizar OR/OF (Item Principal)' : 'Finalizar OR/OF (Encerrar em Massa)'}
+                                    </Button>
+                                  ) : (
+                                    <Button size="sm" onClick={() => abrirDialogFinalizar(item)} disabled={loadingItem === item.id}
+                                      className="bg-purple-600 hover:bg-purple-700">
+                                      <Check className="w-3 h-3 mr-1" />Finalizar Item
                                     </Button>
                                   )}
                                   <Button size="sm" variant="outline" onClick={() => abrirDialogRetorno(item)} disabled={loadingItem === item.id}
