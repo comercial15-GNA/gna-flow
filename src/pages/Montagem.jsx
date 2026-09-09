@@ -202,16 +202,12 @@ export default function Montagem() {
   };
 
   const opsComItens = ops.filter(op => {
+    // Somente OR e OF na Montagem
+    if (op.tipo_ordem === 'op') return false;
     if (filtroTipo !== 'todos' && op.tipo_ordem !== filtroTipo) return false;
     if (!matchOpSearch(op)) return false;
     if (filtroCliente !== 'todos' && op.cliente !== filtroCliente) return false;
     if (filtroResponsavel !== 'todos' && op.responsavel !== filtroResponsavel) return false;
-
-    if (op.tipo_ordem === 'op') {
-      // OPs só aparecem se tiverem itens na etapa de montagem
-      const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
-      return itensOP.length > 0;
-    }
     // OR/OF ativas aparecem mesmo sem itens na montagem (para priorização do admin)
     return op.status !== 'finalizado' && op.status !== 'cancelada';
   }).map(op => {
@@ -382,7 +378,6 @@ export default function Montagem() {
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="of">OF</SelectItem>
                   <SelectItem value="or">OR</SelectItem>
-                  <SelectItem value="op">OP</SelectItem>
                 </SelectContent>
               </Select>
             </div>
