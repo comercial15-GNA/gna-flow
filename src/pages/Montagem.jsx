@@ -272,9 +272,17 @@ export default function Montagem() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="px-4 py-2 rounded-full bg-[#dedfff] text-[#504aab] text-sm font-bold shadow-inner">
-              {itensFiltrados.length} itens • {opsComItens.length} OPs
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-4 py-2 rounded-full bg-amber-100 text-amber-800 text-sm font-bold shadow-inner">
+                {opsComItens.filter(o => o.op.tipo_ordem === 'or').length} OR
+              </span>
+              <span className="px-4 py-2 rounded-full bg-blue-100 text-blue-800 text-sm font-bold shadow-inner">
+                {opsComItens.filter(o => o.op.tipo_ordem === 'of').length} OF
+              </span>
+              <span className="px-4 py-2 rounded-full bg-[#dedfff] text-[#504aab] text-sm font-bold shadow-inner">
+                {itensFiltrados.length} itens
+              </span>
+            </div>
             {itensFiltrados.length > 0 && (
               <Button
                 onClick={gerarRelatorio}
