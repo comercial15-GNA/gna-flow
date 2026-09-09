@@ -202,8 +202,8 @@ export default function Montagem() {
   };
 
   const opsComItens = ops.filter(op => {
-    // Somente OR e OF na Montagem
-    if (op.tipo_ordem === 'op') return false;
+    // Somente OR e OF na Montagem (OPs e registros sem tipo são excluídos)
+    if (op.tipo_ordem !== 'or' && op.tipo_ordem !== 'of') return false;
     if (filtroTipo !== 'todos' && op.tipo_ordem !== filtroTipo) return false;
     if (!matchOpSearch(op)) return false;
     if (filtroCliente !== 'todos' && op.cliente !== filtroCliente) return false;
