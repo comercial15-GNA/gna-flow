@@ -30,15 +30,13 @@ import RetornarItemDialog from '@/components/producao/RetornarItemDialog';
 import MontagemOPCard from '@/components/montagem/MontagemOPCard';
 import MontagemDraggableList from '@/components/montagem/MontagemDraggableList';
 
-const ABA_LABEL = { of: 'OF', or: 'OR', todos: 'Todos' };
-
 export default function Montagem() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCliente, setFiltroCliente] = useState('todos');
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos');
   const [filtroData, setFiltroData] = useState('');
   const [filtroAtrasados, setFiltroAtrasados] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState('of');
+  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [retornarItem, setRetornarItem] = useState(null);
@@ -172,8 +170,8 @@ export default function Montagem() {
 
   const getOP = (opId) => ops.find(o => o.id === opId);
 
-  const clientesUnicos = [...new Set(itens.map(i => i.cliente))].filter(Boolean).sort();
-  const responsaveisUnicos = [...new Set(itens.map(i => i.responsavel_op))].filter(Boolean).sort();
+  const clientesUnicos = [...new Set(ops.map(o => o.cliente))].filter(Boolean).sort();
+  const responsaveisUnicos = [...new Set(ops.map(o => o.responsavel))].filter(Boolean).sort();
 
   const itensFiltrados = itens.filter(item => {
     const matchSearch = !searchTerm ||
@@ -193,28 +191,41 @@ export default function Montagem() {
     return matchSearch && matchCliente && matchResponsavel && matchData && matchAtrasado;
   });
 
+  const matchOpSearch = (op) => {
+    if (!searchTerm) return true;
+    const t = searchTerm.toLowerCase();
+    return op.numero_op?.toLowerCase().includes(t) ||
+      op.cliente?.toLowerCase().includes(t) ||
+      op.equipamento_principal?.toLowerCase().includes(t) ||
+      op.ordem_compra?.toLowerCase().includes(t) ||
+      op.responsavel?.toLowerCase().includes(t);
+  };
+
   const opsComItens = ops.filter(op => {
-    if (abaAtiva !== 'todos' && op.tipo_ordem !== abaAtiva) return false;
-    const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
-    return itensOP.length > 0;
+    if (filtroTipo !== 'todos' && op.tipo_ordem !== filtroTipo) return false;
+    if (!matchOpSearch(op)) return false;
+    if (filtroCliente !== 'todos' && op.cliente !== filtroCliente) return false;
+    if (filtroResponsavel !== 'todos' && op.responsavel !== filtroResponsavel) return false;
+
+    if (op.tipo_ordem === 'op') {
+      // OPs só aparecem se tiverem itens na etapa de montagem
+      const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
+      return itensOP.length > 0;
+    }
+    // OR/OF ativas aparecem mesmo sem itens na montagem (para priorização do admin)
+    return op.status !== 'finalizado' && op.status !== 'cancelada';
   }).map(op => {
     const itensOP = itensFiltrados.filter(i => i.op_id === op.id);
     return { op, itens: itensOP };
   }).sort((a, b) => {
-    if (abaAtiva === 'todos') {
-      // "Todos" segue a ordem definida no Suporte Industrial (aba OR/OF)
-      const ordA = a.op.ordem_visualizacao ?? Infinity;
-      const ordB = b.op.ordem_visualizacao ?? Infinity;
-      if (ordA !== ordB) return ordA - ordB;
-      return new Date(a.op.data_lancamento) - new Date(b.op.data_lancamento);
-    }
-    // OF e OR seguem a ordem definida pelo admin nesta tela (arrastar)
+    // Fila única definida pelo admin (ordem_montagem) — independente do Suporte Industrial
     const ordA = a.op.ordem_montagem ?? Infinity;
     const ordB = b.op.ordem_montagem ?? Infinity;
     if (ordA !== ordB) return ordA - ordB;
     const dataA = a.itens.length > 0 ? Math.min(...a.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
     const dataB = b.itens.length > 0 ? Math.min(...b.itens.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
-    return dataA - dataB;
+    if (dataA !== dataB) return dataA - dataB;
+    return new Date(a.op.data_lancamento) - new Date(b.op.data_lancamento);
   });
 
   const limparFiltros = () => {
@@ -223,12 +234,13 @@ export default function Montagem() {
     setFiltroResponsavel('todos');
     setFiltroData('');
     setFiltroAtrasados(false);
+    setFiltroTipo('todos');
   };
 
-  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados;
+  const temFiltrosAtivos = searchTerm || filtroCliente !== 'todos' || filtroResponsavel !== 'todos' || filtroData || filtroAtrasados || filtroTipo !== 'todos';
 
   const isAdmin = currentUser?.setor === 'administrador';
-  const podeArrastar = isAdmin && !temFiltrosAtivos && abaAtiva !== 'todos';
+  const podeArrastar = isAdmin && !temFiltrosAtivos;
 
   const renderCard = ({ op, itens: itensOP }, dragHandleProps, isDragging) => (
     <MontagemOPCard
@@ -310,7 +322,7 @@ export default function Montagem() {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="md:col-span-2">
               <Label className="text-xs font-bold text-slate-500">Buscar</Label>
               <div className="relative mt-1">
@@ -360,6 +372,20 @@ export default function Montagem() {
                 className="mt-1"
               />
             </div>
+            <div>
+              <Label className="text-xs font-bold text-slate-500">Tipo</Label>
+              <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="of">OF</SelectItem>
+                  <SelectItem value="or">OR</SelectItem>
+                  <SelectItem value="op">OP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex items-center gap-2 mt-4">
             <input
@@ -374,26 +400,6 @@ export default function Montagem() {
               Mostrar apenas atrasados
             </label>
           </div>
-        </div>
-
-        {/* Tabs: OF | OR | Todos */}
-        <div
-          className="inline-flex gap-2 bg-slate-200/65 p-1.5 rounded-xl mb-5"
-          style={{ animation: 'montagem-rise 0.65s 0.22s cubic-bezier(0.2,0.8,0.2,1) both' }}
-        >
-          {['of', 'or', 'todos'].map(tipo => (
-            <button
-              key={tipo}
-              onClick={() => setAbaAtiva(tipo)}
-              className={`px-7 py-2.5 rounded-lg font-bold cursor-pointer transition-all border-0 ${
-                abaAtiva === tipo
-                  ? 'bg-white text-[#5752b7] shadow-md'
-                  : 'bg-transparent text-slate-500 hover:text-[#514dae] hover:bg-white/60'
-              }`}
-            >
-              {ABA_LABEL[tipo]}
-            </button>
-          ))}
         </div>
 
         {/* Queue */}
@@ -412,7 +418,7 @@ export default function Montagem() {
             {opsComItens.length > 1 && (
               <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
                 <GripVertical className="w-3 h-3" />
-                Arraste os cards para reordenar a fila {ABA_LABEL[abaAtiva]}.
+                Arraste os cards para reordenar a fila de montagem.
               </p>
             )}
             <MontagemDraggableList ops={opsComItens} renderCard={renderCard} />
