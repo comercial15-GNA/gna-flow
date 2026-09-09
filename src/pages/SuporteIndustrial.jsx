@@ -79,6 +79,7 @@ export default function SuporteIndustrial() {
   const [editingOp, setEditingOp] = useState(null);
   const [itemExcluir, setItemExcluir] = useState(null);
   const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('suporte');
   const queryClient = useQueryClient();
   const { categorias, getLabel: getCategoriaLabel, getColor: getCategoriaColor } = useCategoriasSuporte();
 
@@ -392,9 +393,20 @@ export default function SuporteIndustrial() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+        {abaAtiva === 'orof' ? (
+          <>
+            <div className="bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
+              {opsOROF.filter(op => op.tipo_ordem === 'or' && op.status !== 'finalizado' && op.status !== 'cancelada').length} OR
+            </div>
+            <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+              {opsOROF.filter(op => op.tipo_ordem === 'of' && op.status !== 'finalizado' && op.status !== 'cancelada').length} OF
+            </div>
+          </>
+        ) : (
           <div className="bg-slate-100 text-slate-800 px-4 py-2 rounded-full text-sm font-medium">
             {itens.length} itens
           </div>
+        )}
           <Button onClick={() => setGerenciarCategoriasOpen(true)} variant="outline">
             <Settings className="w-4 h-4 mr-2" />
             Categorias
@@ -408,7 +420,7 @@ export default function SuporteIndustrial() {
         </div>
       </div>
 
-      <Tabs defaultValue="suporte" className="w-full">
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="suporte">Itens em Suporte</TabsTrigger>
           <TabsTrigger value="orof">Ordens OR/OF</TabsTrigger>
