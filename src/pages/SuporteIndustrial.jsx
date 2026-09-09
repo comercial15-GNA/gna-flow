@@ -53,8 +53,7 @@ import {
   Trash2,
   Loader2,
   CheckCircle,
-  Settings,
-  GripVertical
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -638,12 +637,6 @@ export default function SuporteIndustrial() {
             ))
           ) : (
             <>
-              {opsAtivasOROFFiltradas.length > 1 && (
-                <p className="text-xs text-slate-500 flex items-center gap-1 mb-2">
-                  <GripVertical className="w-3 h-3" />
-                  Arraste os cards para reordenar. A ordem definida aqui será aplicada na Montagem.
-                </p>
-              )}
               <OrdensOROFDraggableList
                 ops={opsAtivasOROFFiltradas}
                 itensOROF={itensOROF}

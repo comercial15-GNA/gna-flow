@@ -30,7 +30,6 @@ import RetornarItemDialog from '@/components/producao/RetornarItemDialog';
 import MontagemOPCard from '@/components/montagem/MontagemOPCard';
 import MontagemDraggableList from '@/components/montagem/MontagemDraggableList';
 
-const TYPE_ORDER = { of: 0, or: 1, op: 2 };
 const ABA_LABEL = { of: 'OF', or: 'OR', todos: 'Todos' };
 
 export default function Montagem() {
@@ -203,10 +202,13 @@ export default function Montagem() {
     return { op, itens: itensOP };
   }).sort((a, b) => {
     if (abaAtiva === 'todos') {
-      const typeA = TYPE_ORDER[a.op.tipo_ordem] ?? 3;
-      const typeB = TYPE_ORDER[b.op.tipo_ordem] ?? 3;
-      if (typeA !== typeB) return typeA - typeB;
+      // "Todos" segue a ordem definida no Suporte Industrial (aba OR/OF)
+      const ordA = a.op.ordem_visualizacao ?? Infinity;
+      const ordB = b.op.ordem_visualizacao ?? Infinity;
+      if (ordA !== ordB) return ordA - ordB;
+      return new Date(a.op.data_lancamento) - new Date(b.op.data_lancamento);
     }
+    // OF e OR seguem a ordem definida pelo admin nesta tela (arrastar)
     const ordA = a.op.ordem_montagem ?? Infinity;
     const ordB = b.op.ordem_montagem ?? Infinity;
     if (ordA !== ordB) return ordA - ordB;
