@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -112,22 +112,32 @@ export default function Comercial() {
   });
 
   // Filtrar OPs: criadas pelo usuário ou onde é responsável (pelo apelido)
-  const opsVisiveis = ops.filter(op => {
+  const opsVisiveis = useMemo(() => ops.filter(op => {
     if (currentUser?.setor === 'administrador') return true;
     return op.created_by === currentUser?.email || op.responsavel === currentUser?.apelido;
-  });
+  }), [ops, currentUser]);
+
+  // Índice de itens por OP (evita re-filtrar a lista inteira a cada comparação/tecla)
+  const itensPorOp = useMemo(() => {
+    const map = {};
+    for (const item of itens) {
+      if (!map[item.op_id]) map[item.op_id] = [];
+      map[item.op_id].push(item);
+    }
+    return map;
+  }, [itens]);
 
   // Itens retornados para o comercial (etapa_atual === 'comercial')
-  const itensRetornados = itens.filter(item => {
+  const itensRetornados = useMemo(() => itens.filter(item => {
     const op = opsVisiveis.find(o => o.id === item.op_id);
     return op && item.etapa_atual === 'comercial';
-  });
+  }), [itens, opsVisiveis]);
 
   // Derivar lista de responsáveis únicos
-  const responsaveisUnicos = [...new Set(opsVisiveis.map(op => op.responsavel).filter(Boolean))].sort();
+  const responsaveisUnicos = useMemo(() => [...new Set(opsVisiveis.map(op => op.responsavel).filter(Boolean))].sort(), [opsVisiveis]);
 
   // Filtros para OPs
-  const opsFiltradas = opsVisiveis.filter(op => {
+  const opsFiltradas = useMemo(() => opsVisiveis.filter(op => {
     const matchSearch = !searchTerm || 
       op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,12 +149,12 @@ export default function Comercial() {
     return matchSearch && matchStatus && matchResponsavel && matchTipoOrdem;
   }).sort((a, b) => {
     // Ordenar por data de entrega mais próxima dos itens
-    const itensA = itens.filter(i => i.op_id === a.id);
-    const itensB = itens.filter(i => i.op_id === b.id);
+    const itensA = itensPorOp[a.id] || [];
+    const itensB = itensPorOp[b.id] || [];
     const dataA = itensA.length > 0 ? Math.min(...itensA.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
     const dataB = itensB.length > 0 ? Math.min(...itensB.map(i => i.data_entrega ? new Date(i.data_entrega).getTime() : Infinity)) : Infinity;
     return dataA - dataB;
-  });
+  }), [opsVisiveis, itensPorOp, searchTerm, statusFilter, filtroResponsavel, filtroTipoOrdem]);
 
   const handleEditItem = (item) => {
     setEditingItem(item);

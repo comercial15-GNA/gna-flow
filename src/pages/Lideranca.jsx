@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -119,25 +119,34 @@ export default function Lideranca() {
     queryFn: () => base44.entities.ItemOP.list('data_entrada_etapa'),
   });
 
-  const responsaveisUnicos = [...new Set(ops.map(op => op.responsavel).filter(Boolean))];
-  const clientesUnicos = [...new Set(ops.map(op => op.cliente).filter(Boolean))].sort();
+  const responsaveisUnicos = useMemo(() => [...new Set(ops.map(op => op.responsavel).filter(Boolean))], [ops]);
+  const clientesUnicos = useMemo(() => [...new Set(ops.map(op => op.cliente).filter(Boolean))].sort(), [ops]);
+
+  // Índice de itens por OP (evita re-filtrar a lista inteira a cada comparação/tecla)
+  const itensPorOp = useMemo(() => {
+    const map = {};
+    for (const item of itens) {
+      if (!map[item.op_id]) map[item.op_id] = [];
+      map[item.op_id].push(item);
+    }
+    return map;
+  }, [itens]);
 
   // Filtrar OPs
-  const opsFiltradas = ops.filter(op => {
-    const itensOPSearch = itens.filter(i => i.op_id === op.id);
+  const opsFiltradas = useMemo(() => ops.filter(op => {
+    const itensOP = itensPorOp[op.id] || [];
     const matchSearch = !searchTerm || 
       op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      itensOPSearch.some(i => i.descricao?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      itensOPSearch.some(i => i.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()));
+      itensOP.some(i => i.descricao?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      itensOP.some(i => i.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchResponsavel = responsavelFilter === 'all' || op.responsavel === responsavelFilter;
     const matchCliente = clienteFilter === 'all' || op.cliente === clienteFilter;
     const matchStatus = statusFilter === 'all' || op.status === statusFilter;
     
     // Filtrar por etapa: verificar se a OP tem pelo menos um item na etapa selecionada
-    const itensOP = itens.filter(i => i.op_id === op.id);
     const matchEtapa = etapaFilter === 'all' || itensOP.some(i => i.etapa_atual === etapaFilter);
     
     // Filtro de data
@@ -155,7 +164,7 @@ export default function Lideranca() {
     }
     
     return matchSearch && matchResponsavel && matchCliente && matchStatus && matchEtapa && matchData;
-  });
+  }), [ops, itensPorOp, searchTerm, responsavelFilter, clienteFilter, statusFilter, etapaFilter, filtroData, dataEspecifica]);
 
   const gerarRelatorio = () => {
     const dados = [];
