@@ -361,7 +361,7 @@ export default function CriarOP() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => e.preventDefault()}>
         {/* Tipo de Ordem */}
         <Card className="mb-6">
           <CardHeader>
@@ -665,7 +665,7 @@ export default function CriarOP() {
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700">
+          <Button type="button" onClick={handleSubmit} disabled={submitting} className="bg-blue-600 hover:bg-blue-700">
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
