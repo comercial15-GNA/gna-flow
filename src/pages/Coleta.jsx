@@ -427,7 +427,7 @@ export default function Coleta() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input placeholder="Buscar por OP, cliente, item, código GA ou O.C..." value={searchTerm}
+          <Input placeholder="OP, O.C, cliente, equipamento, item, código GA..." value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
       </div>
@@ -478,6 +478,9 @@ export default function Coleta() {
                           <TipoOrdemBadge tipo_ordem={op.tipo_ordem} numero_op={op.numero_op} />
                           <span className="text-sm text-slate-600">{op.equipamento_principal}</span>
                         </div>
+                        {op.ordem_compra && (
+                          <Badge variant="outline" className="text-blue-700 border-blue-300">O.C: {op.ordem_compra}</Badge>
+                        )}
                         <Badge className="bg-purple-600 text-white">{itensColeta.length} em Coleta</Badge>
                         {volumesOP.length > 0 && (
                           <Badge className="bg-blue-600 text-white">{volumesOP.length} volume(s)</Badge>
@@ -486,7 +489,6 @@ export default function Coleta() {
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-slate-600">
                         <div><strong>Cliente:</strong> {op.cliente}</div>
-                        {op.ordem_compra && <div><strong>O.C:</strong> {op.ordem_compra}</div>}
                         {op.responsavel && <div><strong>Responsável:</strong> {op.responsavel}</div>}
                         {op.data_lancamento && (
                           <div><strong>Lançamento:</strong> {format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</div>
