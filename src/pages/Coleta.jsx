@@ -378,7 +378,8 @@ export default function Coleta() {
     if (searchTerm) {
       const matchOP = op.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         op.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
+        op.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        op.ordem_compra?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchItens = itensOP.some(item =>
         item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -426,7 +427,7 @@ export default function Coleta() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input placeholder="Buscar por OP, cliente ou item..." value={searchTerm}
+          <Input placeholder="Buscar por OP, cliente, item, código GA ou O.C..." value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
       </div>
@@ -485,6 +486,7 @@ export default function Coleta() {
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-slate-600">
                         <div><strong>Cliente:</strong> {op.cliente}</div>
+                        {op.ordem_compra && <div><strong>O.C:</strong> {op.ordem_compra}</div>}
                         {op.responsavel && <div><strong>Responsável:</strong> {op.responsavel}</div>}
                         {op.data_lancamento && (
                           <div><strong>Lançamento:</strong> {format(new Date(op.data_lancamento), 'dd/MM/yyyy')}</div>
