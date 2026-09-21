@@ -134,6 +134,7 @@ export default function Engenharia() {
     } finally {
       setLoadingItem(null);
       setRetornarDialogOpen(false);
+      setReenviarDialogOpen(false);
     }
   };
 
