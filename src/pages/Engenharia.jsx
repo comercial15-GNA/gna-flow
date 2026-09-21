@@ -59,6 +59,9 @@ export default function Engenharia() {
   const [loadingItem, setLoadingItem] = useState(null);
   const [retornarDialogOpen, setRetornarDialogOpen] = useState(false);
   const [retornarItem, setRetornarItem] = useState(null);
+  const [reenviarDialogOpen, setReenviarDialogOpen] = useState(false);
+  const [reenviarItem, setReenviarItem] = useState(null);
+  const [reenviarDestino, setReenviarDestino] = useState('');
   const [expandedOPs, setExpandedOPs] = useState({});
   const [editarItemOpen, setEditarItemOpen] = useState(false);
   const [itemEdicao, setItemEdicao] = useState(null);
@@ -145,15 +148,16 @@ export default function Engenharia() {
 
   const handleEnviar = async (item, destino) => {
     if (item.retornado) {
-      const justif = prompt('Este item foi retornado. Informe a justificativa para reenvio:');
-      if (!justif || !justif.trim()) {
-        toast.error('Justificativa é obrigatória');
-        return;
-      }
-      await movimentarItem(item, destino, justif, false);
+      setReenviarItem(item);
+      setReenviarDestino(destino);
+      setReenviarDialogOpen(true);
     } else {
       await movimentarItem(item, destino, '', false);
     }
+  };
+
+  const confirmarReenvio = (justificativa) => {
+    movimentarItem(reenviarItem, reenviarDestino, justificativa, false);
   };
 
   const gerarRelatorio = () => {
@@ -584,6 +588,15 @@ export default function Engenharia() {
         onOpenChange={setRetornarDialogOpen}
         titulo="Retornar Item para Comercial"
         onConfirm={confirmarRetorno}
+        loading={!!loadingItem}
+      />
+
+      <RetornarItemDialog
+        open={reenviarDialogOpen}
+        onOpenChange={setReenviarDialogOpen}
+        titulo="Reenviar Item Retornado"
+        descricao="Este item foi retornado. Informe a justificativa para reenvio:"
+        onConfirm={confirmarReenvio}
         loading={!!loadingItem}
       />
 
