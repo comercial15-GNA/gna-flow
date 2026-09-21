@@ -35,13 +35,16 @@ import {
   FileText,
   ExternalLink,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ItemOPActions from '@/components/producao/ItemOPActions';
 import ItensRetornados from '@/components/producao/ItensRetornados';
+import DistribuicaoEtapa from '@/components/producao/DistribuicaoEtapa';
 import { updateOPStatus } from '@/components/producao/UpdateOPStatus';
 import NumeroOpColorido from '@/components/producao/NumeroOpColorido';
 import TipoOrdemBadge from '@/components/producao/TipoOrdemBadge';
@@ -81,6 +84,11 @@ export default function Suprimentos() {
   const { data: ops = [] } = useQuery({
     queryKey: ['ops-all'],
     queryFn: () => base44.entities.OrdemProducao.list('data_lancamento'),
+  });
+
+  const { data: todosItens = [] } = useQuery({
+    queryKey: ['todos-itens-ops'],
+    queryFn: () => base44.entities.ItemOP.list(),
   });
 
   const toggleOP = (opId) => {
@@ -187,6 +195,7 @@ export default function Suprimentos() {
       item.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.codigo_ga?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.equipamento_principal?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchCliente = clienteFilter === 'todos' || item.cliente === clienteFilter;
@@ -213,17 +222,13 @@ export default function Suprimentos() {
       return dataA - dataB;
     });
 
-  const clientes = ['todos', ...new Set(itens.map(i => i.cliente).filter(Boolean))];
-  const responsaveis = ['todos', ...new Set(itens.map(i => i.responsavel_op).filter(Boolean))];
+  const clientesUnicos = [...new Set(itens.map(i => i.cliente))].filter(Boolean).sort();
+  const responsaveisUnicos = [...new Set(itens.map(i => i.responsavel_op))].filter(Boolean).sort();
 
-  const activeFilters = [
-    clienteFilter !== 'todos' && 'Cliente',
-    responsavelFilter !== 'todos' && 'Responsável',
-    dataFilter && 'Data',
-    showAtrasados && 'Atrasados'
-  ].filter(Boolean);
+  const temFiltrosAtivos = searchTerm || clienteFilter !== 'todos' || responsavelFilter !== 'todos' || dataFilter || showAtrasados;
 
   const limparFiltros = () => {
+    setSearchTerm('');
     setClienteFilter('todos');
     setResponsavelFilter('todos');
     setDataFilter('');
@@ -265,70 +270,78 @@ export default function Suprimentos() {
       {/* Filtros */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-slate-400" />
+          <Filter className="w-4 h-4 text-slate-600" />
           <span className="font-medium text-slate-700">Filtros</span>
-          {activeFilters.length > 0 && (
-            <Badge variant="outline" className="ml-2">
-              {activeFilters.length} ativo{activeFilters.length > 1 ? 's' : ''}
-            </Badge>
-          )}
-          {activeFilters.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={limparFiltros} className="ml-auto h-7 text-xs">
-              <X className="w-3 h-3 mr-1" />
-              Limpar filtros
+          {temFiltrosAtivos && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="ml-auto">
+              <X className="w-4 h-4 mr-1" />
+              Limpar
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="md:col-span-2">
+            <Label className="text-xs">Buscar</Label>
+            <div className="relative mt-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="OP, cliente, equipamento, item, código GA..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Cliente</Label>
+            <Select value={clienteFilter} onValueChange={setClienteFilter}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {clientesUnicos.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Responsável</Label>
+            <Select value={responsavelFilter} onValueChange={setResponsavelFilter}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {responsaveisUnicos.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Data Entrega</Label>
             <Input
-              placeholder="Buscar OP, item, cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              type="date"
+              value={dataFilter}
+              onChange={(e) => setDataFilter(e.target.value)}
+              className="mt-1"
             />
           </div>
-          <Select value={clienteFilter} onValueChange={setClienteFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {clientes.map(c => (
-                <SelectItem key={c} value={c}>
-                  {c === 'todos' ? 'Todos os Clientes' : c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={responsavelFilter} onValueChange={setResponsavelFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              {responsaveis.map(r => (
-                <SelectItem key={r} value={r}>
-                  {r === 'todos' ? 'Todos os Responsáveis' : r}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            type="date"
-            value={dataFilter}
-            onChange={(e) => setDataFilter(e.target.value)}
-            placeholder="Data de Entrega"
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="checkbox"
+            id="atrasados"
+            checked={showAtrasados}
+            onChange={(e) => setShowAtrasados(e.target.checked)}
+            className="rounded"
           />
-          <div className="flex items-center space-x-2 border rounded-lg px-3 py-2 bg-white">
-            <Checkbox 
-              id="atrasados" 
-              checked={showAtrasados}
-              onCheckedChange={setShowAtrasados}
-            />
-            <label htmlFor="atrasados" className="text-sm cursor-pointer flex-1">
-              Apenas atrasados
-            </label>
-          </div>
+          <label htmlFor="atrasados" className="text-sm text-slate-700 cursor-pointer flex items-center gap-1">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            Mostrar apenas atrasados
+          </label>
         </div>
       </div>
 
@@ -341,12 +354,14 @@ export default function Suprimentos() {
           <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhum item encontrado</h3>
           <p className="text-slate-500">
-            {activeFilters.length > 0 ? 'Tente ajustar os filtros' : 'Todos os itens foram processados'}
+            {temFiltrosAtivos ? 'Tente ajustar os filtros' : 'Todos os itens foram processados'}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {opsComItens.map((op) => (
+          {opsComItens.map((op) => {
+            const todosItensOP = todosItens.filter(i => i.op_id === op.id);
+            return (
             <div key={op.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
               {/* Header da OP */}
               <div 
@@ -521,10 +536,12 @@ export default function Suprimentos() {
                       </div>
                     );
                   })}
+                  <DistribuicaoEtapa todosItensOP={todosItensOP} etapaAtual="suprimentos" />
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
