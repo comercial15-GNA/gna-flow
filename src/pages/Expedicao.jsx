@@ -402,6 +402,9 @@ export default function Expedicao() {
                         {op.ordem_compra && (
                           <Badge variant="outline" className="text-blue-700 border-blue-300">O.C: {op.ordem_compra}</Badge>
                         )}
+                        {itensExpedicao.some(i => i.pronta_entrega) && (
+                          <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>
+                        )}
                         <Badge className="bg-teal-600 text-white">{itensExpedicao.length} em Expedição</Badge>
                         {volumesOP.length > 0 && (
                           <Badge className="bg-blue-600 text-white">{volumesOP.length} volume(s)</Badge>

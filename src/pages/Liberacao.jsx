@@ -15,7 +15,7 @@ import {
 import {
   CheckCircle, Search, Package, RotateCcw, ArrowRight, FileText,
   ExternalLink, Weight, Box, FileSpreadsheet, Calendar, AlertTriangle,
-  ChevronDown, ChevronUp, Plus, Truck,
+  ChevronDown, ChevronUp, Plus, Truck, Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -383,6 +383,11 @@ export default function Liberacao() {
                         {op.ordem_compra && (
                           <Badge variant="outline" className="text-blue-700 border-blue-300">O.C: {op.ordem_compra}</Badge>
                         )}
+                        {itensLiberacao.some(i => i.pronta_entrega) && (
+                          <Badge className="bg-amber-500 text-white">
+                            <Zap className="w-3 h-3 mr-1" />Pronta Entrega
+                          </Badge>
+                        )}
                         <Badge className="bg-emerald-600 text-white">
                           {itensLiberacao.length} em Liberação
                         </Badge>
@@ -450,11 +455,12 @@ export default function Liberacao() {
                         </h4>
                         <div className="space-y-3">
                           {itensSemVolume.map((item) => (
-                            <div key={item.id} className="bg-emerald-50 rounded-lg border-2 border-emerald-300 p-4">
+                            <div key={item.id} className={`rounded-lg border-2 p-4 ${item.pronta_entrega ? 'bg-amber-50 border-amber-400' : 'bg-emerald-50 border-emerald-300'}`}>
                               <div className="flex items-start justify-between mb-3">
                                 <div>
-                                  <div className="flex items-center gap-2 mb-1">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <p className="font-semibold text-slate-800">{item.descricao}</p>
+                                    {item.pronta_entrega && <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>}
                                     {item.retornado && <Badge variant="destructive">Retornado</Badge>}
                                   </div>
                                   <p className="text-xs text-slate-500">Código GA: {item.codigo_ga || '-'}</p>
