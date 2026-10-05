@@ -66,6 +66,7 @@ export default function SuporteIndustrial() {
   const [searchOROF, setSearchOROF] = useState('');
   const [filtroTipoOROF, setFiltroTipoOROF] = useState('todos');
   const [searchFinalizadas, setSearchFinalizadas] = useState('');
+  const [filtroFinalizadas, setFiltroFinalizadas] = useState('todas');
   const [loadingItem, setLoadingItem] = useState(null);
   const [enviarDialogOpen, setEnviarDialogOpen] = useState(false);
   const [categoriaDialogOpen, setCategoriaDialogOpen] = useState(false);
@@ -300,17 +301,23 @@ export default function SuporteIndustrial() {
 
   const temFiltrosAtivos = searchTerm || filtroCategoria !== 'todos' || filtroCliente !== 'todos';
 
-  // OR/OF finalizadas: todos os itens encerrados (finalizado/cancelado) com ≥1 finalizado
-  const opsFinalizadas = opsOROF.filter(op => {
+  // OR/OF encerradas: todos os itens encerrados (finalizado/cancelado)
+  const opsEncerradas = opsOROF.filter(op => {
     const itensOP = itensOROF.filter(i => i.op_id === op.id);
     if (itensOP.length === 0) return false;
-    const algumFinalizado = itensOP.some(i => i.etapa_atual === 'finalizado');
-    const todosEncerrados = itensOP.every(i => ['finalizado', 'cancelado'].includes(i.etapa_atual));
-    return algumFinalizado && todosEncerrados;
+    return itensOP.every(i => ['finalizado', 'cancelado'].includes(i.etapa_atual));
   });
 
-  // OR/OF finalizadas filtradas por busca
-  const opsFinalizadasFiltradas = opsFinalizadas.filter(op => {
+  // Sub-classificação: finalizadas (≥1 finalizado) vs canceladas (todos cancelados)
+  const opsFinalizadas = opsEncerradas.filter(op => op.status !== 'cancelada');
+  const opsCanceladas = opsEncerradas.filter(op => op.status === 'cancelada');
+
+  // OR/OF encerradas filtradas por busca + sub-filtro
+  const opsEncerradasFiltradas = opsEncerradas.filter(op => {
+    const matchSub = filtroFinalizadas === 'todas' ||
+      (filtroFinalizadas === 'finalizadas' && op.status !== 'cancelada') ||
+      (filtroFinalizadas === 'canceladas' && op.status === 'cancelada');
+    if (!matchSub) return false;
     if (!searchFinalizadas) return true;
     const q = searchFinalizadas.toLowerCase();
     return op.numero_op?.toLowerCase().includes(q) ||
@@ -318,13 +325,13 @@ export default function SuporteIndustrial() {
       op.cliente?.toLowerCase().includes(q);
   });
 
-  // OR/OF ativas: existe ao menos um item não encerrado (não finalizado/cancelado)
+  // OR/OF ativas: existe ao menos um item não encerrado e a OP não está cancelada/finalizada
   const opsAtivasOROF = opsOROF.filter(op => {
+    if (op.status === 'cancelada' || op.status === 'finalizado') return false;
     const itensOP = itensOROF.filter(i => i.op_id === op.id);
     if (itensOP.length === 0) return true;
-    const algumFinalizado = itensOP.some(i => i.etapa_atual === 'finalizado');
     const todosEncerrados = itensOP.every(i => ['finalizado', 'cancelado'].includes(i.etapa_atual));
-    return !(algumFinalizado && todosEncerrados);
+    return !todosEncerrados;
   }).sort((a, b) => {
     const ordA = a.ordem_visualizacao ?? Infinity;
     const ordB = b.ordem_visualizacao ?? Infinity;
@@ -667,22 +674,43 @@ export default function SuporteIndustrial() {
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
             </div>
-          ) : opsFinalizadas.length === 0 ? (
+          ) : opsEncerradas.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
               <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem finalizada</h3>
-              <p className="text-slate-500">Ordens OR/OF com todos os itens finalizados aparecerão aqui</p>
+              <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem encerrada</h3>
+              <p className="text-slate-500">Ordens OR/OF finalizadas ou canceladas aparecerão aqui</p>
             </div>
           ) : (
             <>
               <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Filter className="w-4 h-4 text-slate-600" />
-                  <span className="font-medium text-slate-700">Busca</span>
+                <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-slate-600" />
+                    <span className="font-medium text-slate-700">Filtros</span>
+                  </div>
+                  <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+                    {[
+                      { value: 'todas', label: `Todas (${opsEncerradas.length})` },
+                      { value: 'finalizadas', label: `Finalizadas (${opsFinalizadas.length})` },
+                      { value: 'canceladas', label: `Canceladas (${opsCanceladas.length})` },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setFiltroFinalizadas(opt.value)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          filtroFinalizadas === opt.value
+                            ? 'bg-white text-slate-800 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-800'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                   {searchFinalizadas && (
                     <Button variant="ghost" size="sm" onClick={() => setSearchFinalizadas('')} className="ml-auto">
                       <X className="w-4 h-4 mr-1" />
-                      Limpar
+                      Limpar busca
                     </Button>
                   )}
                 </div>
@@ -696,19 +724,33 @@ export default function SuporteIndustrial() {
                   />
                 </div>
               </div>
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
-                <p className="text-sm text-emerald-800 font-medium">
-                  {opsFinalizadasFiltradas.length} {opsFinalizadasFiltradas.length === 1 ? 'ordem finalizada' : 'ordens finalizadas'}
+              <div className={`border rounded-lg p-3 mb-2 ${
+                filtroFinalizadas === 'canceladas'
+                  ? 'bg-red-50 border-red-200'
+                  : filtroFinalizadas === 'finalizadas'
+                  ? 'bg-emerald-50 border-emerald-200'
+                  : 'bg-slate-50 border-slate-200'
+              }`}>
+                <p className={`text-sm font-medium ${
+                  filtroFinalizadas === 'canceladas'
+                    ? 'text-red-800'
+                    : filtroFinalizadas === 'finalizadas'
+                    ? 'text-emerald-800'
+                    : 'text-slate-700'
+                }`}>
+                  {opsEncerradasFiltradas.length} {opsEncerradasFiltradas.length === 1 ? 'ordem' : 'ordens'} {
+                    filtroFinalizadas === 'canceladas' ? 'cancelada' : filtroFinalizadas === 'finalizadas' ? 'finalizada' : 'encerrada'
+                  }
                 </p>
               </div>
-              {opsFinalizadasFiltradas.length === 0 ? (
+              {opsEncerradasFiltradas.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-xl border border-slate-100">
                   <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-slate-800 mb-2">Nenhuma ordem encontrada</h3>
-                  <p className="text-slate-500">Ajuste a busca</p>
+                  <p className="text-slate-500">Ajuste os filtros</p>
                 </div>
               ) : (
-                opsFinalizadasFiltradas.map(op => (
+                opsEncerradasFiltradas.map(op => (
                   <OrdemFinalizadaCard
                     key={op.id}
                     op={op}
