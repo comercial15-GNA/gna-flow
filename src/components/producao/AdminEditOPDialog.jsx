@@ -12,6 +12,7 @@ import { Plus, Trash2, Upload, X, FileText, ExternalLink, Loader2, CheckCircle, 
 import { Checkbox } from "@/components/ui/checkbox";
 import CancelarOPDialog from './CancelarOPDialog';
 import ReabrirOPDialog from './ReabrirOPDialog';
+import LiberacaoEdicaoOP from './LiberacaoEdicaoOP';
 import { toast } from 'sonner';
 
 export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, onDelete, currentUser }) {
@@ -174,10 +175,11 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
         </DialogHeader>
 
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dados">Dados da OP</TabsTrigger>
             <TabsTrigger value="itens">Itens da OP</TabsTrigger>
             <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
+            <TabsTrigger value="liberacao">Liberação</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="space-y-4">
@@ -441,6 +443,14 @@ export default function AdminEditOPDialog({ op, open, onOpenChange, onSuccess, o
                 </div>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="liberacao" className="space-y-4">
+            <LiberacaoEdicaoOP
+              op={op}
+              currentUser={currentUser}
+              onChanged={onSuccess}
+            />
           </TabsContent>
         </Tabs>
 

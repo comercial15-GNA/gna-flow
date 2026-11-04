@@ -13,6 +13,7 @@ import {
   Edit2,
   History,
   Settings,
+  Pencil,
   AlertTriangle,
   Zap,
 } from 'lucide-react';
@@ -70,7 +71,7 @@ const ETAPA_LABELS = {
   cancelado: 'Cancelado'
 };
 
-export default function OPCard({ op, itens = [], showItens = false, onItemUpdate, isAdmin = false, onAdminEdit, destacar = false }) {
+export default function OPCard({ op, itens = [], showItens = false, onItemUpdate, modoEdicao = null, onEditar, destacar = false }) {
   const [expanded, setExpanded] = useState(false);
   const [editingObservacao, setEditingObservacao] = useState(null);
   const [expandedHistorico, setExpandedHistorico] = useState({});
@@ -119,21 +120,27 @@ export default function OPCard({ op, itens = [], showItens = false, onItemUpdate
                 {itensOP.some(i => i.pronta_entrega) && (
                   <Badge className="bg-amber-500 text-white"><Zap className="w-3 h-3 mr-1" />Pronta Entrega</Badge>
                 )}
+                {op.edicao_liberada_expira_em && new Date(op.edicao_liberada_expira_em).getTime() > Date.now() && (
+                  <Badge variant="outline" className="text-blue-700 border-blue-300">
+                    Edição liberada até {format(new Date(op.edicao_liberada_expira_em), 'dd/MM HH:mm')}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
           <div className="flex gap-2">
-            {isAdmin && onAdminEdit && (
-              <Button 
-                variant="ghost" 
+            {modoEdicao && onEditar && (
+              <Button
+                variant="ghost"
                 size="sm"
+                title={modoEdicao === 'admin' ? 'Editar OP' : 'Adicionar/editar itens'}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onAdminEdit(op);
+                  onEditar(op);
                 }}
-                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                className={modoEdicao === 'admin' ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}
               >
-                <Settings className="w-4 h-4" />
+                {modoEdicao === 'admin' ? <Settings className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
               </Button>
             )}
             <Button variant="ghost" size="sm">

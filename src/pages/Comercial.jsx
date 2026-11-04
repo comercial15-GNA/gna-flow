@@ -43,6 +43,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import OPCard from '@/components/producao/OPCard';
 import AdminEditOPDialog from '@/components/producao/AdminEditOPDialog';
+import EditarOPLimitadoDialog from '@/components/producao/EditarOPLimitadoDialog';
+import { modoEdicaoOP, liberacaoAtiva } from '@/lib/permissoesOP';
 import { toast } from 'sonner';
 import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -64,6 +66,8 @@ export default function Comercial() {
   const [expandedHistorico, setExpandedHistorico] = useState({});
   const [editingOP, setEditingOP] = useState(null);
   const [adminEditDialogOpen, setAdminEditDialogOpen] = useState(false);
+  const [editingOPLimitado, setEditingOPLimitado] = useState(null);
+  const [editLimitadoOpen, setEditLimitadoOpen] = useState(false);
   const [deleteOPDialogOpen, setDeleteOPDialogOpen] = useState(false);
   const [opParaExcluir, setOpParaExcluir] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -114,7 +118,9 @@ export default function Comercial() {
   // Filtrar OPs: criadas pelo usuário ou onde é responsável (pelo apelido)
   const opsVisiveis = useMemo(() => ops.filter(op => {
     if (currentUser?.setor === 'administrador') return true;
-    return op.created_by === currentUser?.email || op.responsavel === currentUser?.apelido;
+    return op.created_by === currentUser?.email ||
+      op.responsavel === currentUser?.apelido ||
+      liberacaoAtiva(op, currentUser);
   }), [ops, currentUser]);
 
   // Índice de itens por OP (evita re-filtrar a lista inteira a cada comparação/tecla)
@@ -576,18 +582,28 @@ export default function Comercial() {
         </div>
       ) : (
         <div className="space-y-4">
-          {opsFiltradas.map((op) => (
-            <OPCard 
-              key={op.id}
-              op={op} 
-              itens={itens} 
-              showItens={true}
-              onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
-              isAdmin={currentUser?.setor === 'administrador'}
-              onAdminEdit={() => handleAdminEditOP(op)}
-              destacar={op.numero_op === opDestacada}
-            />
-          ))}
+          {opsFiltradas.map((op) => {
+            const modo = modoEdicaoOP(op, itensPorOp[op.id] || [], currentUser);
+            return (
+              <OPCard
+                key={op.id}
+                op={op}
+                itens={itens}
+                showItens={true}
+                onItemUpdate={() => queryClient.invalidateQueries({ queryKey: ['itens-all'] })}
+                modoEdicao={modo}
+                onEditar={(o) => {
+                  if (modo === 'admin') {
+                    handleAdminEditOP(o);
+                  } else {
+                    setEditingOPLimitado(o);
+                    setEditLimitadoOpen(true);
+                  }
+                }}
+                destacar={op.numero_op === opDestacada}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -605,6 +621,17 @@ export default function Comercial() {
           onDelete={(op) => confirmarDeleteOP(op)}
         />
       )}
+
+      <EditarOPLimitadoDialog
+        op={editingOPLimitado}
+        open={editLimitadoOpen}
+        onOpenChange={setEditLimitadoOpen}
+        currentUser={currentUser}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['ops-comercial'] });
+          queryClient.invalidateQueries({ queryKey: ['itens-all'] });
+        }}
+      />
 
       {/* Dialog Excluir OP */}
       <Dialog open={deleteOPDialogOpen} onOpenChange={setDeleteOPDialogOpen}>
