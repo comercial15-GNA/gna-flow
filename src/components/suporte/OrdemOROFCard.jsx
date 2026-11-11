@@ -126,6 +126,13 @@ export default function OrdemOROFCard({ op, itens, onAdicionar, onEditar, onExcl
                               </span>
                             )}
                           </div>
+                          {item.observacao && (
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                              <p className="text-xs text-blue-900 whitespace-pre-wrap leading-relaxed">
+                                <strong>Observação:</strong> {item.observacao}
+                              </p>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           <Button size="sm" variant="ghost" onClick={() => onEditar(item, op)} className="h-8 w-8 p-0">
