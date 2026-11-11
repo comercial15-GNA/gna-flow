@@ -138,7 +138,8 @@ export default function Coleta() {
         etapa_atual: 'expedicao',
         data_entrada_etapa: new Date().toISOString(),
         retornado: true,
-        justificativa_retorno: justificativa
+        justificativa_retorno: justificativa,
+        volume_id: null
       });
       await base44.entities.HistoricoMovimentacao.create({
         item_id: selectedItem.id,
@@ -447,7 +448,10 @@ export default function Coleta() {
           {opsComItensColeta.map(({ op, todosItensOP, itensColeta, volumesOP }) => {
             const arquivos = op.arquivos || [];
             const isExpanded = expandedOPs[op.id];
-            const itensSemVolume = itensColeta.filter(i => !i.volume_id);
+            // Item só conta como "no volume" se o volume ainda estiver em Coleta.
+            // Vínculos com volumes já finalizados não podem esconder o item.
+            const volumeIdsOP = new Set(volumesOP.map(v => v.id));
+            const itensSemVolume = itensColeta.filter(i => !i.volume_id || !volumeIdsOP.has(i.volume_id));
 
             // Trigger de encerramento em massa para OR/OF:
             // Item Principal se ativo em Coleta, senão o item ativo mais antigo em Coleta.

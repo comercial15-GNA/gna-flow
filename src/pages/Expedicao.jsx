@@ -98,7 +98,8 @@ export default function Expedicao() {
       await base44.entities.ItemOP.update(selectedItem.id, {
         etapa_atual: 'coleta',
         data_entrada_etapa: new Date().toISOString(),
-        informacoes_expedicao: informacoes
+        informacoes_expedicao: informacoes,
+        volume_id: null
       });
       await base44.entities.HistoricoMovimentacao.create({
         item_id: selectedItem.id,
@@ -138,7 +139,8 @@ export default function Expedicao() {
         etapa_atual: 'liberacao',
         data_entrada_etapa: new Date().toISOString(),
         retornado: true,
-        justificativa_retorno: justificativa
+        justificativa_retorno: justificativa,
+        volume_id: null
       });
       await base44.entities.HistoricoMovimentacao.create({
         item_id: selectedItem.id,
@@ -385,7 +387,10 @@ export default function Expedicao() {
           {opsComItensExpedicao.map(({ op, todosItensOP, itensExpedicao, volumesOP }) => {
             const arquivos = getArquivos(op.id);
             const isExpanded = expandedOPs[op.id];
-            const itensSemVolume = itensExpedicao.filter(i => !i.volume_id);
+            // Um item só fica "dentro do volume" se esse volume ainda estiver na Expedição.
+            // Se o volume já saiu (finalizado/coletado), o item volta a ser individual e acionável.
+            const volumeIdsOP = new Set(volumesOP.map(v => v.id));
+            const itensSemVolume = itensExpedicao.filter(i => !i.volume_id || !volumeIdsOP.has(i.volume_id));
 
             return (
               <div key={op.id} className="bg-white rounded-xl border-2 border-teal-200 shadow-sm overflow-hidden">
