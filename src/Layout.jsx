@@ -22,7 +22,8 @@ import {
   BarChart3,
   Hammer,
   Package,
-  Layers
+  Layers,
+  Printer
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -127,6 +128,7 @@ const NAV_ITEMS = [
   { name: 'Coleta', label: 'Coleta', icon: Package, setores: ['administrador', 'expedicao', 'liberacao', 'acabamento'] },
   { name: 'SuporteIndustrial', label: 'Suporte Industrial', icon: Hammer, setores: ['administrador', 'lideranca', 'liberacao'] },
   { name: 'Lideranca', label: 'Liderança', icon: LayoutDashboard, setores: ['administrador', 'lideranca'] },
+  { name: 'Etiqueta', label: 'Imprimir Etiqueta', icon: Printer, setores: ['administrador'] },
 ];
 
 export default function Layout({ children, currentPageName }) {

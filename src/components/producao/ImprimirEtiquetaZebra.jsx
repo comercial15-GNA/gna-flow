@@ -27,7 +27,7 @@ function normalizarTexto(str) {
     .replace(/[Ý]/g, 'Y');
 }
 
-function gerarZPL(item) {
+export function gerarZPL(item) {
   const numeroOP = (item.numero_op || '-');
   const descricao = normalizarTexto((item.descricao || '-').substring(0, 45));
   const codigoGA = normalizarTexto(item.codigo_ga || '-');
@@ -77,7 +77,7 @@ ${(inferTipoOrdem(numeroOP) === 'or' || inferTipoOrdem(numeroOP) === 'of')
 ^XZ`;
 }
 
-async function imprimirViaBrowserPrint(zpl) {
+export async function imprimirViaBrowserPrint(zpl) {
   const BROWSERPRINT_URL = 'http://localhost:9100';
 
   const deviceRes = await fetch(`${BROWSERPRINT_URL}/available`, {

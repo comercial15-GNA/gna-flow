@@ -72,6 +72,7 @@ const AVAILABLE_PAGES = [
   { value: 'SuporteIndustrial', label: 'Suporte Industrial' },
   { value: 'Coleta', label: 'Coleta' },
   { value: 'Lideranca', label: 'Liderança' },
+  { value: 'Etiqueta', label: 'Imprimir Etiqueta' },
   { value: 'Administracao', label: 'Administração' },
 ];
 
